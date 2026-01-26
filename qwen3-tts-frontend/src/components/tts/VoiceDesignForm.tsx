@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { ChevronDown } from 'lucide-react'
+import { Settings, Globe2, Type, Play, Palette } from 'lucide-react'
 import { toast } from 'sonner'
+import { IconLabel } from '@/components/IconLabel'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { LoadingState } from '@/components/LoadingState'
@@ -40,6 +42,13 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
   const [languages, setLanguages] = useState<Language[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [tempAdvancedParams, setTempAdvancedParams] = useState({
+    max_new_tokens: 2048,
+    temperature: 0.3,
+    top_k: 20,
+    top_p: 0.7,
+    repetition_penalty: 1.05
+  })
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
 
@@ -107,9 +116,9 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
   }, [currentJob?.id, currentJob?.audio_url])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      <div className="space-y-1">
-        <Label htmlFor="language">语言</Label>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <div className="space-y-0.5">
+        <IconLabel icon={Globe2} tooltip="语言" required />
         <Select
           value={watch('language')}
           onValueChange={(value: string) => setValue('language', value)}
@@ -130,8 +139,8 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="text">合成文本</Label>
+      <div className="space-y-0.5">
+        <IconLabel icon={Type} tooltip="合成文本" required />
         <Textarea
           {...register('text')}
           placeholder="输入要合成的文本..."
@@ -142,8 +151,8 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="instruct">音色描述</Label>
+      <div className="space-y-0.5">
+        <IconLabel icon={Palette} tooltip="音色描述" required />
         <Textarea
           {...register('instruct')}
           placeholder="例如：成熟男性,低沉磁性,充满权威感"
@@ -163,68 +172,175 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
         )}
       </div>
 
-      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-        <CollapsibleTrigger asChild>
-          <Button type="button" variant="ghost" className="w-full py-1.5">
+      <Dialog open={advancedOpen} onOpenChange={(open) => {
+        if (open) {
+          setTempAdvancedParams({
+            max_new_tokens: watch('max_new_tokens'),
+            temperature: watch('temperature'),
+            top_k: watch('top_k'),
+            top_p: watch('top_p'),
+            repetition_penalty: watch('repetition_penalty')
+          })
+        }
+        setAdvancedOpen(open)
+      }}>
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline" className="w-full">
+            <Settings className="mr-2 h-4 w-4" />
             高级选项
-            <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2 pt-2">
-          <ParamInput
-            name="max_new_tokens"
-            label={ADVANCED_PARAMS_INFO.max_new_tokens.label}
-            description={ADVANCED_PARAMS_INFO.max_new_tokens.description}
-            tooltip={ADVANCED_PARAMS_INFO.max_new_tokens.tooltip}
-            register={register}
-            min={1}
-            max={10000}
-          />
-          <ParamInput
-            name="temperature"
-            label={ADVANCED_PARAMS_INFO.temperature.label}
-            description={ADVANCED_PARAMS_INFO.temperature.description}
-            tooltip={ADVANCED_PARAMS_INFO.temperature.tooltip}
-            register={register}
-            step={0.1}
-            min={0}
-            max={2}
-          />
-          <ParamInput
-            name="top_k"
-            label={ADVANCED_PARAMS_INFO.top_k.label}
-            description={ADVANCED_PARAMS_INFO.top_k.description}
-            tooltip={ADVANCED_PARAMS_INFO.top_k.tooltip}
-            register={register}
-            min={1}
-            max={100}
-          />
-          <ParamInput
-            name="top_p"
-            label={ADVANCED_PARAMS_INFO.top_p.label}
-            description={ADVANCED_PARAMS_INFO.top_p.description}
-            tooltip={ADVANCED_PARAMS_INFO.top_p.tooltip}
-            register={register}
-            step={0.1}
-            min={0}
-            max={1}
-          />
-          <ParamInput
-            name="repetition_penalty"
-            label={ADVANCED_PARAMS_INFO.repetition_penalty.label}
-            description={ADVANCED_PARAMS_INFO.repetition_penalty.description}
-            tooltip={ADVANCED_PARAMS_INFO.repetition_penalty.tooltip}
-            register={register}
-            step={0.01}
-            min={0}
-            max={2}
-          />
-        </CollapsibleContent>
-      </Collapsible>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>高级参数设置</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="dialog-max_new_tokens">
+                {ADVANCED_PARAMS_INFO.max_new_tokens.label}
+              </Label>
+              <Input
+                id="dialog-max_new_tokens"
+                type="number"
+                min={1}
+                max={10000}
+                value={tempAdvancedParams.max_new_tokens}
+                onChange={(e) => setTempAdvancedParams({
+                  ...tempAdvancedParams,
+                  max_new_tokens: parseInt(e.target.value) || 2048
+                })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {ADVANCED_PARAMS_INFO.max_new_tokens.description}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-temperature">
+                {ADVANCED_PARAMS_INFO.temperature.label}
+              </Label>
+              <Input
+                id="dialog-temperature"
+                type="number"
+                min={0}
+                max={2}
+                step={0.1}
+                value={tempAdvancedParams.temperature}
+                onChange={(e) => setTempAdvancedParams({
+                  ...tempAdvancedParams,
+                  temperature: parseFloat(e.target.value) || 0.3
+                })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {ADVANCED_PARAMS_INFO.temperature.description}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-top_k">
+                {ADVANCED_PARAMS_INFO.top_k.label}
+              </Label>
+              <Input
+                id="dialog-top_k"
+                type="number"
+                min={1}
+                max={100}
+                value={tempAdvancedParams.top_k}
+                onChange={(e) => setTempAdvancedParams({
+                  ...tempAdvancedParams,
+                  top_k: parseInt(e.target.value) || 20
+                })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {ADVANCED_PARAMS_INFO.top_k.description}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-top_p">
+                {ADVANCED_PARAMS_INFO.top_p.label}
+              </Label>
+              <Input
+                id="dialog-top_p"
+                type="number"
+                min={0}
+                max={1}
+                step={0.1}
+                value={tempAdvancedParams.top_p}
+                onChange={(e) => setTempAdvancedParams({
+                  ...tempAdvancedParams,
+                  top_p: parseFloat(e.target.value) || 0.7
+                })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {ADVANCED_PARAMS_INFO.top_p.description}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-repetition_penalty">
+                {ADVANCED_PARAMS_INFO.repetition_penalty.label}
+              </Label>
+              <Input
+                id="dialog-repetition_penalty"
+                type="number"
+                min={0}
+                max={2}
+                step={0.01}
+                value={tempAdvancedParams.repetition_penalty}
+                onChange={(e) => setTempAdvancedParams({
+                  ...tempAdvancedParams,
+                  repetition_penalty: parseFloat(e.target.value) || 1.05
+                })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {ADVANCED_PARAMS_INFO.repetition_penalty.description}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTempAdvancedParams({
+                  max_new_tokens: watch('max_new_tokens'),
+                  temperature: watch('temperature'),
+                  top_k: watch('top_k'),
+                  top_p: watch('top_p'),
+                  repetition_penalty: watch('repetition_penalty')
+                })
+                setAdvancedOpen(false)
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setValue('max_new_tokens', tempAdvancedParams.max_new_tokens)
+                setValue('temperature', tempAdvancedParams.temperature)
+                setValue('top_k', tempAdvancedParams.top_k)
+                setValue('top_p', tempAdvancedParams.top_p)
+                setValue('repetition_penalty', tempAdvancedParams.repetition_penalty)
+                setAdvancedOpen(false)
+              }}
+            >
+              确定
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <Button type="submit" className="w-full" disabled={isLoading || isPolling}>
-        {isLoading ? '创建中...' : '生成语音'}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="submit" className="w-full" disabled={isLoading || isPolling}>
+              <Play className="mr-2 h-4 w-4" />
+              {isLoading ? '创建中...' : '生成语音'}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>生成语音</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {isPolling && <LoadingState elapsedTime={elapsedTime} />}
 

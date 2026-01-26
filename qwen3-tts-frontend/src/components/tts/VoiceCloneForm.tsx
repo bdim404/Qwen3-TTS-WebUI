@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { ChevronDown } from 'lucide-react'
+import { Settings, Globe2, Type, Play, FileText, Mic, Zap, Database } from 'lucide-react'
 import { toast } from 'sonner'
+import { IconLabel } from '@/components/IconLabel'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { LoadingState } from '@/components/LoadingState'
@@ -41,6 +43,9 @@ function VoiceCloneForm() {
   const [languages, setLanguages] = useState<Language[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [tempAdvancedParams, setTempAdvancedParams] = useState({
+    max_new_tokens: 2048
+  })
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
 
@@ -101,9 +106,9 @@ function VoiceCloneForm() {
   }, [currentJob?.id, currentJob?.audio_url])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      <div className="space-y-1">
-        <Label htmlFor="ref_text">参考文稿（可选）</Label>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <div className="space-y-0.5">
+        <IconLabel icon={FileText} tooltip="参考文稿（可选）" />
         <Textarea
           {...register('ref_text')}
           placeholder="参考音频对应的文本..."
@@ -118,8 +123,8 @@ function VoiceCloneForm() {
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="ref_audio">参考音频</Label>
+      <div className="space-y-0.5">
+        <IconLabel icon={Mic} tooltip="参考音频" required />
         <Controller
           name="ref_audio"
           control={control}
@@ -133,8 +138,8 @@ function VoiceCloneForm() {
         />
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="language">语言（可选）</Label>
+      <div className="space-y-0.5">
+        <IconLabel icon={Globe2} tooltip="语言（可选）" />
         <Select
           value={watch('language')}
           onValueChange={(value: string) => setValue('language', value)}
@@ -152,8 +157,8 @@ function VoiceCloneForm() {
         </Select>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="text">合成文本</Label>
+      <div className="space-y-0.5">
+        <IconLabel icon={Type} tooltip="合成文本" required />
         <Textarea
           {...register('text')}
           placeholder="输入要合成的文本..."
@@ -170,6 +175,7 @@ function VoiceCloneForm() {
 
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
+          <Zap className="h-4 w-4 text-muted-foreground" />
           <Controller
             name="x_vector_only_mode"
             control={control}
@@ -187,6 +193,7 @@ function VoiceCloneForm() {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Database className="h-4 w-4 text-muted-foreground" />
           <Controller
             name="use_cache"
             control={control}
@@ -204,29 +211,82 @@ function VoiceCloneForm() {
         </div>
       </div>
 
-      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-        <CollapsibleTrigger asChild>
-          <Button type="button" variant="ghost" className="w-full py-1.5">
+      <Dialog open={advancedOpen} onOpenChange={(open) => {
+        if (open) {
+          setTempAdvancedParams({
+            max_new_tokens: watch('max_new_tokens')
+          })
+        }
+        setAdvancedOpen(open)
+      }}>
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline" className="w-full">
+            <Settings className="mr-2 h-4 w-4" />
             高级选项
-            <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2 pt-2">
-          <ParamInput
-            name="max_new_tokens"
-            label={ADVANCED_PARAMS_INFO.max_new_tokens.label}
-            description={ADVANCED_PARAMS_INFO.max_new_tokens.description}
-            tooltip={ADVANCED_PARAMS_INFO.max_new_tokens.tooltip}
-            register={register}
-            min={1}
-            max={10000}
-          />
-        </CollapsibleContent>
-      </Collapsible>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>高级参数设置</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="dialog-max_new_tokens">
+                {ADVANCED_PARAMS_INFO.max_new_tokens.label}
+              </Label>
+              <Input
+                id="dialog-max_new_tokens"
+                type="number"
+                min={1}
+                max={10000}
+                value={tempAdvancedParams.max_new_tokens}
+                onChange={(e) => setTempAdvancedParams({
+                  ...tempAdvancedParams,
+                  max_new_tokens: parseInt(e.target.value) || 2048
+                })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {ADVANCED_PARAMS_INFO.max_new_tokens.description}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTempAdvancedParams({ max_new_tokens: watch('max_new_tokens') })
+                setAdvancedOpen(false)
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setValue('max_new_tokens', tempAdvancedParams.max_new_tokens)
+                setAdvancedOpen(false)
+              }}
+            >
+              确定
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <Button type="submit" className="w-full" disabled={isLoading || isPolling}>
-        {isLoading ? '创建中...' : '生成语音'}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="submit" className="w-full" disabled={isLoading || isPolling}>
+              <Play className="mr-2 h-4 w-4" />
+              {isLoading ? '创建中...' : '生成语音'}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>生成语音</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {isPolling && <LoadingState elapsedTime={elapsedTime} />}
 
