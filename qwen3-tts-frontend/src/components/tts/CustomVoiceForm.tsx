@@ -116,8 +116,8 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   }, [currentJob?.id, currentJob?.audio_url])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
-      <div className="space-y-1.5 md:space-y-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <div className="space-y-1">
         <Label htmlFor="language">语言</Label>
         <Select
           value={watch('language')}
@@ -139,7 +139,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
         )}
       </div>
 
-      <div className="space-y-1.5 md:space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="speaker">发音人</Label>
         <Select
           value={watch('speaker')}
@@ -161,26 +161,24 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
         )}
       </div>
 
-      <div className="space-y-1.5 md:space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="text">合成文本</Label>
         <Textarea
           {...register('text')}
           placeholder="输入要合成的文本..."
-          rows={2}
-          className="min-h-[60px] md:min-h-[96px]"
+          className="min-h-[40px] md:min-h-[60px]"
         />
         {errors.text && (
           <p className="text-sm text-destructive">{errors.text.message}</p>
         )}
       </div>
 
-      <div className="space-y-1.5 md:space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="instruct">情绪指导（可选）</Label>
         <Textarea
           {...register('instruct')}
           placeholder="例如：温柔体贴，语速平缓，充满关怀"
-          rows={2}
-          className="min-h-[60px] md:min-h-[80px]"
+          className="min-h-[40px] md:min-h-[60px]"
         />
         <PresetSelector
           presets={PRESET_INSTRUCTS}
@@ -198,12 +196,12 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
 
       <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
         <CollapsibleTrigger asChild>
-          <Button type="button" variant="ghost" className="w-full">
+          <Button type="button" variant="ghost" className="w-full py-1.5">
             高级选项
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 md:space-y-4 pt-3 md:pt-4">
+        <CollapsibleContent className="space-y-2 pt-2">
           <ParamInput
             name="max_new_tokens"
             label={ADVANCED_PARAMS_INFO.max_new_tokens.label}

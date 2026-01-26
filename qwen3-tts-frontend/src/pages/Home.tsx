@@ -71,7 +71,7 @@ function Home() {
               </Tabs>
             </CardHeader>
 
-            <CardContent className="pt-4 md:pt-6 px-3 md:px-6">
+            <CardContent className="pt-0 px-3 md:px-6">
               <Tabs value={currentTab}>
                 <TabsContent value="custom-voice" className="mt-0">
                   <Suspense fallback={<FormSkeleton />}>
