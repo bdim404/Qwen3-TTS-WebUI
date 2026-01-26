@@ -21,7 +21,7 @@ const PresetSelectorInner = <T extends Preset>({ presets, onSelect }: PresetSele
         variant="outline"
         size="sm"
         onClick={() => onSelect(preset)}
-        className="text-xs md:text-sm px-2 h-6 md:h-7"
+        className="text-xs md:text-sm px-2 py-0.5 h-5"
       >
         {preset.label}
       </Button>
@@ -34,19 +34,19 @@ const PresetSelectorInner = <T extends Preset>({ presets, onSelect }: PresetSele
   }
 
   return (
-    <div className="flex items-center gap-2 mt-1">
+    <div className="flex items-center gap-1.5 mt-1">
       <div className="flex flex-wrap gap-1 flex-1">
         {presetButtons}
       </div>
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={handleRandomSelect}
-        className="h-6 md:h-7 px-2 flex-shrink-0"
+        className="h-6 w-6 flex-shrink-0"
         title="随机选择"
       >
-        <Shuffle className="h-3.5 w-3.5" />
+        <Shuffle className="h-3 w-3" />
       </Button>
     </div>
   )

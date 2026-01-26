@@ -2,6 +2,7 @@ import { useState, useRef, lazy, Suspense } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { User, Palette, Copy } from 'lucide-react'
 import type { CustomVoiceFormHandle } from '@/components/tts/CustomVoiceForm'
 import type { VoiceDesignFormHandle } from '@/components/tts/VoiceDesignForm'
 import { HistorySidebar } from '@/components/HistorySidebar'
@@ -63,10 +64,19 @@ function Home() {
           <Card>
             <CardHeader>
               <Tabs value={currentTab} onValueChange={setCurrentTab}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="custom-voice">自定义音色</TabsTrigger>
-                  <TabsTrigger value="voice-design">音色设计</TabsTrigger>
-                  <TabsTrigger value="voice-clone">声音克隆</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3 h-9">
+                  <TabsTrigger value="custom-voice">
+                    <User className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">自定义</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="voice-design">
+                    <Palette className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">设计</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="voice-clone">
+                    <Copy className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">克隆</span>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </CardHeader>
