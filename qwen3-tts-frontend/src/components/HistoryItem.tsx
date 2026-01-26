@@ -124,9 +124,9 @@ const HistoryItem = memo(({ job, onDelete, onLoadParams }: HistoryItemProps) => 
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              variant="destructive"
+              variant="ghost"
               size="sm"
-              className="min-h-[44px] md:min-h-[36px]"
+              className="min-h-[44px] md:min-h-[36px] text-muted-foreground hover:[&_svg]:text-destructive"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
