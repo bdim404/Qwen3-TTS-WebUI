@@ -65,15 +65,15 @@ function Home() {
             <CardHeader>
               <Tabs value={currentTab} onValueChange={setCurrentTab}>
                 <TabsList className="grid w-full grid-cols-3 h-9">
-                  <TabsTrigger value="custom-voice">
+                  <TabsTrigger value="custom-voice" variant="default">
                     <User className="h-4 w-4 md:mr-2" />
                     <span className="hidden md:inline">自定义</span>
                   </TabsTrigger>
-                  <TabsTrigger value="voice-design">
+                  <TabsTrigger value="voice-design" variant="secondary">
                     <Palette className="h-4 w-4 md:mr-2" />
                     <span className="hidden md:inline">设计</span>
                   </TabsTrigger>
-                  <TabsTrigger value="voice-clone">
+                  <TabsTrigger value="voice-clone" variant="outline">
                     <Copy className="h-4 w-4 md:mr-2" />
                     <span className="hidden md:inline">克隆</span>
                   </TabsTrigger>
