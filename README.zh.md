@@ -73,4 +73,4 @@ GET  /jobs/{id}/download     - 下载结果
 
 ## 许可证
 
-MIT
+Apache-2.0 license 
