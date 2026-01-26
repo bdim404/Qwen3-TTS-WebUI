@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { jobApi } from '@/lib/api'
 import type { Job, JobStatus } from '@/types/job'
 import { POLL_INTERVAL } from '@/lib/constants'
+import { useHistoryContext } from '@/contexts/HistoryContext'
 
 interface JobContextType {
   currentJob: Job | null
@@ -22,6 +23,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<JobStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
+
+  const { refresh: historyRefresh } = useHistoryContext()
 
   const stopJob = useCallback(() => {
     setCurrentJob(null)
@@ -61,11 +64,17 @@ export function JobProvider({ children }: { children: ReactNode }) {
           if (pollInterval) clearInterval(pollInterval)
           if (timeInterval) clearInterval(timeInterval)
           toast.success('任务完成！')
+          try {
+            historyRefresh()
+          } catch {}
         } else if (job.status === 'failed') {
           if (pollInterval) clearInterval(pollInterval)
           if (timeInterval) clearInterval(timeInterval)
           setError(job.error_message || '任务失败')
           toast.error(job.error_message || '任务失败')
+          try {
+            historyRefresh()
+          } catch {}
         }
       } catch (error: any) {
         if (pollInterval) clearInterval(pollInterval)
@@ -86,7 +95,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
       if (pollInterval) clearInterval(pollInterval)
       if (timeInterval) clearInterval(timeInterval)
     }
-  }, [])
+  }, [historyRefresh])
 
   const value = useMemo(
     () => ({
