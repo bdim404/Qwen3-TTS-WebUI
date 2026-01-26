@@ -73,4 +73,4 @@ GET  /jobs/{id}/download     - Download result
 
 ## License
 
-MIT
+Apache-2.0 license 
