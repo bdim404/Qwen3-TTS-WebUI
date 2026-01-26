@@ -42,6 +42,11 @@ npm run dev
 
 Visit `http://localhost:5173`
 
+**First Time Setup**: On first run, a default superuser account will be automatically created:
+- Username: `admin`
+- Password: `admin123456`
+- **IMPORTANT**: Please change the password immediately after first login for security!
+
 ## Configuration
 
 Backend `.env` key settings:
