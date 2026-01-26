@@ -1,0 +1,11 @@
+.env
+*.pyc
+__pycache__/
+*.log
+qwen_tts.db
+voice_cache/
+outputs/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/

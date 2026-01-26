@@ -1,0 +1,46 @@
+export interface Language {
+  code: string
+  name: string
+}
+
+export interface Speaker {
+  name: string
+  description: string
+}
+
+export interface CustomVoiceForm {
+  text: string
+  language: string
+  speaker: string
+  instruct?: string
+  max_new_tokens?: number
+  temperature?: number
+  top_k?: number
+  top_p?: number
+  repetition_penalty?: number
+}
+
+export interface VoiceDesignForm {
+  text: string
+  language: string
+  instruct: string
+  max_new_tokens?: number
+  temperature?: number
+  top_k?: number
+  top_p?: number
+  repetition_penalty?: number
+}
+
+export interface VoiceCloneForm {
+  text: string
+  language?: string
+  ref_audio: File | null
+  ref_text?: string
+  use_cache?: boolean
+  x_vector_only_mode?: boolean
+  max_new_tokens?: number
+  temperature?: number
+  top_k?: number
+  top_p?: number
+  repetition_penalty?: number
+}

@@ -1,0 +1,102 @@
+.audioPlayerWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  background: transparent;
+}
+
+.audioPlayerWrapper :global(.rhap_container) {
+  flex: 1;
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.audioPlayerWrapper :global(.rhap_main) {
+  --rhap_theme-color: hsl(var(--primary));
+  --rhap_background-color: transparent;
+  --rhap_bar-color: hsl(var(--secondary));
+  --rhap_time-color: hsl(var(--muted-foreground));
+}
+
+.audioPlayerWrapper :global(.rhap_progress-indicator),
+.audioPlayerWrapper :global(.rhap_volume-indicator) {
+  background: hsl(var(--primary));
+}
+
+.audioPlayerWrapper :global(.rhap_progress-filled),
+.audioPlayerWrapper :global(.rhap_volume-bar) {
+  background-color: hsl(var(--primary));
+}
+
+.audioPlayerWrapper :global(.rhap_progress-bar),
+.audioPlayerWrapper :global(.rhap_volume-container) {
+  background-color: hsl(var(--secondary));
+}
+
+.audioPlayerWrapper :global(.rhap_progress-bar) {
+  height: 6px;
+  border-radius: 3px;
+  transition: height 0.15s ease;
+}
+
+.audioPlayerWrapper :global(.rhap_progress-bar):hover {
+  height: 7px;
+}
+
+.audioPlayerWrapper :global(.rhap_progress-filled) {
+  border-radius: 3px;
+}
+
+.audioPlayerWrapper :global(.rhap_progress-indicator) {
+  width: 14px;
+  height: 14px;
+  top: -4px;
+  margin-left: -7px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.audioPlayerWrapper :global(.rhap_progress-indicator):hover {
+  transform: scale(1.1);
+}
+
+.audioPlayerWrapper :global(.rhap_progress-container) {
+  margin: 0 0.5rem;
+}
+
+.audioPlayerWrapper :global(.rhap_horizontal .rhap_controls-section) {
+  margin-left: 0;
+}
+
+.audioPlayerWrapper :global(.rhap_time) {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.audioPlayerWrapper :global(.rhap_button-clear) {
+  color: hsl(var(--foreground));
+  font-size: 1.25rem;
+}
+
+.audioPlayerWrapper :global(.rhap_button-clear):hover {
+  color: hsl(var(--primary));
+}
+
+.audioPlayerWrapper :global(.rhap_main-controls-button) {
+  width: 40px;
+  height: 40px;
+}
+
+.audioPlayerWrapper :global(.rhap_main-controls-button svg) {
+  width: 22px;
+  height: 22px;
+}
+
+.downloadButton {
+  min-height: 40px;
+  min-width: 40px;
+}

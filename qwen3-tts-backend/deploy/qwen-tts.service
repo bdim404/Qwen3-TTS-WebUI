@@ -1,0 +1,21 @@
+[Unit]
+Description=Qwen3-TTS Backend API Service
+After=network.target
+
+[Service]
+Type=simple
+User=qwen-tts
+Group=qwen-tts
+WorkingDirectory=/opt/qwen3-tts-backend
+Environment="PATH=/opt/conda/envs/qwen3-tts/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/opt/qwen3-tts-backend/.env
+ExecStart=/opt/conda/envs/qwen3-tts/bin/python main.py
+Restart=on-failure
+RestartSec=10s
+StandardOutput=append:/var/log/qwen-tts/app.log
+StandardError=append:/var/log/qwen-tts/error.log
+TimeoutStopSec=30s
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
