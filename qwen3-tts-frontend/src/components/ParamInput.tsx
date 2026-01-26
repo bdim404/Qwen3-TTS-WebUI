@@ -28,8 +28,8 @@ export function ParamInput<T extends FieldValues>({
   max,
 }: ParamInputProps<T>) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5">
         <Label htmlFor={name}>{label}</Label>
         <TooltipProvider>
           <Tooltip>

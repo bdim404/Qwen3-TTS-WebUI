@@ -101,14 +101,13 @@ function VoiceCloneForm() {
   }, [currentJob?.id, currentJob?.audio_url])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
-      <div className="space-y-1.5 md:space-y-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <div className="space-y-1">
         <Label htmlFor="ref_text">参考文稿（可选）</Label>
         <Textarea
           {...register('ref_text')}
           placeholder="参考音频对应的文本..."
-          rows={2}
-          className="min-h-[60px] md:min-h-[80px]"
+          className="min-h-[40px] md:min-h-[60px]"
         />
         <PresetSelector
           presets={PRESET_REF_TEXTS}
@@ -119,7 +118,7 @@ function VoiceCloneForm() {
         )}
       </div>
 
-      <div className="space-y-1.5 md:space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="ref_audio">参考音频</Label>
         <Controller
           name="ref_audio"
@@ -134,7 +133,7 @@ function VoiceCloneForm() {
         />
       </div>
 
-      <div className="space-y-1.5 md:space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="language">语言（可选）</Label>
         <Select
           value={watch('language')}
@@ -153,13 +152,12 @@ function VoiceCloneForm() {
         </Select>
       </div>
 
-      <div className="space-y-1.5 md:space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="text">合成文本</Label>
         <Textarea
           {...register('text')}
           placeholder="输入要合成的文本..."
-          rows={2}
-          className="min-h-[60px] md:min-h-[96px]"
+          className="min-h-[40px] md:min-h-[60px]"
         />
         <PresetSelector
           presets={PRESET_REF_TEXTS}
@@ -170,7 +168,7 @@ function VoiceCloneForm() {
         )}
       </div>
 
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
           <Controller
             name="x_vector_only_mode"
@@ -208,12 +206,12 @@ function VoiceCloneForm() {
 
       <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
         <CollapsibleTrigger asChild>
-          <Button type="button" variant="ghost" className="w-full">
+          <Button type="button" variant="ghost" className="w-full py-1.5">
             高级选项
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 md:space-y-4 pt-3 md:pt-4">
+        <CollapsibleContent className="space-y-2 pt-2">
           <ParamInput
             name="max_new_tokens"
             label={ADVANCED_PARAMS_INFO.max_new_tokens.label}
