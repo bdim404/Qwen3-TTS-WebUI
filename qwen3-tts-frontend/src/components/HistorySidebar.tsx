@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { useHistory } from '@/hooks/useHistory'
+import { useHistoryContext } from '@/contexts/HistoryContext'
 import { HistoryItem } from '@/components/HistoryItem'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -15,7 +15,7 @@ interface HistorySidebarProps {
 }
 
 function HistorySidebarContent({ onLoadParams }: Pick<HistorySidebarProps, 'onLoadParams'>) {
-  const { jobs, loading, loadingMore, hasMore, loadMore, deleteJob, error, retry } = useHistory()
+  const { jobs, loading, loadingMore, hasMore, loadMore, deleteJob, error, retry } = useHistoryContext()
   const observerTarget = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -99,7 +99,7 @@ function HistorySidebarContent({ onLoadParams }: Pick<HistorySidebarProps, 'onLo
 export function HistorySidebar({ open, onOpenChange, onLoadParams }: HistorySidebarProps) {
   return (
     <>
-      <aside className="hidden lg:block w-[320px] border-r h-[calc(100vh-64px)]">
+      <aside className="hidden lg:block w-[320px] border-r h-full">
         <HistorySidebarContent onLoadParams={onLoadParams} />
       </aside>
 

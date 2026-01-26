@@ -50,17 +50,17 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-hidden flex flex-col bg-background">
       <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div className="flex">
+      <div className="flex-1 flex overflow-hidden">
         <HistorySidebar
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           onLoadParams={handleLoadParams}
         />
 
-        <main className="flex-1 container mx-auto p-3 md:p-6 max-w-[800px] md:max-w-[700px]">
+        <main className="flex-1 overflow-y-auto container mx-auto p-3 md:p-6 max-w-[800px] md:max-w-[700px]">
           <Card>
             <CardHeader>
               <Tabs value={currentTab} onValueChange={setCurrentTab}>

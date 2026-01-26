@@ -14,6 +14,7 @@ import { IconLabel } from '@/components/IconLabel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
+import { useHistoryContext } from '@/contexts/HistoryContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
@@ -53,6 +54,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   })
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
+  const { refresh } = useHistoryContext()
 
   const {
     register,
@@ -112,6 +114,9 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       const result = await ttsApi.createCustomVoiceJob(data)
       toast.success('任务已创建')
       startPolling(result.job_id)
+      try {
+        await refresh()
+      } catch {}
     } catch (error) {
       toast.error('创建任务失败')
     } finally {

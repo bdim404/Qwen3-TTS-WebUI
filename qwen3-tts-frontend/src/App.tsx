@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { AppProvider } from '@/contexts/AppContext'
 import { JobProvider } from '@/contexts/JobContext'
+import { HistoryProvider } from '@/contexts/HistoryContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import LoadingScreen from '@/components/LoadingScreen'
 import { SuperAdminRoute } from '@/components/SuperAdminRoute'
@@ -71,9 +72,11 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AppProvider>
-                        <JobProvider>
-                          <Home />
-                        </JobProvider>
+                        <HistoryProvider>
+                          <JobProvider>
+                            <Home />
+                          </JobProvider>
+                        </HistoryProvider>
                       </AppProvider>
                     </ProtectedRoute>
                   }
