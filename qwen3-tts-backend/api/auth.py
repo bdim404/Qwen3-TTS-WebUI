@@ -14,8 +14,8 @@ from core.security import (
     decode_access_token
 )
 from db.database import get_db
-from db.crud import get_user_by_username, get_user_by_email, create_user
-from schemas.user import User, UserCreate, Token
+from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password
+from schemas.user import User, UserCreate, Token, PasswordChange
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -105,3 +105,33 @@ async def get_current_user_info(
     current_user: Annotated[User, Depends(get_current_user)]
 ):
     return current_user
+
+@router.post("/change-password", response_model=User)
+@limiter.limit("5/minute")
+async def change_password(
+    request: Request,
+    password_data: PasswordChange,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    new_hashed_password = get_password_hash(password_data.new_password)
+
+    user = change_user_password(
+        db,
+        user_id=current_user.id,
+        new_hashed_password=new_hashed_password
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    return user

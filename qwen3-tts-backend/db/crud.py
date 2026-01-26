@@ -11,6 +11,9 @@ def get_user_by_username(db: Session, username: str) -> Optional[User]:
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email).first()
 
+def count_users(db: Session) -> int:
+    return db.query(User).count()
+
 def create_user(db: Session, username: str, email: str, hashed_password: str) -> User:
     user = User(
         username=username,
@@ -84,6 +87,21 @@ def delete_user(db: Session, user_id: int) -> bool:
     db.delete(user)
     db.commit()
     return True
+
+def change_user_password(
+    db: Session,
+    user_id: int,
+    new_hashed_password: str
+) -> Optional[User]:
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return None
+
+    user.hashed_password = new_hashed_password
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    return user
 
 def create_job(db: Session, user_id: int, job_type: str, input_data: Dict[str, Any]) -> Job:
     job = Job(

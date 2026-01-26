@@ -2,6 +2,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/token',
     ME: '/auth/me',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
   TTS: {
     LANGUAGES: '/tts/languages',

@@ -23,3 +23,9 @@ export interface AuthState {
   isLoading: boolean
   isAuthenticated: boolean
 }
+
+export interface PasswordChangeRequest {
+  current_password: string
+  new_password: string
+  confirm_password: string
+}
