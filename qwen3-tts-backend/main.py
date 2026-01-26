@@ -71,6 +71,13 @@ async def lifespan(app: FastAPI):
         raise
 
     try:
+        from core.init_admin import init_superuser
+        init_superuser()
+    except Exception as e:
+        logger.error(f"Superuser initialization failed: {e}")
+        raise
+
+    try:
         model_manager = await ModelManager.get_instance()
         await model_manager.load_model("custom-voice")
         logger.info("Preloaded custom-voice model")

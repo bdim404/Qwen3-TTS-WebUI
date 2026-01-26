@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { LoginRequest, LoginResponse, User } from '@/types/auth'
+import type { LoginRequest, LoginResponse, User, PasswordChangeRequest } from '@/types/auth'
 import type { Job, JobCreateResponse, JobListResponse, JobType } from '@/types/job'
 import type { Language, Speaker, CustomVoiceForm, VoiceDesignForm, VoiceCloneForm } from '@/types/tts'
 import type { UserCreateRequest, UserUpdateRequest, UserListResponse } from '@/types/user'
@@ -32,6 +32,9 @@ const FIELD_NAMES: Record<string, string> = {
   username: '用户名',
   email: '邮箱',
   password: '密码',
+  current_password: '当前密码',
+  new_password: '新密码',
+  confirm_password: '确认密码',
   is_active: '激活状态',
   is_superuser: '超级管理员',
 }
@@ -172,6 +175,14 @@ export const authApi = {
 
   getCurrentUser: async (): Promise<User> => {
     const response = await apiClient.get<User>(API_ENDPOINTS.AUTH.ME)
+    return response.data
+  },
+
+  changePassword: async (data: PasswordChangeRequest): Promise<User> => {
+    const response = await apiClient.post<User>(
+      API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+      data
+    )
     return response.data
   },
 }
