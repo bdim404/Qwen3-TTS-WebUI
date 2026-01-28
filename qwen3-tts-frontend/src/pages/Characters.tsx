@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Navbar } from '@/components/Navbar'
 
 export const Characters: React.FC = () => {
   const { characters, isLoading, error, loadCharacters, createCharacter, updateCharacter, deleteCharacter } = useCharacter()
@@ -71,16 +72,21 @@ export const Characters: React.FC = () => {
 
   if (isLoading && characters.length === 0) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center">
-          <p className="text-muted-foreground">加载角色列表...</p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto py-8 px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">加载角色列表...</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">角色管理</h1>
@@ -149,6 +155,7 @@ export const Characters: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   )
 }

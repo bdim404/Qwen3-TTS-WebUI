@@ -8,6 +8,7 @@ import VoiceFormDialog from '@/components/voice-library/VoiceFormDialog'
 import DeleteConfirmDialog from '@/components/voice-library/DeleteConfirmDialog'
 import { useVoiceLibrary } from '@/contexts/VoiceLibraryContext'
 import type { VoiceLibrary as VoiceLibraryType } from '@/lib/api/voices'
+import { Navbar } from '@/components/Navbar'
 
 const VoiceLibrary: React.FC = () => {
   const { voices, total, currentPage, pageSize, isLoading, loadVoices, previewVoice } = useVoiceLibrary()
@@ -55,7 +56,9 @@ const VoiceLibrary: React.FC = () => {
   const totalPages = Math.ceil(total / pageSize)
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">音色库管理</h1>
@@ -150,6 +153,7 @@ const VoiceLibrary: React.FC = () => {
         onOpenChange={setIsDeleteDialogOpen}
         voice={selectedVoice}
       />
+      </div>
     </div>
   )
 }

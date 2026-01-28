@@ -24,7 +24,7 @@ export default function CharacterAvatar({ character, size = 'md' }: CharacterAva
       if (IconComponent) {
         return (
           <Avatar className={sizeClasses[size]} style={{ backgroundColor: character.color }}>
-            <AvatarFallback style={{ backgroundColor: character.color, color: 'white' }}>
+            <AvatarFallback className="text-primary-foreground" style={{ backgroundColor: character.color }}>
               <IconComponent className={size === 'sm' ? 'h-3 w-3' : size === 'md' ? 'h-5 w-5' : 'h-8 w-8'} />
             </AvatarFallback>
           </Avatar>
@@ -43,7 +43,7 @@ export default function CharacterAvatar({ character, size = 'md' }: CharacterAva
     const initial = character.name.charAt(0).toUpperCase();
     return (
       <Avatar className={sizeClasses[size]}>
-        <AvatarFallback style={{ backgroundColor: character.color, color: 'white' }}>{initial}</AvatarFallback>
+        <AvatarFallback className="text-primary-foreground" style={{ backgroundColor: character.color }}>{initial}</AvatarFallback>
       </Avatar>
     );
   };
