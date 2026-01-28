@@ -25,6 +25,10 @@ class User(Base):
 
     jobs = relationship("Job", back_populates="user", cascade="all, delete-orphan")
     voice_caches = relationship("VoiceCache", back_populates="user", cascade="all, delete-orphan")
+    voice_libraries = relationship("VoiceLibrary", back_populates="user", cascade="all, delete-orphan")
+    characters = relationship("Character", back_populates="user", cascade="all, delete-orphan")
+    dialogues = relationship("Dialogue", back_populates="user", cascade="all, delete-orphan")
+    dialogue_generation_jobs = relationship("DialogueGenerationJob", back_populates="user", cascade="all, delete-orphan")
 
 class Job(Base):
     __tablename__ = "jobs"
