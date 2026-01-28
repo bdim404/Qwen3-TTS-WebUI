@@ -1,4 +1,4 @@
-import { Menu, LogOut, Users, KeyRound } from 'lucide-react'
+import { Menu, LogOut, Users, KeyRound, Library } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -54,9 +54,14 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link to="/voice-library">
+            <Button variant="ghost" size="icon" title="音色库">
+              <Library className="h-5 w-5" />
+            </Button>
+          </Link>
           {user?.is_superuser && (
             <Link to="/users">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" title="用户管理">
                 <Users className="h-5 w-5" />
               </Button>
             </Link>
@@ -65,11 +70,12 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
             variant="ghost"
             size="icon"
             onClick={() => setPasswordDialogOpen(true)}
+            title="修改密码"
           >
             <KeyRound className="h-5 w-5" />
           </Button>
           <ThemeToggle />
-          <Button variant="ghost" size="icon" onClick={logout}>
+          <Button variant="ghost" size="icon" onClick={logout} title="退出登录">
             <LogOut className="h-5 w-5" />
           </Button>
         </div>
