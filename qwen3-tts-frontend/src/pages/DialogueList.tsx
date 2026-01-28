@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search } from 'lucide-react';
+import { Navbar } from '@/components/Navbar';
 
 export default function DialogueList() {
   const navigate = useNavigate();
@@ -79,7 +80,9 @@ export default function DialogueList() {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">对话管理</h1>
         <Button onClick={handleCreate}>
@@ -90,7 +93,7 @@ export default function DialogueList() {
 
       <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="搜索对话..."
             value={search}
@@ -103,7 +106,7 @@ export default function DialogueList() {
       {isLoading ? (
         <div className="text-center py-12">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="mt-4 text-gray-500">加载中...</p>
+          <p className="mt-4 text-muted-foreground">加载中...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -116,7 +119,7 @@ export default function DialogueList() {
                 </div>
               </CardHeader>
               <CardContent onClick={() => navigate(`/dialogues/${dialogue.id}`)}>
-                <div className="space-y-2 text-sm text-gray-600">
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex justify-between">
                     <span>总行数:</span>
                     <span className="font-medium">{dialogue.total_lines}</span>
@@ -166,9 +169,10 @@ export default function DialogueList() {
 
       {!isLoading && dialogues.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">还没有对话，点击"新建对话"开始</p>
+          <p className="text-muted-foreground">还没有对话，点击"新建对话"开始</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

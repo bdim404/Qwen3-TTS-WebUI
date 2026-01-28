@@ -32,7 +32,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({ character, onEdit,
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <Avatar style={{ backgroundColor: character.color }} className="h-12 w-12">
-            <AvatarFallback style={{ backgroundColor: character.color, color: '#fff' }}>
+            <AvatarFallback className="text-primary-foreground" style={{ backgroundColor: character.color }}>
               {getAvatarContent()}
             </AvatarFallback>
           </Avatar>

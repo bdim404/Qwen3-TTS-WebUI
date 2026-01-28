@@ -170,7 +170,7 @@ export const updateDialogueLine = async (
 ): Promise<DialogueLine> => {
   const token = localStorage.getItem('token');
   const response = await axios.patch(
-    `${API_BASE}/dialogue-lines/${lineId}`,
+    `${API_BASE}/dialogues/dialogue-lines/${lineId}`,
     data,
     {
       headers: {
@@ -183,7 +183,7 @@ export const updateDialogueLine = async (
 
 export const deleteDialogueLine = async (lineId: number): Promise<void> => {
   const token = localStorage.getItem('token');
-  await axios.delete(`${API_BASE}/dialogue-lines/${lineId}`, {
+  await axios.delete(`${API_BASE}/dialogues/dialogue-lines/${lineId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

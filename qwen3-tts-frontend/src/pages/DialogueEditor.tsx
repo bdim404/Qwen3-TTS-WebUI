@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
 import DialogueTable from '@/components/dialogue/DialogueTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { Navbar } from '@/components/Navbar';
 
 export default function DialogueEditor() {
   const { id } = useParams<{ id: string }>();
@@ -34,15 +35,20 @@ export default function DialogueEditor() {
 
   if (!currentDialogue) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      <div className="h-screen overflow-hidden flex flex-col bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="border-b bg-white px-6 py-4">
+    <div className="h-screen overflow-hidden flex flex-col bg-background">
+      <Navbar />
+      <div className="h-full flex flex-col">
+        <div className="border-b bg-card px-6 py-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/dialogues')}>
             <ArrowLeft className="h-5 w-5" />
@@ -55,7 +61,7 @@ export default function DialogueEditor() {
           />
           <div className="flex items-center gap-2 ml-auto">
             {isSaving ? (
-              <span className="text-sm text-gray-500">保存中...</span>
+              <span className="text-sm text-muted-foreground">保存中...</span>
             ) : (
               <span className="text-sm text-green-600">已保存</span>
             )}
@@ -63,8 +69,9 @@ export default function DialogueEditor() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        <DialogueTable />
+        <div className="flex-1 overflow-auto">
+          <DialogueTable />
+        </div>
       </div>
     </div>
   );

@@ -91,8 +91,8 @@ export default function DialogueLineRow({ line, isSelected, onSelect }: Dialogue
   const selectedCharacter = characters.find((c) => c.id === characterId);
 
   return (
-    <tr className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`} onClick={onSelect}>
-      <td className="px-4 py-3 text-sm text-gray-900">{line.order + 1}</td>
+    <tr className={`hover:bg-muted ${isSelected ? 'bg-accent' : ''}`} onClick={onSelect}>
+      <td className="px-4 py-3 text-sm text-foreground">{line.order + 1}</td>
       <td className="px-4 py-3">
         <Select value={characterId.toString()} onValueChange={(value) => setCharacterId(parseInt(value))}>
           <SelectTrigger className="w-full">
@@ -125,7 +125,7 @@ export default function DialogueLineRow({ line, isSelected, onSelect }: Dialogue
           className="min-h-[60px] resize-none"
           maxLength={2000}
         />
-        <div className="text-xs text-gray-500 mt-1">{text.length}/2000</div>
+        <div className="text-xs text-muted-foreground mt-1">{text.length}/2000</div>
       </td>
       <td className="px-4 py-3">
         <Badge className={getStatusColor(line.status)}>{getStatusText(line.status)}</Badge>
