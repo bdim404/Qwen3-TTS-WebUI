@@ -7,6 +7,7 @@ import { AppProvider } from '@/contexts/AppContext'
 import { JobProvider } from '@/contexts/JobContext'
 import { HistoryProvider } from '@/contexts/HistoryContext'
 import { VoiceLibraryProvider } from '@/contexts/VoiceLibraryContext'
+import { CharacterProvider } from '@/contexts/CharacterContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import LoadingScreen from '@/components/LoadingScreen'
 import { SuperAdminRoute } from '@/components/SuperAdminRoute'
@@ -15,6 +16,7 @@ const Login = lazy(() => import('@/pages/Login'))
 const Home = lazy(() => import('@/pages/Home'))
 const UserManagement = lazy(() => import('@/pages/UserManagement'))
 const VoiceLibrary = lazy(() => import('@/pages/VoiceLibrary'))
+const Characters = lazy(() => import('@/pages/Characters'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -98,6 +100,20 @@ function App() {
                       <VoiceLibraryProvider>
                         <VoiceLibrary />
                       </VoiceLibraryProvider>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/characters"
+                  element={
+                    <ProtectedRoute>
+                      <AppProvider>
+                        <VoiceLibraryProvider>
+                          <CharacterProvider>
+                            <Characters />
+                          </CharacterProvider>
+                        </VoiceLibraryProvider>
+                      </AppProvider>
                     </ProtectedRoute>
                   }
                 />
