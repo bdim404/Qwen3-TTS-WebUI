@@ -8,6 +8,7 @@ import { JobProvider } from '@/contexts/JobContext'
 import { HistoryProvider } from '@/contexts/HistoryContext'
 import { VoiceLibraryProvider } from '@/contexts/VoiceLibraryContext'
 import { CharacterProvider } from '@/contexts/CharacterContext'
+import { DialogueProvider } from '@/contexts/DialogueContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import LoadingScreen from '@/components/LoadingScreen'
 import { SuperAdminRoute } from '@/components/SuperAdminRoute'
@@ -17,6 +18,8 @@ const Home = lazy(() => import('@/pages/Home'))
 const UserManagement = lazy(() => import('@/pages/UserManagement'))
 const VoiceLibrary = lazy(() => import('@/pages/VoiceLibrary'))
 const Characters = lazy(() => import('@/pages/Characters'))
+const DialogueList = lazy(() => import('@/pages/DialogueList'))
+const DialogueEditor = lazy(() => import('@/pages/DialogueEditor'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -114,6 +117,30 @@ function App() {
                           </CharacterProvider>
                         </VoiceLibraryProvider>
                       </AppProvider>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dialogues"
+                  element={
+                    <ProtectedRoute>
+                      <CharacterProvider>
+                        <DialogueProvider>
+                          <DialogueList />
+                        </DialogueProvider>
+                      </CharacterProvider>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dialogues/:id"
+                  element={
+                    <ProtectedRoute>
+                      <CharacterProvider>
+                        <DialogueProvider>
+                          <DialogueEditor />
+                        </DialogueProvider>
+                      </CharacterProvider>
                     </ProtectedRoute>
                   }
                 />
