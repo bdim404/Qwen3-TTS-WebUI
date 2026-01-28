@@ -1,4 +1,4 @@
-import { Menu, LogOut, Users, KeyRound, Library } from 'lucide-react'
+import { Menu, LogOut, Users, KeyRound, Library, UserCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -57,6 +57,11 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
           <Link to="/voice-library">
             <Button variant="ghost" size="icon" title="音色库">
               <Library className="h-5 w-5" />
+            </Button>
+          </Link>
+          <Link to="/characters">
+            <Button variant="ghost" size="icon" title="角色管理">
+              <UserCircle className="h-5 w-5" />
             </Button>
           </Link>
           {user?.is_superuser && (
