@@ -154,24 +154,24 @@ export default function Settings() {
     <div className="h-screen overflow-hidden flex flex-col bg-background">
       <Navbar />
 
-      <main className="flex-1 overflow-y-auto container mx-auto p-6 max-w-[800px]">
-        <div className="space-y-6">
+      <main className="flex-1 overflow-y-auto container mx-auto p-3 sm:p-6 max-w-[800px]">
+        <div className="space-y-3 sm:space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">设置</h1>
-            <p className="text-muted-foreground mt-2">管理您的账户设置和偏好</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">设置</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">管理您的账户设置和偏好</p>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>后端偏好</CardTitle>
-              <CardDescription>选择默认的 TTS 后端模式</CardDescription>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">后端偏好</CardTitle>
+              <CardDescription className="text-sm">选择默认的 TTS 后端模式</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <RadioGroup
                 value={preferences.default_backend}
                 onValueChange={handleBackendChange}
               >
-                <div className={`flex items-center space-x-3 border rounded-lg p-4 ${
+                <div className={`flex items-center space-x-2 sm:space-x-3 border rounded-lg p-3 sm:p-4 ${
                   !isBackendAvailable('local') ? 'opacity-50' : 'hover:bg-accent/50 cursor-pointer'
                 }`}>
                   <RadioGroupItem
@@ -180,18 +180,18 @@ export default function Settings() {
                     disabled={!isBackendAvailable('local')}
                   />
                   <Label htmlFor="backend-local" className="flex-1 cursor-pointer">
-                    <div className="font-medium">本地模型</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-medium text-sm sm:text-base">本地模型</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       免费使用本地 Qwen3-TTS 模型
                       {!isBackendAvailable('local') && ' (管理员未启用)'}
                     </div>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-accent/50 cursor-pointer">
+                <div className="flex items-center space-x-2 sm:space-x-3 border rounded-lg p-3 sm:p-4 hover:bg-accent/50 cursor-pointer">
                   <RadioGroupItem value="aliyun" id="backend-aliyun" />
                   <Label htmlFor="backend-aliyun" className="flex-1 cursor-pointer">
-                    <div className="font-medium">阿里云 API</div>
-                    <div className="text-sm text-muted-foreground">使用阿里云 TTS 服务</div>
+                    <div className="font-medium text-sm sm:text-base">阿里云 API</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">使用阿里云 TTS 服务</div>
                   </Label>
                 </div>
               </RadioGroup>
@@ -199,21 +199,21 @@ export default function Settings() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>阿里云 API 密钥</CardTitle>
-              <CardDescription>管理您的阿里云 API 密钥配置</CardDescription>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">阿里云 API 密钥</CardTitle>
+              <CardDescription className="text-sm">管理您的阿里云 API 密钥配置</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm">
+            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
                 <span className="text-muted-foreground">当前状态:</span>
                 {hasAliyunKey ? (
                   <span className="flex items-center gap-1 text-green-600">
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                     已配置并有效
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-muted-foreground">
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
                     未配置
                   </span>
                 )}
@@ -226,7 +226,7 @@ export default function Settings() {
                     name="api_key"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>API 密钥</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">API 密钥</FormLabel>
                         <FormControl>
                           <div className="flex gap-2">
                             <div className="relative flex-1">
@@ -257,8 +257,8 @@ export default function Settings() {
                     )}
                   />
 
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={isLoading}>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-initial">
                       {isLoading ? '更新中...' : hasAliyunKey ? '更新密钥' : '添加密钥'}
                     </Button>
                     {hasAliyunKey && (
@@ -268,6 +268,7 @@ export default function Settings() {
                           variant="outline"
                           onClick={handleVerifyKey}
                           disabled={isLoading}
+                          className="flex-1 sm:flex-initial"
                         >
                           验证密钥
                         </Button>
@@ -276,9 +277,11 @@ export default function Settings() {
                           variant="destructive"
                           onClick={handleDeleteKey}
                           disabled={isLoading}
+                          size="icon"
+                          className="sm:w-auto sm:px-4"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          删除密钥
+                          <Trash2 className="h-4 w-4" />
+                          <span className="hidden sm:inline sm:ml-2">删除密钥</span>
                         </Button>
                       </>
                     )}
@@ -290,16 +293,16 @@ export default function Settings() {
 
           {user.is_superuser && (
             <Card>
-              <CardHeader>
-                <CardTitle>系统设置</CardTitle>
-                <CardDescription>管理全局系统设置（仅管理员可见）</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">系统设置</CardTitle>
+                <CardDescription className="text-sm">管理全局系统设置（仅管理员可见）</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="local-model-toggle">启用本地模型</Label>
-                      <p className="text-sm text-muted-foreground">
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5 flex-1">
+                      <Label htmlFor="local-model-toggle" className="text-sm sm:text-base">启用本地模型</Label>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         允许普通用户在设置中选择并使用本地 Qwen3-TTS 模型
                       </p>
                     </div>
@@ -307,6 +310,7 @@ export default function Settings() {
                       id="local-model-toggle"
                       checked={localModelEnabled}
                       onCheckedChange={handleToggleLocalModel}
+                      className="shrink-0"
                     />
                   </div>
                 </div>
@@ -315,21 +319,21 @@ export default function Settings() {
           )}
 
           <Card>
-            <CardHeader>
-              <CardTitle>账户信息</CardTitle>
-              <CardDescription>您的账户基本信息</CardDescription>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">账户信息</CardTitle>
+              <CardDescription className="text-sm">您的账户基本信息</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label>用户名</Label>
+            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label className="text-sm sm:text-base">用户名</Label>
                 <Input value={user.username} disabled />
               </div>
-              <div className="grid gap-2">
-                <Label>邮箱</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label className="text-sm sm:text-base">邮箱</Label>
                 <Input value={user.email} disabled />
               </div>
               <div>
-                <Button onClick={() => setShowPasswordDialog(true)}>修改密码</Button>
+                <Button onClick={() => setShowPasswordDialog(true)} className="w-full sm:w-auto">修改密码</Button>
               </div>
             </CardContent>
           </Card>
