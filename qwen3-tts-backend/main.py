@@ -194,6 +194,27 @@ async def health_check():
     if queue_length > 50:
         minor_issues.append("queue_congested")
 
+    backends_status = {}
+
+    try:
+        from core.tts_service import TTSServiceFactory
+
+        try:
+            local_backend = await TTSServiceFactory.get_backend("local")
+            local_health = await local_backend.health_check()
+            backends_status["local"] = local_health
+        except Exception as e:
+            backends_status["local"] = {"available": False, "error": str(e)}
+
+        backends_status["aliyun"] = {
+            "available": True,
+            "region": settings.ALIYUN_REGION,
+            "note": "Requires user API key configuration"
+        }
+    except Exception as e:
+        logger.error(f"Backend health check failed: {e}")
+        backends_status = {"error": str(e)}
+
     if critical_issues:
         status = "unhealthy"
     elif minor_issues:
@@ -211,6 +232,7 @@ async def health_check():
         "database_connected": database_connected,
         "cache_dir_writable": cache_dir_writable,
         "output_dir_writable": output_dir_writable,
+        "backends": backends_status,
         "issues": {
             "critical": critical_issues,
             "minor": minor_issues

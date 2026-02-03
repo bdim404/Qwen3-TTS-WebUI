@@ -20,6 +20,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
+    aliyun_api_key = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -33,6 +34,7 @@ class Job(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     job_type = Column(String(50), nullable=False)
     status = Column(String(50), default="pending", nullable=False, index=True)
+    backend_type = Column(String(20), default="local", nullable=False)
     input_data = Column(Text, nullable=True)
     input_params = Column(JSON, nullable=True)
     output_path = Column(String(500), nullable=True)

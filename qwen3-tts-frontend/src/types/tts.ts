@@ -18,6 +18,7 @@ export interface CustomVoiceForm {
   top_k?: number
   top_p?: number
   repetition_penalty?: number
+  backend?: string
 }
 
 export interface VoiceDesignForm {
@@ -29,6 +30,7 @@ export interface VoiceDesignForm {
   top_k?: number
   top_p?: number
   repetition_penalty?: number
+  backend?: string
 }
 
 export interface VoiceCloneForm {
@@ -43,4 +45,5 @@ export interface VoiceCloneForm {
   top_k?: number
   top_p?: number
   repetition_penalty?: number
+  backend?: string
 }

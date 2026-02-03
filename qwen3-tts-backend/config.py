@@ -36,6 +36,14 @@ class Settings(BaseSettings):
     MAX_TEXT_LENGTH: int = Field(default=1000)
     MAX_AUDIO_SIZE_MB: int = Field(default=10)
 
+    ALIYUN_REGION: str = Field(default="beijing")
+
+    ALIYUN_MODEL_FLASH: str = Field(default="qwen3-tts-flash-realtime")
+    ALIYUN_MODEL_VC: str = Field(default="qwen3-tts-vc-realtime-2026-01-15")
+    ALIYUN_MODEL_VD: str = Field(default="qwen3-tts-vd-realtime-2026-01-15")
+
+    DEFAULT_BACKEND: str = Field(default="local")
+
     class Config:
         env_file = ".env"
         case_sensitive = True

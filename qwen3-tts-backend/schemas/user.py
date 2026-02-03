@@ -111,3 +111,10 @@ class PasswordChange(BaseModel):
         if self.new_password != self.confirm_password:
             raise ValueError('Passwords do not match')
         return self
+
+class AliyunKeyUpdate(BaseModel):
+    api_key: str = Field(..., min_length=1, max_length=500)
+
+class AliyunKeyVerifyResponse(BaseModel):
+    valid: bool
+    message: str

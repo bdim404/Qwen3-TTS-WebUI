@@ -24,6 +24,7 @@ class CustomVoiceRequest(BaseModel):
     top_k: Optional[int] = Field(default=50, ge=1, le=100)
     top_p: Optional[float] = Field(default=1.0, ge=0.0, le=1.0)
     repetition_penalty: Optional[float] = Field(default=1.05, ge=1.0, le=2.0)
+    backend: Optional[str] = Field(default=None, description="Backend type: local or aliyun")
 
 
 class VoiceDesignRequest(BaseModel):
@@ -35,6 +36,7 @@ class VoiceDesignRequest(BaseModel):
     top_k: Optional[int] = Field(default=50, ge=1, le=100)
     top_p: Optional[float] = Field(default=1.0, ge=0.0, le=1.0)
     repetition_penalty: Optional[float] = Field(default=1.05, ge=1.0, le=2.0)
+    backend: Optional[str] = Field(default=None)
 
 
 class VoiceCloneRequest(BaseModel):

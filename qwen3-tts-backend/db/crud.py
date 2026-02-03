@@ -103,6 +103,21 @@ def change_user_password(
     db.refresh(user)
     return user
 
+def update_user_aliyun_key(
+    db: Session,
+    user_id: int,
+    encrypted_api_key: str
+) -> Optional[User]:
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return None
+
+    user.aliyun_api_key = encrypted_api_key
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    return user
+
 def create_job(db: Session, user_id: int, job_type: str, input_data: Dict[str, Any]) -> Job:
     job = Job(
         user_id=user_id,

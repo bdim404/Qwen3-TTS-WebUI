@@ -247,6 +247,9 @@ export const ttsApi = {
     if (data.repetition_penalty !== undefined) {
       formData.append('repetition_penalty', String(data.repetition_penalty))
     }
+    if (data.backend) {
+      formData.append('backend', data.backend)
+    }
 
     const response = await apiClient.post<JobCreateResponse>(
       API_ENDPOINTS.TTS.VOICE_CLONE,

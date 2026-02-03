@@ -14,8 +14,8 @@ from core.security import (
     decode_access_token
 )
 from db.database import get_db
-from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password
-from schemas.user import User, UserCreate, Token, PasswordChange
+from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key
+from schemas.user import User, UserCreate, Token, PasswordChange, AliyunKeyUpdate, AliyunKeyVerifyResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -135,3 +135,79 @@ async def change_password(
         )
 
     return user
+
+@router.post("/aliyun-key", response_model=User)
+@limiter.limit("5/minute")
+async def set_aliyun_key(
+    request: Request,
+    key_data: AliyunKeyUpdate,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    from core.security import encrypt_api_key
+    from core.tts_service import AliyunTTSBackend
+
+    api_key = key_data.api_key.strip()
+
+    aliyun_backend = AliyunTTSBackend(api_key=api_key, region=settings.ALIYUN_REGION)
+    health = await aliyun_backend.health_check()
+
+    if not health.get("available", False):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Aliyun API key. Please check your API key and try again."
+        )
+
+    encrypted_key = encrypt_api_key(api_key)
+
+    user = update_user_aliyun_key(
+        db,
+        user_id=current_user.id,
+        encrypted_api_key=encrypted_key
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    return user
+
+@router.get("/aliyun-key/verify", response_model=AliyunKeyVerifyResponse)
+@limiter.limit("10/minute")
+async def verify_aliyun_key(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    from core.security import decrypt_api_key
+    from core.tts_service import AliyunTTSBackend
+
+    if not current_user.aliyun_api_key:
+        return AliyunKeyVerifyResponse(
+            valid=False,
+            message="No Aliyun API key configured"
+        )
+
+    api_key = decrypt_api_key(current_user.aliyun_api_key)
+
+    if not api_key:
+        return AliyunKeyVerifyResponse(
+            valid=False,
+            message="Failed to decrypt API key"
+        )
+
+    aliyun_backend = AliyunTTSBackend(api_key=api_key, region=settings.ALIYUN_REGION)
+    health = await aliyun_backend.health_check()
+
+    if health.get("available", False):
+        return AliyunKeyVerifyResponse(
+            valid=True,
+            message="Aliyun API key is valid and working"
+        )
+    else:
+        return AliyunKeyVerifyResponse(
+            valid=False,
+            message="Aliyun API key is not working. Please check your API key."
+        )
