@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Settings, Globe2, Type, Play, FileText, Mic, Zap, Database } from 'lucide-react'
+import { Settings, Globe2, Type, Play, FileText, Mic, Zap, Database, ArrowRight, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { IconLabel } from '@/components/IconLabel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -18,11 +18,12 @@ import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
-import { AudioInputSelector } from '@/components/AudioInputSelector'
+import { FileUploader } from '@/components/FileUploader'
+import { AudioRecorder } from '@/components/AudioRecorder'
 import { PresetSelector } from '@/components/PresetSelector'
-import { ParamInput } from '@/components/ParamInput'
 import { PRESET_REF_TEXTS, ADVANCED_PARAMS_INFO } from '@/lib/constants'
 import type { Language } from '@/types/tts'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const formSchema = z.object({
   text: z.string().min(1, '请输入要合成的文本').max(5000, '文本长度不能超过 5000 字符'),
@@ -44,6 +45,8 @@ function VoiceCloneForm() {
   const [languages, setLanguages] = useState<Language[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [step, setStep] = useState<1 | 2>(1)
+  const [inputTab, setInputTab] = useState<'upload' | 'record'>('upload')
   const [tempAdvancedParams, setTempAdvancedParams] = useState({
     max_new_tokens: 2048
   })
@@ -57,6 +60,7 @@ function VoiceCloneForm() {
     setValue,
     watch,
     control,
+    trigger,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -86,6 +90,14 @@ function VoiceCloneForm() {
     fetchData()
   }, [])
 
+  const handleNextStep = async () => {
+    // Validate step 1 fields
+    const valid = await trigger(['ref_audio', 'ref_text'])
+    if (valid) {
+      setStep(2)
+    }
+  }
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
@@ -97,7 +109,7 @@ function VoiceCloneForm() {
       startPolling(result.job_id)
       try {
         await refresh()
-      } catch {}
+      } catch { }
     } catch (error) {
       toast.error('创建任务失败')
     } finally {
@@ -111,187 +123,257 @@ function VoiceCloneForm() {
   }, [currentJob?.id, currentJob?.audio_url])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-      <div className="space-y-0.5">
-        <IconLabel icon={FileText} tooltip="参考文稿（可选）" />
-        <Textarea
-          {...register('ref_text')}
-          placeholder="参考音频对应的文本..."
-          className="min-h-[40px] md:min-h-[60px]"
-        />
-        <PresetSelector
-          presets={PRESET_REF_TEXTS}
-          onSelect={(preset) => setValue('ref_text', preset.text)}
-        />
-        {errors.ref_text && (
-          <p className="text-sm text-destructive">{errors.ref_text.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-0.5">
-        <IconLabel icon={Mic} tooltip="参考音频" required />
-        <Controller
-          name="ref_audio"
-          control={control}
-          render={({ field }) => (
-            <AudioInputSelector
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.ref_audio?.message}
-            />
-          )}
-        />
-      </div>
-
-      <div className="space-y-0.5">
-        <IconLabel icon={Globe2} tooltip="语言（可选）" />
-        <Select
-          value={watch('language')}
-          onValueChange={(value: string) => setValue('language', value)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {languages.map((lang) => (
-              <SelectItem key={lang.code} value={lang.code}>
-                {lang.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-0.5">
-        <IconLabel icon={Type} tooltip="合成文本" required />
-        <Textarea
-          {...register('text')}
-          placeholder="输入要合成的文本..."
-          className="min-h-[40px] md:min-h-[60px]"
-        />
-        <PresetSelector
-          presets={PRESET_REF_TEXTS}
-          onSelect={(preset) => setValue('text', preset.text)}
-        />
-        {errors.text && (
-          <p className="text-sm text-destructive">{errors.text.message}</p>
-        )}
-      </div>
-
-      <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2">
-          <Zap className="h-4 w-4 text-muted-foreground" />
-          <Controller
-            name="x_vector_only_mode"
-            control={control}
-            render={({ field }) => (
-              <Checkbox
-                id="x_vector_only_mode"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-          <Label htmlFor="x_vector_only_mode" className="text-sm font-normal">
-            快速模式
-          </Label>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Steps Indicator */}
+      <div className="flex items-center justify-center space-x-4 mb-6">
+        <div className={`flex items-center space-x-2 ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === 1 ? 'border-primary bg-primary/10' : 'border-muted'}`}>1</div>
+          <span className="text-sm font-medium">音频素材</span>
         </div>
-
-        <div className="flex items-center space-x-2">
-          <Database className="h-4 w-4 text-muted-foreground" />
-          <Controller
-            name="use_cache"
-            control={control}
-            render={({ field }) => (
-              <Checkbox
-                id="use_cache"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-          <Label htmlFor="use_cache" className="text-sm font-normal">
-            使用缓存
-          </Label>
+        <div className="w-8 h-[2px] bg-muted" />
+        <div className={`flex items-center space-x-2 ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === 2 ? 'border-primary bg-primary/10' : 'border-muted'}`}>2</div>
+          <span className="text-sm font-medium">合成设置</span>
         </div>
       </div>
 
-      <Dialog open={advancedOpen} onOpenChange={(open) => {
-        if (open) {
-          setTempAdvancedParams({
-            max_new_tokens: watch('max_new_tokens')
-          })
-        }
-        setAdvancedOpen(open)
-      }}>
-        <DialogTrigger asChild>
-          <Button type="button" variant="outline" className="w-full">
-            <Settings className="mr-2 h-4 w-4" />
-            高级选项
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>高级参数设置</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="dialog-max_new_tokens">
-                {ADVANCED_PARAMS_INFO.max_new_tokens.label}
-              </Label>
-              <Input
-                id="dialog-max_new_tokens"
-                type="number"
-                min={1}
-                max={10000}
-                value={tempAdvancedParams.max_new_tokens}
-                onChange={(e) => setTempAdvancedParams({
-                  ...tempAdvancedParams,
-                  max_new_tokens: parseInt(e.target.value) || 2048
-                })}
+      <div className={step === 1 ? 'block' : 'hidden'}>
+        {/* Step 1: Input Selection */}
+        <Tabs value={inputTab} onValueChange={(v) => setInputTab(v as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              上传音频
+            </TabsTrigger>
+            <TabsTrigger value="record" className="flex items-center gap-2">
+              <Mic className="h-4 w-4" />
+              在线录制
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="upload" className="space-y-4 mt-4">
+            <div className="space-y-0.5">
+              <Label>参考音频文件</Label>
+              <Controller
+                name="ref_audio"
+                control={control}
+                render={({ field }) => (
+                  <FileUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.ref_audio?.message}
+                  />
+                )}
               />
-              <p className="text-sm text-muted-foreground">
-                {ADVANCED_PARAMS_INFO.max_new_tokens.description}
-              </p>
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setTempAdvancedParams({ max_new_tokens: watch('max_new_tokens') })
-                setAdvancedOpen(false)
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setValue('max_new_tokens', tempAdvancedParams.max_new_tokens)
-                setAdvancedOpen(false)
-              }}
-            >
-              确定
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="space-y-0.5">
+              <Label>参考文稿（可选，提高准确率）</Label>
+              <Textarea
+                {...register('ref_text')}
+                placeholder="参考音频对应的文本内容..."
+                className="min-h-[100px]"
+              />
+              <PresetSelector
+                presets={PRESET_REF_TEXTS}
+                onSelect={(preset) => setValue('ref_text', preset.text)}
+              />
+            </div>
+          </TabsContent>
 
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button type="submit" className="w-full" disabled={isLoading || isPolling}>
-              <Play className="mr-2 h-4 w-4" />
-              {isLoading ? '创建中...' : '生成语音'}
+          <TabsContent value="record" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label className="text-base font-medium">请朗读以下任一段落：</Label>
+              <div className="grid gap-2">
+                {PRESET_REF_TEXTS.map((preset, i) => (
+                  <div
+                    key={i}
+                    className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors text-sm"
+                    onClick={() => setValue('ref_text', preset.text)}
+                  >
+                    <div className="font-medium mb-1">{preset.label}</div>
+                    <div className="text-muted-foreground line-clamp-2">{preset.text}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-0.5 pt-2">
+                <Label>当前参考文本</Label>
+                <Textarea
+                  {...register('ref_text')}
+                  placeholder="选中的文本将显示在这里..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+
+            {/* Mobile-friendly Bottom Recorder Area */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t z-50 md:relative md:border-t-0 md:bg-transparent md:p-0 md:z-0">
+              <Controller
+                name="ref_audio"
+                control={control}
+                render={({ field }) => (
+                  <AudioRecorder
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.ref_audio && (
+                <p className="text-sm text-destructive mt-2 text-center md:text-left">{errors.ref_audio.message}</p>
+              )}
+            </div>
+            {/* Spacer for mobile to prevent content being hidden behind fixed footer */}
+            <div className="h-24 md:hidden" />
+          </TabsContent>
+        </Tabs>
+
+        <Button type="button" className="w-full mt-6" onClick={handleNextStep}>
+          下一步
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className={step === 2 ? 'block space-y-4' : 'hidden'}>
+        {/* Step 2: Synthesis Options */}
+        <div className="space-y-0.5">
+          <IconLabel icon={Globe2} tooltip="语言（可选）" />
+          <Select
+            value={watch('language')}
+            onValueChange={(value: string) => setValue('language', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-0.5">
+          <IconLabel icon={Type} tooltip="合成文本" required />
+          <Textarea
+            {...register('text')}
+            placeholder="输入要合成的文本..."
+            className="min-h-[120px]"
+          />
+          <PresetSelector
+            presets={PRESET_REF_TEXTS}
+            onSelect={(preset) => setValue('text', preset.text)}
+          />
+          {errors.text && (
+            <p className="text-sm text-destructive">{errors.text.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 pt-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="x_vector_only_mode"
+              checked={watch('x_vector_only_mode')}
+              onCheckedChange={(c) => setValue('x_vector_only_mode', c as boolean)}
+            />
+            <Label htmlFor="x_vector_only_mode" className="text-sm font-normal cursor-pointer">
+              快速模式
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="use_cache"
+              checked={watch('use_cache')}
+              onCheckedChange={(c) => setValue('use_cache', c as boolean)}
+            />
+            <Label htmlFor="use_cache" className="text-sm font-normal cursor-pointer">
+              使用缓存
+            </Label>
+          </div>
+        </div>
+
+        <Dialog open={advancedOpen} onOpenChange={(open) => {
+          if (open) {
+            setTempAdvancedParams({
+              max_new_tokens: watch('max_new_tokens') || 2048
+            })
+          }
+          setAdvancedOpen(open)
+        }}>
+          <DialogTrigger asChild>
+            <Button type="button" variant="outline" className="w-full">
+              <Settings className="mr-2 h-4 w-4" />
+              高级选项
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>生成语音</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>高级参数设置</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="dialog-max_new_tokens">
+                  {ADVANCED_PARAMS_INFO.max_new_tokens.label}
+                </Label>
+                <Input
+                  id="dialog-max_new_tokens"
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={tempAdvancedParams.max_new_tokens}
+                  onChange={(e) => setTempAdvancedParams({
+                    ...tempAdvancedParams,
+                    max_new_tokens: parseInt(e.target.value) || 2048
+                  })}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {ADVANCED_PARAMS_INFO.max_new_tokens.description}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAdvancedOpen(false)
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setValue('max_new_tokens', tempAdvancedParams.max_new_tokens)
+                  setAdvancedOpen(false)
+                }}
+              >
+                确定
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <div className="flex gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            上一步
+          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button type="submit" className="flex-1" disabled={isLoading || isPolling}>
+                  <Play className="mr-2 h-4 w-4" />
+                  {isLoading ? '创建中...' : '生成语音'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>生成语音</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
 
       {isPolling && <LoadingState elapsedTime={elapsedTime} />}
 
