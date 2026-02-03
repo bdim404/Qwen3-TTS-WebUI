@@ -9,6 +9,7 @@ interface UserPreferencesContextType {
   updatePreferences: (prefs: Partial<UserPreferences>) => Promise<void>
   hasAliyunKey: boolean
   refetchPreferences: () => Promise<void>
+  isBackendAvailable: (backend: string) => boolean
 }
 
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined)
@@ -43,7 +44,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       if (cached) {
         setPreferences(JSON.parse(cached))
       } else {
-        setPreferences({ default_backend: 'local', onboarding_completed: false })
+        setPreferences({ default_backend: 'aliyun', onboarding_completed: false })
       }
     } finally {
       setIsLoading(false)
@@ -72,6 +73,13 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const isBackendAvailable = (backend: string) => {
+    if (!preferences?.available_backends) {
+      return backend === 'aliyun'
+    }
+    return preferences.available_backends.includes(backend)
+  }
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -80,6 +88,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         updatePreferences,
         hasAliyunKey,
         refetchPreferences: fetchPreferences,
+        isBackendAvailable,
       }}
     >
       {children}

@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from db.models import User, Job, VoiceCache
+from db.models import User, Job, VoiceCache, SystemSettings
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
@@ -233,7 +233,7 @@ def delete_cache_entry(db: Session, cache_id: int, user_id: int) -> bool:
 def get_user_preferences(db: Session, user_id: int) -> dict:
     user = get_user_by_id(db, user_id)
     if not user or not user.user_preferences:
-        return {"default_backend": "local", "onboarding_completed": False}
+        return {"default_backend": "aliyun", "onboarding_completed": False}
     return user.user_preferences
 
 def update_user_preferences(db: Session, user_id: int, preferences: dict) -> Optional[User]:
@@ -245,3 +245,27 @@ def update_user_preferences(db: Session, user_id: int, preferences: dict) -> Opt
     db.commit()
     db.refresh(user)
     return user
+
+def get_system_setting(db: Session, key: str) -> Optional[dict]:
+    setting = db.query(SystemSettings).filter(SystemSettings.key == key).first()
+    if not setting:
+        return None
+    return setting.value
+
+def update_system_setting(db: Session, key: str, value: dict) -> SystemSettings:
+    setting = db.query(SystemSettings).filter(SystemSettings.key == key).first()
+    if setting:
+        setting.value = value
+        setting.updated_at = datetime.utcnow()
+    else:
+        setting = SystemSettings(key=key, value=value, updated_at=datetime.utcnow())
+        db.add(setting)
+    db.commit()
+    db.refresh(setting)
+    return setting
+
+def is_local_model_enabled(db: Session) -> bool:
+    setting = get_system_setting(db, "local_model_enabled")
+    if not setting:
+        return False
+    return setting.get("enabled", False)

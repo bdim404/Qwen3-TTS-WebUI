@@ -21,7 +21,7 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     aliyun_api_key = Column(Text, nullable=True)
-    user_preferences = Column(JSON, nullable=True, default=lambda: {"default_backend": "local", "onboarding_completed": False})
+    user_preferences = Column(JSON, nullable=True, default=lambda: {"default_backend": "aliyun", "onboarding_completed": False})
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -68,3 +68,11 @@ class VoiceCache(Base):
     __table_args__ = (
         Index('idx_user_hash', 'user_id', 'ref_audio_hash'),
     )
+
+class SystemSettings(Base):
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(JSON, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

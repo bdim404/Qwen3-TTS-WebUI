@@ -33,4 +33,9 @@ export interface PasswordChangeRequest {
 export interface UserPreferences {
   default_backend: 'local' | 'aliyun'
   onboarding_completed: boolean
+  available_backends?: string[]
+}
+
+export interface SystemSettings {
+  local_model_enabled: boolean
 }

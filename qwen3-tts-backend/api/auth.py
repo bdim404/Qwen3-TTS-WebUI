@@ -14,7 +14,7 @@ from core.security import (
     decode_access_token
 )
 from db.database import get_db
-from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences
+from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences, is_local_model_enabled
 from schemas.user import User, UserCreate, Token, PasswordChange, AliyunKeyUpdate, AliyunKeyVerifyResponse, UserPreferences, UserPreferencesResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -246,7 +246,17 @@ async def get_preferences(
     db: Session = Depends(get_db)
 ):
     prefs = get_user_preferences(db, current_user.id)
-    return UserPreferencesResponse(**prefs)
+
+    local_enabled = is_local_model_enabled(db)
+    available_backends = ["aliyun"]
+    if local_enabled or current_user.is_superuser:
+        available_backends.append("local")
+
+    return {
+        "default_backend": prefs.get("default_backend", "aliyun"),
+        "onboarding_completed": prefs.get("onboarding_completed", False),
+        "available_backends": available_backends
+    }
 
 @router.put("/preferences")
 @limiter.limit("10/minute")
@@ -256,10 +266,24 @@ async def update_preferences(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db)
 ):
-    user = update_user_preferences(db, current_user.id, preferences.dict())
-    if not user:
+    if preferences.default_backend == "local":
+        local_enabled = is_local_model_enabled(db)
+        if not local_enabled and not current_user.is_superuser:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Local model is not available. Please contact administrator."
+            )
+
+    updated_user = update_user_preferences(
+        db,
+        current_user.id,
+        preferences.model_dump()
+    )
+
+    if not updated_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    return {"message": "Preferences updated"}
+
+    return {"message": "Preferences updated successfully"}

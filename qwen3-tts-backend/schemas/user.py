@@ -120,9 +120,16 @@ class AliyunKeyVerifyResponse(BaseModel):
     message: str
 
 class UserPreferences(BaseModel):
-    default_backend: str = Field(default="local", pattern="^(local|aliyun)$")
+    default_backend: str = Field(default="aliyun", pattern="^(local|aliyun)$")
     onboarding_completed: bool = Field(default=False)
 
 class UserPreferencesResponse(BaseModel):
-    default_backend: str
-    onboarding_completed: bool
+    default_backend: str = Field(default="aliyun", pattern="^(local|aliyun)$")
+    onboarding_completed: bool = Field(default=False)
+    available_backends: list[str] = Field(default=["aliyun"])
+
+class SystemSettingsUpdate(BaseModel):
+    local_model_enabled: bool
+
+class SystemSettingsResponse(BaseModel):
+    local_model_enabled: bool

@@ -285,14 +285,27 @@ async def create_custom_voice_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
+    from db.crud import get_user_preferences, is_local_model_enabled
 
-    backend_type = req_data.backend or settings.DEFAULT_BACKEND
-    if backend_type == "aliyun":
-        if not current_user.aliyun_api_key:
-            raise HTTPException(status_code=400, detail="Aliyun API key not configured. Please set your API key first.")
-        user_api_key = decrypt_api_key(current_user.aliyun_api_key)
-        if not user_api_key:
-            raise HTTPException(status_code=400, detail="Invalid Aliyun API key. Please update your API key.")
+    user_prefs = get_user_preferences(db, current_user.id)
+    preferred_backend = user_prefs.get("default_backend", "aliyun")
+
+    local_enabled = is_local_model_enabled(db)
+    can_use_local = local_enabled or current_user.is_superuser
+
+    backend_type = req_data.backend if hasattr(req_data, 'backend') and req_data.backend else preferred_backend
+
+    if backend_type == "local" and not can_use_local:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Local model is not available. Please contact administrator."
+        )
+
+    if backend_type == "aliyun" and not current_user.aliyun_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aliyun API key not configured. Please set your API key in Settings."
+        )
 
     try:
         validate_text_length(req_data.text)
@@ -362,14 +375,27 @@ async def create_voice_design_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
+    from db.crud import get_user_preferences, is_local_model_enabled
 
-    backend_type = req_data.backend or settings.DEFAULT_BACKEND
-    if backend_type == "aliyun":
-        if not current_user.aliyun_api_key:
-            raise HTTPException(status_code=400, detail="Aliyun API key not configured. Please set your API key first.")
-        user_api_key = decrypt_api_key(current_user.aliyun_api_key)
-        if not user_api_key:
-            raise HTTPException(status_code=400, detail="Invalid Aliyun API key. Please update your API key.")
+    user_prefs = get_user_preferences(db, current_user.id)
+    preferred_backend = user_prefs.get("default_backend", "aliyun")
+
+    local_enabled = is_local_model_enabled(db)
+    can_use_local = local_enabled or current_user.is_superuser
+
+    backend_type = req_data.backend if hasattr(req_data, 'backend') and req_data.backend else preferred_backend
+
+    if backend_type == "local" and not can_use_local:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Local model is not available. Please contact administrator."
+        )
+
+    if backend_type == "aliyun" and not current_user.aliyun_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aliyun API key not configured. Please set your API key in Settings."
+        )
 
     try:
         validate_text_length(req_data.text)
@@ -450,14 +476,27 @@ async def create_voice_clone_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
+    from db.crud import get_user_preferences, is_local_model_enabled
 
-    backend_type = backend or settings.DEFAULT_BACKEND
-    if backend_type == "aliyun":
-        if not current_user.aliyun_api_key:
-            raise HTTPException(status_code=400, detail="Aliyun API key not configured. Please set your API key first.")
-        user_api_key = decrypt_api_key(current_user.aliyun_api_key)
-        if not user_api_key:
-            raise HTTPException(status_code=400, detail="Invalid Aliyun API key. Please update your API key.")
+    user_prefs = get_user_preferences(db, current_user.id)
+    preferred_backend = user_prefs.get("default_backend", "aliyun")
+
+    local_enabled = is_local_model_enabled(db)
+    can_use_local = local_enabled or current_user.is_superuser
+
+    backend_type = backend if backend else preferred_backend
+
+    if backend_type == "local" and not can_use_local:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Local model is not available. Please contact administrator."
+        )
+
+    if backend_type == "aliyun" and not current_user.aliyun_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aliyun API key not configured. Please set your API key in Settings."
+        )
 
     try:
         validate_text_length(text)

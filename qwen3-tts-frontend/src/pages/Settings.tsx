@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Switch } from '@/components/ui/switch'
 import {
   Form,
   FormControl,
@@ -32,11 +33,12 @@ type ApiKeyFormValues = z.infer<typeof apiKeySchema>
 
 export default function Settings() {
   const { user } = useAuth()
-  const { preferences, hasAliyunKey, updatePreferences, refetchPreferences } = useUserPreferences()
+  const { preferences, hasAliyunKey, updatePreferences, refetchPreferences, isBackendAvailable } = useUserPreferences()
   const [showApiKey, setShowApiKey] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+  const [localModelEnabled, setLocalModelEnabled] = useState(false)
 
   const form = useForm<ApiKeyFormValues>({
     resolver: zodResolver(apiKeySchema),
@@ -44,6 +46,34 @@ export default function Settings() {
       api_key: '',
     },
   })
+
+  useEffect(() => {
+    if (user?.is_superuser) {
+      fetchSystemSettings()
+    }
+  }, [user])
+
+  const fetchSystemSettings = async () => {
+    try {
+      const settings = await authApi.getSystemSettings()
+      setLocalModelEnabled(settings.local_model_enabled)
+    } catch (error) {
+      console.error('Failed to fetch system settings:', error)
+    }
+  }
+
+  const handleToggleLocalModel = async (enabled: boolean) => {
+    try {
+      await authApi.updateSystemSettings({ local_model_enabled: enabled })
+      setLocalModelEnabled(enabled)
+      toast.success(`本地模型已${enabled ? '启用' : '禁用'}`)
+
+      await refetchPreferences()
+    } catch (error) {
+      toast.error('更新失败，请重试')
+      console.error('Failed to update system settings:', error)
+    }
+  }
 
   const handleBackendChange = async (value: string) => {
     try {
@@ -141,11 +171,20 @@ export default function Settings() {
                 value={preferences.default_backend}
                 onValueChange={handleBackendChange}
               >
-                <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-accent/50 cursor-pointer">
-                  <RadioGroupItem value="local" id="backend-local" />
+                <div className={`flex items-center space-x-3 border rounded-lg p-4 ${
+                  !isBackendAvailable('local') ? 'opacity-50' : 'hover:bg-accent/50 cursor-pointer'
+                }`}>
+                  <RadioGroupItem
+                    value="local"
+                    id="backend-local"
+                    disabled={!isBackendAvailable('local')}
+                  />
                   <Label htmlFor="backend-local" className="flex-1 cursor-pointer">
                     <div className="font-medium">本地模型</div>
-                    <div className="text-sm text-muted-foreground">免费使用本地 Qwen3-TTS 模型</div>
+                    <div className="text-sm text-muted-foreground">
+                      免费使用本地 Qwen3-TTS 模型
+                      {!isBackendAvailable('local') && ' (管理员未启用)'}
+                    </div>
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-accent/50 cursor-pointer">
@@ -248,6 +287,32 @@ export default function Settings() {
               </Form>
             </CardContent>
           </Card>
+
+          {user.is_superuser && (
+            <Card>
+              <CardHeader>
+                <CardTitle>系统设置</CardTitle>
+                <CardDescription>管理全局系统设置（仅管理员可见）</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="local-model-toggle">启用本地模型</Label>
+                      <p className="text-sm text-muted-foreground">
+                        允许普通用户在设置中选择并使用本地 Qwen3-TTS 模型
+                      </p>
+                    </div>
+                    <Switch
+                      id="local-model-toggle"
+                      checked={localModelEnabled}
+                      onCheckedChange={handleToggleLocalModel}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

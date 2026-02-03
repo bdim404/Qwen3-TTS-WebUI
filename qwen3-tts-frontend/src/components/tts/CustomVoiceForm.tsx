@@ -33,7 +33,6 @@ const formSchema = z.object({
   top_k: z.number().min(1).max(100).optional(),
   top_p: z.number().min(0).max(1).optional(),
   repetition_penalty: z.number().min(0).max(2).optional(),
-  backend: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -77,15 +76,8 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       top_k: 20,
       top_p: 0.7,
       repetition_penalty: 1.05,
-      backend: preferences?.default_backend || 'local',
     },
   })
-
-  useEffect(() => {
-    if (preferences?.default_backend) {
-      setValue('backend', preferences.default_backend)
-    }
-  }, [preferences?.default_backend, setValue])
 
   useImperativeHandle(ref, () => ({
     loadParams: (params: any) => {
@@ -142,22 +134,6 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-      <div className="space-y-0.5">
-        <Label>后端选择</Label>
-        <Select
-          value={watch('backend')}
-          onValueChange={(value: string) => setValue('backend', value)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="local">本地模型</SelectItem>
-            <SelectItem value="aliyun">阿里云 API</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       <div className="space-y-0.5">
         <IconLabel icon={Globe2} tooltip="语言" required />
         <Select
