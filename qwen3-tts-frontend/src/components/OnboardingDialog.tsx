@@ -39,9 +39,9 @@ interface OnboardingDialogProps {
 
 export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
   const [step, setStep] = useState(1)
-  const [selectedBackend, setSelectedBackend] = useState<'local' | 'aliyun'>('local')
+  const [selectedBackend, setSelectedBackend] = useState<'local' | 'aliyun'>('aliyun')
   const [isLoading, setIsLoading] = useState(false)
-  const { updatePreferences, refetchPreferences } = useUserPreferences()
+  const { updatePreferences, refetchPreferences, isBackendAvailable } = useUserPreferences()
 
   const form = useForm<ApiKeyFormValues>({
     resolver: zodResolver(apiKeySchema),
@@ -118,17 +118,19 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
           <>
             <div className="space-y-4 py-4">
               <RadioGroup value={selectedBackend} onValueChange={(v) => setSelectedBackend(v as 'local' | 'aliyun')}>
-                <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-accent/50 cursor-pointer">
-                  <RadioGroupItem value="local" id="local" />
-                  <Label htmlFor="local" className="flex-1 cursor-pointer">
-                    <div className="font-medium">本地模型（推荐）</div>
-                    <div className="text-sm text-muted-foreground">免费使用本地 Qwen3-TTS 模型</div>
+                <div className={`flex items-center space-x-3 border rounded-lg p-4 ${isBackendAvailable('local') ? 'hover:bg-accent/50 cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+                  <RadioGroupItem value="local" id="local" disabled={!isBackendAvailable('local')} />
+                  <Label htmlFor="local" className={`flex-1 ${isBackendAvailable('local') ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                    <div className="font-medium">本地模型</div>
+                    <div className="text-sm text-muted-foreground">
+                      {isBackendAvailable('local') ? '免费使用本地 Qwen3-TTS 模型' : '无本地模型权限，请联系管理员'}
+                    </div>
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-accent/50 cursor-pointer">
                   <RadioGroupItem value="aliyun" id="aliyun" />
                   <Label htmlFor="aliyun" className="flex-1 cursor-pointer">
-                    <div className="font-medium">阿里云 API</div>
+                    <div className="font-medium">阿里云 API<span className="ml-2 text-xs text-primary">(推荐)</span></div>
                     <div className="text-sm text-muted-foreground">需要配置 API 密钥，按量计费</div>
                   </Label>
                 </div>
@@ -136,9 +138,11 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleSkip}>
-                跳过配置
-              </Button>
+              {isBackendAvailable('local') && (
+                <Button type="button" variant="outline" onClick={handleSkip}>
+                  跳过配置
+                </Button>
+              )}
               <Button type="button" onClick={handleNextStep}>
                 下一步
               </Button>
@@ -164,6 +168,16 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                       />
                     </FormControl>
                     <FormMessage />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      <a
+                        href="https://help.aliyun.com/zh/model-studio/qwen-tts-realtime?spm=a2ty_o06.30285417.0.0.2994c921szHZj2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        如何获取 API 密钥？
+                      </a>
+                    </p>
                   </FormItem>
                 )}
               />
