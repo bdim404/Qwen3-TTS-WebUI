@@ -11,14 +11,33 @@ interface AudioPlayerProps {
   jobId: number
 }
 
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
 const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   const [blobUrl, setBlobUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [useMobileMode, setUseMobileMode] = useState(false)
   const previousAudioUrlRef = useRef<string>('')
 
   useEffect(() => {
+    setUseMobileMode(isMobileDevice())
+  }, [])
+
+  useEffect(() => {
     if (!audioUrl || audioUrl === previousAudioUrlRef.current) return
+
+    if (useMobileMode) {
+      const token = localStorage.getItem('token')
+      const separator = audioUrl.includes('?') ? '&' : '?'
+      const urlWithToken = token ? `${audioUrl}${separator}token=${token}` : audioUrl
+      setBlobUrl(urlWithToken)
+      previousAudioUrlRef.current = audioUrl
+      setIsLoading(false)
+      return
+    }
 
     let active = true
     const prevBlobUrl = blobUrl
@@ -55,7 +74,7 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
     return () => {
       active = false
     }
-  }, [audioUrl])
+  }, [audioUrl, useMobileMode])
 
   useEffect(() => {
     return () => {

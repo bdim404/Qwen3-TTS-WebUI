@@ -342,6 +342,10 @@ export const jobApi = {
   getAudioUrl: (id: number, audioPath?: string): string => {
     if (audioPath) {
       if (audioPath.startsWith('http')) {
+        if (audioPath.includes('localhost') || audioPath.includes('127.0.0.1')) {
+          const url = new URL(audioPath)
+          return `${import.meta.env.VITE_API_URL}${url.pathname}`
+        }
         return audioPath
       } else {
         const baseUrl = import.meta.env.VITE_API_URL

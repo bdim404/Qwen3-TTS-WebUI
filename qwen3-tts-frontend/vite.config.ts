@@ -14,6 +14,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'icons': ['lucide-react'],
           'ui-vendor': [
             '@radix-ui/react-tabs',
             '@radix-ui/react-label',

@@ -29,3 +29,5 @@ qwen3-tts-frontend/.env.local
 CLAUDE.md
 样本.mp3
 aliyun.md
+nginx.conf
+deploy.md

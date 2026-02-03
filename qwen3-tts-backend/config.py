@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(default="sqlite:///./qwen_tts.db")
     CACHE_DIR: str = Field(default="./voice_cache")
     OUTPUT_DIR: str = Field(default="./outputs")
-    BASE_URL: str = Field(default="http://localhost:8000")
+    BASE_URL: str = Field(default="")
 
     MODEL_DEVICE: str = Field(default="cuda:0")
     MODEL_BASE_PATH: str = Field(default="../Qwen")

@@ -9,13 +9,51 @@ from slowapi.util import get_remote_address
 
 from core.database import get_db
 from core.config import settings
+from core.security import decode_access_token
 from db.models import Job, JobStatus, User
+from db.crud import get_user_by_username
 from api.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 limiter = Limiter(key_func=get_remote_address)
+
+
+async def get_user_from_token_or_query(
+    request: Request,
+    token: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+) -> User:
+    auth_token = None
+
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        auth_token = auth_header.split(" ")[1]
+    elif token:
+        auth_token = token
+
+    if not auth_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing authentication token"
+        )
+
+    username = decode_access_token(auth_token)
+    if username is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user = get_user_by_username(db, username=username)
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+
+    return user
 
 
 @router.get("/{job_id}")
@@ -140,7 +178,7 @@ async def delete_job(
 async def download_job_output(
     request: Request,
     job_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_user_from_token_or_query),
     db: Session = Depends(get_db)
 ):
     job = db.query(Job).filter(Job.id == job_id).first()
