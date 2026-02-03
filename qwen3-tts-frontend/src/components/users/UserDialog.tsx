@@ -22,23 +22,15 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { User } from '@/types/auth'
 
-const editUserFormSchema = z.object({
+const userFormSchema = z.object({
   username: z.string().min(3, '用户名至少3个字符').max(20, '用户名最多20个字符'),
   email: z.string().email('请输入有效的邮箱地址'),
   password: z.string().optional(),
-  is_active: z.boolean().default(true),
-  is_superuser: z.boolean().default(false),
+  is_active: z.boolean(),
+  is_superuser: z.boolean(),
 })
 
-const createUserFormSchema = z.object({
-  username: z.string().min(3, '用户名至少3个字符').max(20, '用户名最多20个字符'),
-  email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string().min(8, '密码至少8个字符'),
-  is_active: z.boolean().default(true),
-  is_superuser: z.boolean().default(false),
-})
-
-type UserFormValues = z.infer<typeof editUserFormSchema>
+type UserFormValues = z.infer<typeof userFormSchema>
 
 interface UserDialogProps {
   open: boolean
@@ -58,7 +50,7 @@ export function UserDialog({
   const isEditing = !!user
 
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(isEditing ? editUserFormSchema : createUserFormSchema),
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
       username: '',
       email: '',

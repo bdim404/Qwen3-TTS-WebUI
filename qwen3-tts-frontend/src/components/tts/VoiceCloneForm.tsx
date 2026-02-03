@@ -9,14 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Settings, Globe2, Type, Play, FileText, Mic, Zap, Database, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Settings, Globe2, Type, Play, FileText, Mic, ArrowRight, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { IconLabel } from '@/components/IconLabel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
-import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { FileUploader } from '@/components/FileUploader'
@@ -54,7 +53,6 @@ function VoiceCloneForm() {
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
-  const { preferences } = useUserPreferences()
 
   const {
     register,
@@ -91,6 +89,14 @@ function VoiceCloneForm() {
     }
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (inputTab === 'record' && PRESET_REF_TEXTS.length > 0) {
+      setValue('ref_text', PRESET_REF_TEXTS[0].text)
+    } else if (inputTab === 'upload') {
+      setValue('ref_text', '')
+    }
+  }, [inputTab])
 
   const handleNextStep = async () => {
     // Validate step 1 fields
@@ -180,22 +186,31 @@ function VoiceCloneForm() {
                 onSelect={(preset) => setValue('ref_text', preset.text)}
               />
             </div>
+
+            <Button type="button" className="w-full mt-6" onClick={handleNextStep}>
+              下一步
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </TabsContent>
 
           <TabsContent value="record" className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label className="text-base font-medium">请朗读以下任一段落：</Label>
-              <div className="grid gap-2">
-                {PRESET_REF_TEXTS.map((preset, i) => (
-                  <div
-                    key={i}
-                    className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors text-sm"
-                    onClick={() => setValue('ref_text', preset.text)}
-                  >
-                    <div className="font-medium mb-1">{preset.label}</div>
-                    <div className="text-muted-foreground line-clamp-2">{preset.text}</div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-3 gap-2">
+                {PRESET_REF_TEXTS.map((preset, i) => {
+                  const isSelected = watch('ref_text') === preset.text
+                  return (
+                    <div
+                      key={i}
+                      className={`p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors text-sm text-center ${
+                        isSelected ? 'border-primary bg-primary/10' : ''
+                      }`}
+                      onClick={() => setValue('ref_text', preset.text)}
+                    >
+                      <div className="font-medium">{preset.label}</div>
+                    </div>
+                  )
+                })}
               </div>
               <div className="space-y-0.5 pt-2">
                 <Label>当前参考文本</Label>
@@ -209,28 +224,31 @@ function VoiceCloneForm() {
 
             {/* Mobile-friendly Bottom Recorder Area */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t z-50 md:relative md:border-t-0 md:bg-transparent md:p-0 md:z-0">
-              <Controller
-                name="ref_audio"
-                control={control}
-                render={({ field }) => (
-                  <AudioRecorder
-                    onChange={field.onChange}
-                  />
+              <div className="space-y-3">
+                {watch('ref_audio') && (
+                  <Button type="button" className="w-full" onClick={handleNextStep}>
+                    下一步
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 )}
-              />
-              {errors.ref_audio && (
-                <p className="text-sm text-destructive mt-2 text-center md:text-left">{errors.ref_audio.message}</p>
-              )}
+                <Controller
+                  name="ref_audio"
+                  control={control}
+                  render={({ field }) => (
+                    <AudioRecorder
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                {errors.ref_audio && (
+                  <p className="text-sm text-destructive mt-2 text-center md:text-left">{errors.ref_audio.message}</p>
+                )}
+              </div>
             </div>
             {/* Spacer for mobile to prevent content being hidden behind fixed footer */}
             <div className="h-24 md:hidden" />
           </TabsContent>
         </Tabs>
-
-        <Button type="button" className="w-full mt-6" onClick={handleNextStep}>
-          下一步
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
       </div>
 
       <div className={step === 2 ? 'block space-y-4' : 'hidden'}>

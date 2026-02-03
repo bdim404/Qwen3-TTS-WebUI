@@ -15,11 +15,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
-import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
-import { ParamInput } from '@/components/ParamInput'
 import { PRESET_VOICE_DESIGNS, ADVANCED_PARAMS_INFO } from '@/lib/constants'
 import type { Language } from '@/types/tts'
 
@@ -54,7 +52,6 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
-  const { preferences } = useUserPreferences()
 
   const {
     register,
@@ -182,11 +179,11 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       <Dialog open={advancedOpen} onOpenChange={(open) => {
         if (open) {
           setTempAdvancedParams({
-            max_new_tokens: watch('max_new_tokens'),
-            temperature: watch('temperature'),
-            top_k: watch('top_k'),
-            top_p: watch('top_p'),
-            repetition_penalty: watch('repetition_penalty')
+            max_new_tokens: watch('max_new_tokens') || 2048,
+            temperature: watch('temperature') || 0.3,
+            top_k: watch('top_k') || 20,
+            top_p: watch('top_p') || 0.7,
+            repetition_penalty: watch('repetition_penalty') || 1.05
           })
         }
         setAdvancedOpen(open)
@@ -307,11 +304,11 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
               variant="outline"
               onClick={() => {
                 setTempAdvancedParams({
-                  max_new_tokens: watch('max_new_tokens'),
-                  temperature: watch('temperature'),
-                  top_k: watch('top_k'),
-                  top_p: watch('top_p'),
-                  repetition_penalty: watch('repetition_penalty')
+                  max_new_tokens: watch('max_new_tokens') || 2048,
+                  temperature: watch('temperature') || 0.3,
+                  top_k: watch('top_k') || 20,
+                  top_p: watch('top_p') || 0.7,
+                  repetition_penalty: watch('repetition_penalty') || 1.05
                 })
                 setAdvancedOpen(false)
               }}

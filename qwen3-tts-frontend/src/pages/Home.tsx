@@ -8,10 +8,6 @@ import type { VoiceDesignFormHandle } from '@/components/tts/VoiceDesignForm'
 import { HistorySidebar } from '@/components/HistorySidebar'
 import { OnboardingDialog } from '@/components/OnboardingDialog'
 import FormSkeleton from '@/components/FormSkeleton'
-import type { JobType } from '@/types/job'
-import { jobApi } from '@/lib/api'
-import { toast } from 'sonner'
-import { useJobPolling } from '@/hooks/useJobPolling'
 import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 
 const CustomVoiceForm = lazy(() => import('@/components/tts/CustomVoiceForm'))
@@ -22,7 +18,6 @@ function Home() {
   const [currentTab, setCurrentTab] = useState('custom-voice')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const { loadCompletedJob } = useJobPolling()
   const { preferences } = useUserPreferences()
 
   const customVoiceFormRef = useRef<CustomVoiceFormHandle>(null)
@@ -34,30 +29,6 @@ function Home() {
     }
   }, [preferences])
 
-  const handleLoadParams = async (jobId: number, jobType: JobType) => {
-    try {
-      const job = await jobApi.getJob(jobId)
-
-      setSidebarOpen(false)
-
-      if (jobType === 'custom_voice') {
-        setCurrentTab('custom-voice')
-        setTimeout(() => {
-          customVoiceFormRef.current?.loadParams(job.parameters)
-        }, 100)
-      } else if (jobType === 'voice_design') {
-        setCurrentTab('voice-design')
-        setTimeout(() => {
-          voiceDesignFormRef.current?.loadParams(job.parameters)
-        }, 100)
-      }
-
-      loadCompletedJob(job)
-      toast.success('参数已加载到表单')
-    } catch (error) {
-      toast.error('加载参数失败')
-    }
-  }
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-background">
@@ -72,7 +43,6 @@ function Home() {
         <HistorySidebar
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
-          onLoadParams={handleLoadParams}
         />
 
         <main className="flex-1 overflow-y-auto container mx-auto p-3 md:p-6 max-w-[800px] md:max-w-[700px]">

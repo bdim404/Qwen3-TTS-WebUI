@@ -54,10 +54,11 @@ class LocalTTSBackend(TTSBackend):
         import numpy as np
         if isinstance(result, tuple):
             audio_data = result[0]
-        elif isinstance(result, list):
-            audio_data = np.array(result)
         else:
             audio_data = result
+
+        if isinstance(audio_data, list):
+            audio_data = np.array(audio_data)
 
         return self._numpy_to_bytes(audio_data), 24000
 
@@ -78,6 +79,8 @@ class LocalTTSBackend(TTSBackend):
 
         import numpy as np
         audio_data = result[0] if isinstance(result, tuple) else result
+        if isinstance(audio_data, list):
+            audio_data = np.array(audio_data)
         return self._numpy_to_bytes(audio_data), 24000
 
     async def generate_voice_clone(self, params: dict, ref_audio_bytes: bytes) -> Tuple[bytes, int]:
@@ -105,7 +108,10 @@ class LocalTTSBackend(TTSBackend):
             repetition_penalty=params['repetition_penalty']
         )
 
+        import numpy as np
         audio_data = wavs[0] if isinstance(wavs, list) else wavs
+        if isinstance(audio_data, list):
+            audio_data = np.array(audio_data)
         return self._numpy_to_bytes(audio_data), sample_rate
 
     async def health_check(self) -> dict:
@@ -118,10 +124,21 @@ class LocalTTSBackend(TTSBackend):
     def _numpy_to_bytes(audio_array) -> bytes:
         import numpy as np
         import io
-        import scipy.io.wavfile
+        import wave
+
+        if isinstance(audio_array, list):
+            audio_array = np.array(audio_array)
+
+        audio_array = np.clip(audio_array, -1.0, 1.0)
+        audio_int16 = (audio_array * 32767).astype(np.int16)
 
         buffer = io.BytesIO()
-        scipy.io.wavfile.write(buffer, 24000, (audio_array * 32767).astype(np.int16))
+        with wave.open(buffer, 'wb') as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(24000)
+            wav_file.writeframes(audio_int16.tobytes())
+
         buffer.seek(0)
         return buffer.read()
 
@@ -250,7 +267,7 @@ class AliyunTTSBackend(TTSBackend):
             "input": {
                 "action": "create",
                 "target_model": settings.ALIYUN_MODEL_VC,
-                "preferred_name": f"clone_{int(time.time())}",
+                "preferred_name": f"clone{int(time.time())}",
                 "audio": {"data": data_uri}
             }
         }
@@ -260,8 +277,15 @@ class AliyunTTSBackend(TTSBackend):
             "Content-Type": "application/json"
         }
 
+        logger.info(f"Voice clone request payload (audio truncated): {{'model': '{payload['model']}', 'input': {{'action': '{payload['input']['action']}', 'target_model': '{payload['input']['target_model']}', 'preferred_name': '{payload['input']['preferred_name']}', 'audio': '<truncated>'}}}}")
+
         async with httpx.AsyncClient() as client:
             resp = await client.post(self.http_url, json=payload, headers=headers, timeout=60)
+
+            if resp.status_code != 200:
+                logger.error(f"Voice clone failed with status {resp.status_code}")
+                logger.error(f"Response body: {resp.text}")
+
             resp.raise_for_status()
             result = resp.json()
             return result['output']['voice']
@@ -277,7 +301,7 @@ class AliyunTTSBackend(TTSBackend):
                 "target_model": settings.ALIYUN_MODEL_VD,
                 "voice_prompt": instruct,
                 "preview_text": preview_text,
-                "preferred_name": f"design_{int(time.time())}",
+                "preferred_name": f"design{int(time.time())}",
                 "language": "zh"
             },
             "parameters": {
@@ -291,8 +315,15 @@ class AliyunTTSBackend(TTSBackend):
             "Content-Type": "application/json"
         }
 
+        logger.info(f"Voice design request payload: {payload}")
+
         async with httpx.AsyncClient() as client:
             resp = await client.post(self.http_url, json=payload, headers=headers, timeout=60)
+
+            if resp.status_code != 200:
+                logger.error(f"Voice design failed with status {resp.status_code}")
+                logger.error(f"Response body: {resp.text}")
+
             resp.raise_for_status()
             result = resp.json()
             return result['output']['voice']

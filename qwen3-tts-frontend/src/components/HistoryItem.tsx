@@ -20,7 +20,6 @@ import { JobDetailDialog } from '@/components/JobDetailDialog'
 interface HistoryItemProps {
   job: Job
   onDelete: (id: number) => void
-  onLoadParams: (job: Job) => void
 }
 
 const jobTypeBadgeVariant = {
@@ -35,7 +34,7 @@ const jobTypeLabel = {
   voice_clone: '声音克隆',
 }
 
-const HistoryItem = memo(({ job, onDelete, onLoadParams }: HistoryItemProps) => {
+const HistoryItem = memo(({ job, onDelete }: HistoryItemProps) => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
 
   const getLanguageDisplay = (lang: string | undefined) => {

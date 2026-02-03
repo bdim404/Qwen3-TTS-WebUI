@@ -5,16 +5,13 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Loader2, FileAudio, RefreshCw } from 'lucide-react'
-import type { JobType } from '@/types/job'
-import { toast } from 'sonner'
 
 interface HistorySidebarProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onLoadParams: (jobId: number, jobType: JobType) => Promise<void>
 }
 
-function HistorySidebarContent({ onLoadParams }: Pick<HistorySidebarProps, 'onLoadParams'>) {
+function HistorySidebarContent() {
   const { jobs, loading, loadingMore, hasMore, loadMore, deleteJob, error, retry } = useHistoryContext()
   const observerTarget = useRef<HTMLDivElement>(null)
 
@@ -34,14 +31,6 @@ function HistorySidebarContent({ onLoadParams }: Pick<HistorySidebarProps, 'onLo
 
     return () => observer.disconnect()
   }, [hasMore, loadingMore, loadMore])
-
-  const handleLoadParams = async (jobId: number, jobType: JobType) => {
-    try {
-      await onLoadParams(jobId, jobType)
-    } catch (error) {
-      toast.error('加载参数失败')
-    }
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -79,7 +68,6 @@ function HistorySidebarContent({ onLoadParams }: Pick<HistorySidebarProps, 'onLo
                   key={job.id}
                   job={job}
                   onDelete={deleteJob}
-                  onLoadParams={(job) => handleLoadParams(job.id, job.type)}
                 />
               ))}
 
@@ -96,16 +84,16 @@ function HistorySidebarContent({ onLoadParams }: Pick<HistorySidebarProps, 'onLo
   )
 }
 
-export function HistorySidebar({ open, onOpenChange, onLoadParams }: HistorySidebarProps) {
+export function HistorySidebar({ open, onOpenChange }: HistorySidebarProps) {
   return (
     <>
       <aside className="hidden lg:block w-[320px] border-r h-full">
-        <HistorySidebarContent onLoadParams={onLoadParams} />
+        <HistorySidebarContent />
       </aside>
 
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="left" className="w-full sm:max-w-md p-0">
-          <HistorySidebarContent onLoadParams={onLoadParams} />
+          <HistorySidebarContent />
         </SheetContent>
       </Sheet>
     </>

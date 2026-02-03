@@ -16,7 +16,6 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const previousAudioUrlRef = useRef<string>('')
-  const playerRef = useRef<any>(null)
 
   useEffect(() => {
     if (!audioUrl || audioUrl === previousAudioUrlRef.current) return
