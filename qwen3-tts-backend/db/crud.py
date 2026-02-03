@@ -106,7 +106,7 @@ def change_user_password(
 def update_user_aliyun_key(
     db: Session,
     user_id: int,
-    encrypted_api_key: str
+    encrypted_api_key: Optional[str]
 ) -> Optional[User]:
     user = get_user_by_id(db, user_id)
     if not user:
@@ -229,3 +229,19 @@ def delete_cache_entry(db: Session, cache_id: int, user_id: int) -> bool:
     db.delete(cache)
     db.commit()
     return True
+
+def get_user_preferences(db: Session, user_id: int) -> dict:
+    user = get_user_by_id(db, user_id)
+    if not user or not user.user_preferences:
+        return {"default_backend": "local", "onboarding_completed": False}
+    return user.user_preferences
+
+def update_user_preferences(db: Session, user_id: int, preferences: dict) -> Optional[User]:
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return None
+    user.user_preferences = preferences
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    return user

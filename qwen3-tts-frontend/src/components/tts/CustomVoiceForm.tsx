@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
+import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
@@ -56,6 +57,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
+  const { preferences } = useUserPreferences()
 
   const {
     register,
@@ -75,9 +77,15 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       top_k: 20,
       top_p: 0.7,
       repetition_penalty: 1.05,
-      backend: 'local',
+      backend: preferences?.default_backend || 'local',
     },
   })
+
+  useEffect(() => {
+    if (preferences?.default_backend) {
+      setValue('backend', preferences.default_backend)
+    }
+  }, [preferences?.default_backend, setValue])
 
   useImperativeHandle(ref, () => ({
     loadParams: (params: any) => {

@@ -14,8 +14,8 @@ from core.security import (
     decode_access_token
 )
 from db.database import get_db
-from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key
-from schemas.user import User, UserCreate, Token, PasswordChange, AliyunKeyUpdate, AliyunKeyVerifyResponse
+from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences
+from schemas.user import User, UserCreate, Token, PasswordChange, AliyunKeyUpdate, AliyunKeyVerifyResponse, UserPreferences, UserPreferencesResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -174,6 +174,32 @@ async def set_aliyun_key(
 
     return user
 
+@router.delete("/aliyun-key")
+@limiter.limit("5/minute")
+async def delete_aliyun_key(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    user = update_user_aliyun_key(
+        db,
+        user_id=current_user.id,
+        encrypted_api_key=None
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    prefs = get_user_preferences(db, current_user.id)
+    if prefs.get("default_backend") == "aliyun":
+        prefs["default_backend"] = "local"
+        update_user_preferences(db, current_user.id, prefs)
+
+    return {"message": "Aliyun API key deleted", "preferences_updated": True}
+
 @router.get("/aliyun-key/verify", response_model=AliyunKeyVerifyResponse)
 @limiter.limit("10/minute")
 async def verify_aliyun_key(
@@ -211,3 +237,29 @@ async def verify_aliyun_key(
             valid=False,
             message="Aliyun API key is not working. Please check your API key."
         )
+
+@router.get("/preferences", response_model=UserPreferencesResponse)
+@limiter.limit("30/minute")
+async def get_preferences(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    prefs = get_user_preferences(db, current_user.id)
+    return UserPreferencesResponse(**prefs)
+
+@router.put("/preferences")
+@limiter.limit("10/minute")
+async def update_preferences(
+    request: Request,
+    preferences: UserPreferences,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    user = update_user_preferences(db, current_user.id, preferences.dict())
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return {"message": "Preferences updated"}

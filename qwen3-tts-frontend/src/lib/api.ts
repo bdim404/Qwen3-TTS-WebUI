@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { LoginRequest, LoginResponse, User, PasswordChangeRequest } from '@/types/auth'
+import type { LoginRequest, LoginResponse, User, PasswordChangeRequest, UserPreferences } from '@/types/auth'
 import type { Job, JobCreateResponse, JobListResponse, JobType } from '@/types/job'
 import type { Language, Speaker, CustomVoiceForm, VoiceDesignForm, VoiceCloneForm } from '@/types/tts'
 import type { UserCreateRequest, UserUpdateRequest, UserListResponse } from '@/types/user'
@@ -182,6 +182,30 @@ export const authApi = {
     const response = await apiClient.post<User>(
       API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
       data
+    )
+    return response.data
+  },
+
+  getPreferences: async (): Promise<UserPreferences> => {
+    const response = await apiClient.get<UserPreferences>(API_ENDPOINTS.AUTH.PREFERENCES)
+    return response.data
+  },
+
+  updatePreferences: async (data: UserPreferences): Promise<void> => {
+    await apiClient.put(API_ENDPOINTS.AUTH.PREFERENCES, data)
+  },
+
+  setAliyunKey: async (apiKey: string): Promise<void> => {
+    await apiClient.post(API_ENDPOINTS.AUTH.SET_ALIYUN_KEY, { api_key: apiKey })
+  },
+
+  deleteAliyunKey: async (): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.AUTH.SET_ALIYUN_KEY)
+  },
+
+  verifyAliyunKey: async (): Promise<{ valid: boolean; message: string }> => {
+    const response = await apiClient.get<{ valid: boolean; message: string }>(
+      API_ENDPOINTS.AUTH.VERIFY_ALIYUN_KEY
     )
     return response.data
   },

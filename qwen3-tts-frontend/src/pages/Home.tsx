@@ -1,4 +1,4 @@
-import { useState, useRef, lazy, Suspense } from 'react'
+import { useState, useRef, lazy, Suspense, useEffect } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -6,11 +6,13 @@ import { User, Palette, Copy } from 'lucide-react'
 import type { CustomVoiceFormHandle } from '@/components/tts/CustomVoiceForm'
 import type { VoiceDesignFormHandle } from '@/components/tts/VoiceDesignForm'
 import { HistorySidebar } from '@/components/HistorySidebar'
+import { OnboardingDialog } from '@/components/OnboardingDialog'
 import FormSkeleton from '@/components/FormSkeleton'
 import type { JobType } from '@/types/job'
 import { jobApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { useJobPolling } from '@/hooks/useJobPolling'
+import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 
 const CustomVoiceForm = lazy(() => import('@/components/tts/CustomVoiceForm'))
 const VoiceDesignForm = lazy(() => import('@/components/tts/VoiceDesignForm'))
@@ -19,10 +21,18 @@ const VoiceCloneForm = lazy(() => import('@/components/tts/VoiceCloneForm'))
 function Home() {
   const [currentTab, setCurrentTab] = useState('custom-voice')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const { loadCompletedJob } = useJobPolling()
+  const { preferences } = useUserPreferences()
 
   const customVoiceFormRef = useRef<CustomVoiceFormHandle>(null)
   const voiceDesignFormRef = useRef<VoiceDesignFormHandle>(null)
+
+  useEffect(() => {
+    if (preferences && !preferences.onboarding_completed) {
+      setShowOnboarding(true)
+    }
+  }, [preferences])
 
   const handleLoadParams = async (jobId: number, jobType: JobType) => {
     try {
@@ -51,6 +61,11 @@ function Home() {
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-background">
+      <OnboardingDialog
+        open={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+      />
+
       <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex-1 flex overflow-hidden">

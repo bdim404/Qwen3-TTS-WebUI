@@ -118,3 +118,11 @@ class AliyunKeyUpdate(BaseModel):
 class AliyunKeyVerifyResponse(BaseModel):
     valid: bool
     message: str
+
+class UserPreferences(BaseModel):
+    default_backend: str = Field(default="local", pattern="^(local|aliyun)$")
+    onboarding_completed: bool = Field(default=False)
+
+class UserPreferencesResponse(BaseModel):
+    default_backend: str
+    onboarding_completed: bool

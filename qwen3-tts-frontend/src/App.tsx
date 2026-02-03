@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { UserPreferencesProvider } from '@/contexts/UserPreferencesContext'
 import { AppProvider } from '@/contexts/AppContext'
 import { JobProvider } from '@/contexts/JobContext'
 import { HistoryProvider } from '@/contexts/HistoryContext'
@@ -12,6 +13,7 @@ import { SuperAdminRoute } from '@/components/SuperAdminRoute'
 
 const Login = lazy(() => import('@/pages/Login'))
 const Home = lazy(() => import('@/pages/Home'))
+const Settings = lazy(() => import('@/pages/Settings'))
 const UserManagement = lazy(() => import('@/pages/UserManagement'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -56,9 +58,10 @@ function App() {
       <ErrorBoundary>
         <BrowserRouter>
           <AuthProvider>
-            <Toaster position="top-right" />
-            <Suspense fallback={<LoadingScreen />}>
-              <Routes>
+            <UserPreferencesProvider>
+              <Toaster position="top-right" />
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
                 <Route
                   path="/login"
                   element={
@@ -82,6 +85,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/users"
                   element={
                     <SuperAdminRoute>
@@ -91,6 +102,7 @@ function App() {
                 />
               </Routes>
             </Suspense>
+            </UserPreferencesProvider>
           </AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>

@@ -3,6 +3,9 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/token',
     ME: '/auth/me',
     CHANGE_PASSWORD: '/auth/change-password',
+    PREFERENCES: '/auth/preferences',
+    SET_ALIYUN_KEY: '/auth/aliyun-key',
+    VERIFY_ALIYUN_KEY: '/auth/aliyun-key/verify',
   },
   TTS: {
     LANGUAGES: '/tts/languages',

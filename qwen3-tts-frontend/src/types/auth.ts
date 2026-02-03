@@ -29,3 +29,8 @@ export interface PasswordChangeRequest {
   new_password: string
   confirm_password: string
 }
+
+export interface UserPreferences {
+  default_backend: 'local' | 'aliyun'
+  onboarding_completed: boolean
+}
