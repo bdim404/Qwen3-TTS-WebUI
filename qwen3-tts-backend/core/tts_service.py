@@ -330,15 +330,43 @@ class AliyunTTSBackend(TTSBackend):
 
     async def health_check(self) -> dict:
         try:
-            import httpx
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(
-                    self.http_url.replace('/customization', '/health'),
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=5
-                )
-                return {"available": resp.status_code < 500}
-        except:
+            from core.config import settings
+            url = f"{self.ws_url}?model={settings.ALIYUN_MODEL_FLASH}"
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+
+            async with websockets.connect(url, additional_headers=headers, close_timeout=3) as ws:
+                await ws.send(json.dumps({
+                    "type": "session.update",
+                    "session": {
+                        "mode": "server_commit",
+                        "voice": "Cherry",
+                        "language_type": "zh",
+                        "response_format": "pcm",
+                        "sample_rate": 24000
+                    }
+                }))
+
+                await ws.send(json.dumps({
+                    "type": "input_text_buffer.append",
+                    "text": "测试"
+                }))
+
+                await ws.send(json.dumps({
+                    "type": "session.finish"
+                }))
+
+                async for message in ws:
+                    event = json.loads(message)
+                    event_type = event.get('type')
+
+                    if event_type == 'error':
+                        return {"available": False}
+                    elif event_type in ['response.audio.delta', 'session.finished']:
+                        return {"available": True}
+
+            return {"available": True}
+        except Exception as e:
+            logger.warning(f"Aliyun health check failed: {e}")
             return {"available": False}
 
     @staticmethod

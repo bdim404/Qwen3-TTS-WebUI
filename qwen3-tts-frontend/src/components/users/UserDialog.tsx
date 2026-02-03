@@ -5,6 +5,7 @@ import * as z from 'zod'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -87,9 +88,12 @@ export function UserDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? '编辑用户' : '创建用户'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? '修改用户信息和权限设置' : '创建新用户并配置基本信息'}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -174,16 +178,17 @@ export function UserDialog({
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 取消
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading ? '保存中...' : '保存'}
               </Button>
             </DialogFooter>

@@ -93,11 +93,11 @@ export default function UserManagement() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <CardTitle>用户管理</CardTitle>
-            <Button onClick={handleCreateUser}>
+            <Button onClick={handleCreateUser} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               创建用户
             </Button>

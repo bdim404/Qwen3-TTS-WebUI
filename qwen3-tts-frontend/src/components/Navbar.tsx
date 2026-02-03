@@ -1,4 +1,4 @@
-import { Menu, LogOut, Users, Settings } from 'lucide-react'
+import { Menu, LogOut, Users, Settings, AudioLines } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -25,8 +25,9 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
       )}
 
       <div className="flex-1">
-        <Link to="/">
-          <h1 className="text-sm md:text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity">
+        <Link to="/" className="flex items-center gap-2">
+          <AudioLines className="h-6 w-6 md:hidden" />
+          <h1 className="hidden md:block text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity">
             Qwen3-TTS-WebUI
           </h1>
         </Link>

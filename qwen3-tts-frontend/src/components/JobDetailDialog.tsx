@@ -3,6 +3,7 @@ import type { Job } from '@/types/job'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -76,6 +77,7 @@ const JobDetailDialog = memo(({ job, open, onOpenChange }: JobDetailDialogProps)
               {formatTimestamp(job.created_at)}
             </span>
           </div>
+          <DialogDescription>查看任务的详细参数和生成结果</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
