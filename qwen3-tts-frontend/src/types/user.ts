@@ -6,6 +6,7 @@ export interface UserCreateRequest {
   password: string
   is_active: boolean
   is_superuser: boolean
+  can_use_local_model: boolean
 }
 
 export interface UserUpdateRequest {
@@ -14,6 +15,7 @@ export interface UserUpdateRequest {
   password?: string
   is_active?: boolean
   is_superuser?: boolean
+  can_use_local_model?: boolean
 }
 
 export interface UserListResponse {

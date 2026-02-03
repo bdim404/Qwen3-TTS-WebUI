@@ -21,6 +21,7 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     aliyun_api_key = Column(Text, nullable=True)
+    can_use_local_model = Column(Boolean, default=False, nullable=False)
     user_preferences = Column(JSON, nullable=True, default=lambda: {"default_backend": "aliyun", "onboarding_completed": False})
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

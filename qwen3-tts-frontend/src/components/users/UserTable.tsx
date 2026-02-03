@@ -38,6 +38,7 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
               <th className="px-4 py-3 font-medium">邮箱</th>
               <th className="px-4 py-3 font-medium">状态</th>
               <th className="px-4 py-3 font-medium">角色</th>
+              <th className="px-4 py-3 font-medium">权限</th>
               <th className="px-4 py-3 font-medium">创建时间</th>
               <th className="px-4 py-3 font-medium text-right">操作</th>
             </tr>
@@ -57,6 +58,11 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
                   <Badge variant={user.is_superuser ? 'destructive' : 'outline'}>
                     {user.is_superuser ? '超级管理员' : '普通用户'}
                   </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  {(user.is_superuser || user.can_use_local_model) && (
+                    <Badge variant="secondary">本地模型</Badge>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   {new Date(user.created_at).toLocaleString('zh-CN')}
@@ -128,6 +134,14 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
                 <Badge variant={user.is_superuser ? 'destructive' : 'outline'}>
                   {user.is_superuser ? '超级管理员' : '普通用户'}
                 </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">权限:</span>
+                {(user.is_superuser || user.can_use_local_model) ? (
+                  <Badge variant="secondary">本地模型</Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground">无</span>
+                )}
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">创建时间:</span>

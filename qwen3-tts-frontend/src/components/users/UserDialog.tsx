@@ -29,6 +29,7 @@ const userFormSchema = z.object({
   password: z.string().optional(),
   is_active: z.boolean(),
   is_superuser: z.boolean(),
+  can_use_local_model: z.boolean(),
 })
 
 type UserFormValues = z.infer<typeof userFormSchema>
@@ -58,6 +59,7 @@ export function UserDialog({
       password: '',
       is_active: true,
       is_superuser: false,
+      can_use_local_model: false,
     },
   })
 
@@ -69,6 +71,7 @@ export function UserDialog({
         password: '',
         is_active: user.is_active,
         is_superuser: user.is_superuser,
+        can_use_local_model: user.can_use_local_model,
       })
     } else {
       form.reset({
@@ -77,6 +80,7 @@ export function UserDialog({
         password: '',
         is_active: true,
         is_superuser: false,
+        can_use_local_model: false,
       })
     }
   }, [user, form])
@@ -173,6 +177,27 @@ export function UserDialog({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>超级管理员</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="can_use_local_model"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>本地模型权限</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      允许用户使用本地 TTS 模型
+                    </p>
                   </div>
                 </FormItem>
               )}

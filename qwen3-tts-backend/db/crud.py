@@ -30,13 +30,15 @@ def create_user_by_admin(
     username: str,
     email: str,
     hashed_password: str,
-    is_superuser: bool = False
+    is_superuser: bool = False,
+    can_use_local_model: bool = False
 ) -> User:
     user = User(
         username=username,
         email=email,
         hashed_password=hashed_password,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
+        can_use_local_model=can_use_local_model
     )
     db.add(user)
     db.commit()
@@ -58,7 +60,8 @@ def update_user(
     email: Optional[str] = None,
     hashed_password: Optional[str] = None,
     is_active: Optional[bool] = None,
-    is_superuser: Optional[bool] = None
+    is_superuser: Optional[bool] = None,
+    can_use_local_model: Optional[bool] = None
 ) -> Optional[User]:
     user = get_user_by_id(db, user_id)
     if not user:
@@ -74,6 +77,8 @@ def update_user(
         user.is_active = is_active
     if is_superuser is not None:
         user.is_superuser = is_superuser
+    if can_use_local_model is not None:
+        user.can_use_local_model = can_use_local_model
 
     user.updated_at = datetime.utcnow()
     db.commit()
@@ -264,8 +269,5 @@ def update_system_setting(db: Session, key: str, value: dict) -> SystemSettings:
     db.refresh(setting)
     return setting
 
-def is_local_model_enabled(db: Session) -> bool:
-    setting = get_system_setting(db, "local_model_enabled")
-    if not setting:
-        return False
-    return setting.get("enabled", False)
+def can_user_use_local_model(user: User) -> bool:
+    return user.is_superuser or user.can_use_local_model

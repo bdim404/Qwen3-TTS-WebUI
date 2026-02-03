@@ -32,6 +32,7 @@ class User(UserBase):
     id: int
     is_active: bool
     is_superuser: bool
+    can_use_local_model: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -39,6 +40,7 @@ class User(UserBase):
 class UserCreateByAdmin(UserBase):
     password: str = Field(..., min_length=8, max_length=128)
     is_superuser: bool = False
+    can_use_local_model: bool = False
 
     @field_validator('password')
     @classmethod
@@ -57,6 +59,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=8, max_length=128)
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
+    can_use_local_model: Optional[bool] = None
 
     @field_validator('username')
     @classmethod
@@ -127,9 +130,3 @@ class UserPreferencesResponse(BaseModel):
     default_backend: str = Field(default="aliyun", pattern="^(local|aliyun)$")
     onboarding_completed: bool = Field(default=False)
     available_backends: list[str] = Field(default=["aliyun"])
-
-class SystemSettingsUpdate(BaseModel):
-    local_model_enabled: bool
-
-class SystemSettingsResponse(BaseModel):
-    local_model_enabled: bool

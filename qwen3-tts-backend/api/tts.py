@@ -285,13 +285,12 @@ async def create_custom_voice_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
-    from db.crud import get_user_preferences, is_local_model_enabled
+    from db.crud import get_user_preferences, can_user_use_local_model
 
     user_prefs = get_user_preferences(db, current_user.id)
     preferred_backend = user_prefs.get("default_backend", "aliyun")
 
-    local_enabled = is_local_model_enabled(db)
-    can_use_local = local_enabled or current_user.is_superuser
+    can_use_local = can_user_use_local_model(current_user)
 
     backend_type = req_data.backend if hasattr(req_data, 'backend') and req_data.backend else preferred_backend
 
@@ -375,13 +374,12 @@ async def create_voice_design_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
-    from db.crud import get_user_preferences, is_local_model_enabled
+    from db.crud import get_user_preferences, can_user_use_local_model
 
     user_prefs = get_user_preferences(db, current_user.id)
     preferred_backend = user_prefs.get("default_backend", "aliyun")
 
-    local_enabled = is_local_model_enabled(db)
-    can_use_local = local_enabled or current_user.is_superuser
+    can_use_local = can_user_use_local_model(current_user)
 
     backend_type = req_data.backend if hasattr(req_data, 'backend') and req_data.backend else preferred_backend
 
@@ -476,13 +474,12 @@ async def create_voice_clone_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
-    from db.crud import get_user_preferences, is_local_model_enabled
+    from db.crud import get_user_preferences, can_user_use_local_model
 
     user_prefs = get_user_preferences(db, current_user.id)
     preferred_backend = user_prefs.get("default_backend", "aliyun")
 
-    local_enabled = is_local_model_enabled(db)
-    can_use_local = local_enabled or current_user.is_superuser
+    can_use_local = can_user_use_local_model(current_user)
 
     backend_type = backend if backend else preferred_backend
 

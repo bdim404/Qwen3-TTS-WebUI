@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { LoginRequest, LoginResponse, User, PasswordChangeRequest, UserPreferences, SystemSettings } from '@/types/auth'
+import type { LoginRequest, LoginResponse, User, PasswordChangeRequest, UserPreferences } from '@/types/auth'
 import type { Job, JobCreateResponse, JobListResponse, JobType } from '@/types/job'
 import type { Language, Speaker, CustomVoiceForm, VoiceDesignForm, VoiceCloneForm } from '@/types/tts'
 import type { UserCreateRequest, UserUpdateRequest, UserListResponse } from '@/types/user'
@@ -210,14 +210,6 @@ export const authApi = {
     return response.data
   },
 
-  getSystemSettings: async (): Promise<SystemSettings> => {
-    const response = await apiClient.get<SystemSettings>('/users/system/settings')
-    return response.data
-  },
-
-  updateSystemSettings: async (settings: { local_model_enabled: boolean }): Promise<void> => {
-    await apiClient.put('/users/system/settings', settings)
-  },
 }
 
 export const ttsApi = {

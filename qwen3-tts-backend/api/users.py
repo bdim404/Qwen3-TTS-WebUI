@@ -15,12 +15,9 @@ from db.crud import (
     list_users,
     create_user_by_admin,
     update_user,
-    delete_user,
-    get_system_setting,
-    update_system_setting,
-    is_local_model_enabled
+    delete_user
 )
-from schemas.user import User, UserCreateByAdmin, UserUpdate, UserListResponse, SystemSettingsUpdate, SystemSettingsResponse
+from schemas.user import User, UserCreateByAdmin, UserUpdate, UserListResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 limiter = Limiter(key_func=get_remote_address)
@@ -75,7 +72,8 @@ async def create_user(
         username=user_data.username,
         email=user_data.email,
         hashed_password=hashed_password,
-        is_superuser=user_data.is_superuser
+        is_superuser=user_data.is_superuser,
+        can_use_local_model=user_data.can_use_local_model
     )
 
     return user
@@ -139,7 +137,8 @@ async def update_user_info(
         email=user_data.email,
         hashed_password=hashed_password,
         is_active=user_data.is_active,
-        is_superuser=user_data.is_superuser
+        is_superuser=user_data.is_superuser,
+        can_use_local_model=user_data.can_use_local_model
     )
 
     if not user:
@@ -170,42 +169,3 @@ async def delete_user_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-
-@router.get("/system/settings", response_model=SystemSettingsResponse)
-async def get_system_settings(
-    current_user: Annotated[User, Depends(require_superuser)],
-    db: Session = Depends(get_db)
-):
-    local_enabled = is_local_model_enabled(db)
-    return {"local_model_enabled": local_enabled}
-
-@router.put("/system/settings")
-async def update_system_settings(
-    settings: SystemSettingsUpdate,
-    current_user: Annotated[User, Depends(require_superuser)],
-    db: Session = Depends(get_db)
-):
-    from db.models import User
-    from datetime import datetime
-
-    update_system_setting(db, "local_model_enabled", {"enabled": settings.local_model_enabled})
-
-    if not settings.local_model_enabled:
-        users = db.query(User).filter(User.is_superuser == False).all()
-        migrated_count = 0
-
-        for user in users:
-            prefs = user.user_preferences or {}
-            if prefs.get("default_backend") == "local":
-                prefs["default_backend"] = "aliyun"
-                user.user_preferences = prefs
-                user.updated_at = datetime.utcnow()
-                migrated_count += 1
-
-        db.commit()
-        return {
-            "message": "System settings updated",
-            "users_migrated": migrated_count
-        }
-
-    return {"message": "System settings updated", "users_migrated": 0}

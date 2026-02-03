@@ -14,7 +14,7 @@ from core.security import (
     decode_access_token
 )
 from db.database import get_db
-from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences, is_local_model_enabled
+from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences, can_user_use_local_model
 from schemas.user import User, UserCreate, Token, PasswordChange, AliyunKeyUpdate, AliyunKeyVerifyResponse, UserPreferences, UserPreferencesResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -247,9 +247,8 @@ async def get_preferences(
 ):
     prefs = get_user_preferences(db, current_user.id)
 
-    local_enabled = is_local_model_enabled(db)
     available_backends = ["aliyun"]
-    if local_enabled or current_user.is_superuser:
+    if can_user_use_local_model(current_user):
         available_backends.append("local")
 
     return {
@@ -267,8 +266,7 @@ async def update_preferences(
     db: Session = Depends(get_db)
 ):
     if preferences.default_backend == "local":
-        local_enabled = is_local_model_enabled(db)
-        if not local_enabled and not current_user.is_superuser:
+        if not can_user_use_local_model(current_user):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Local model is not available. Please contact administrator."
