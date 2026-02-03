@@ -23,6 +23,26 @@ SPEAKER_DESCRIPTIONS = {
     "Sohee": "Female, soft and melodious"
 }
 
+ALIYUN_SPEAKERS = [
+    "Vivian", "Serena", "Dylan", "Eric",
+    "Ryan", "Aiden", "Ono_Anna", "Sohee"
+]
+
+ALIYUN_SPEAKER_DESCRIPTIONS = {
+    "Vivian": "Female, cute and lively (十三 - 拽拽的、可爱的小暴躁)",
+    "Serena": "Female, gentle and warm (苏瑶 - 温柔小姐姐)",
+    "Dylan": "Male, young and energetic (北京-晓东 - 北京胡同里长大的少年)",
+    "Eric": "Male, calm and steady (四川-程川 - 跳脱市井的四川成都男子)",
+    "Ryan": "Male, friendly and dramatic (甜茶 - 节奏拉满,戏感炸裂)",
+    "Aiden": "Male, deep and resonant (艾登 - 精通厨艺的美语大男孩)",
+    "Ono_Anna": "Female, cute and playful (小野杏 - 鬼灵精怪的青梅竹马)",
+    "Sohee": "Female, soft and melodious (素熙 - 温柔开朗的韩国欧尼)"
+}
+
+LOCAL_SPEAKERS = SUPPORTED_SPEAKERS.copy()
+
+LOCAL_SPEAKER_DESCRIPTIONS = SPEAKER_DESCRIPTIONS.copy()
+
 
 def validate_language(language: str) -> str:
     normalized = language.strip()
@@ -37,16 +57,21 @@ def validate_language(language: str) -> str:
     )
 
 
-def validate_speaker(speaker: str) -> str:
+def validate_speaker(speaker: str, backend: str = "local") -> str:
     normalized = speaker.strip()
 
-    for supported in SUPPORTED_SPEAKERS:
+    if backend == "aliyun":
+        speaker_list = ALIYUN_SPEAKERS
+    else:
+        speaker_list = LOCAL_SPEAKERS
+
+    for supported in speaker_list:
         if normalized.lower() == supported.lower():
             return supported
 
     raise ValueError(
-        f"Unsupported speaker: {speaker}. "
-        f"Supported speakers: {', '.join(SUPPORTED_SPEAKERS)}"
+        f"Unsupported speaker: {speaker} for backend '{backend}'. "
+        f"Supported speakers: {', '.join(speaker_list)}"
     )
 
 
@@ -92,11 +117,18 @@ def get_supported_languages() -> List[str]:
     return SUPPORTED_LANGUAGES.copy()
 
 
-def get_supported_speakers() -> List[dict]:
+def get_supported_speakers(backend: str = "local") -> List[dict]:
+    if backend == "aliyun":
+        speakers = ALIYUN_SPEAKERS
+        descriptions = ALIYUN_SPEAKER_DESCRIPTIONS
+    else:
+        speakers = LOCAL_SPEAKERS
+        descriptions = LOCAL_SPEAKER_DESCRIPTIONS
+
     return [
         {
             "name": speaker,
-            "description": SPEAKER_DESCRIPTIONS.get(speaker, "")
+            "description": descriptions.get(speaker, "")
         }
-        for speaker in SUPPORTED_SPEAKERS
+        for speaker in speakers
     ]

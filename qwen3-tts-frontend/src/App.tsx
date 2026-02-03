@@ -59,7 +59,7 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <UserPreferencesProvider>
-              <Toaster position="top-right" />
+              <Toaster position="top-center" offset="16px" />
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
                 <Route

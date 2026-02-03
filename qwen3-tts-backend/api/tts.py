@@ -309,7 +309,7 @@ async def create_custom_voice_job(
     try:
         validate_text_length(req_data.text)
         language = validate_language(req_data.language)
-        speaker = validate_speaker(req_data.speaker)
+        speaker = validate_speaker(req_data.speaker, backend_type)
 
         params = validate_generation_params({
             'max_new_tokens': req_data.max_new_tokens,
@@ -581,8 +581,8 @@ async def list_models(request: Request):
 
 @router.get("/speakers")
 @limiter.limit("30/minute")
-async def list_speakers(request: Request):
-    return get_supported_speakers()
+async def list_speakers(request: Request, backend: Optional[str] = "local"):
+    return get_supported_speakers(backend)
 
 
 @router.get("/languages")

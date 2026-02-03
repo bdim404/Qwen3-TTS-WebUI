@@ -387,14 +387,16 @@ class AliyunTTSBackend(TTSBackend):
     @staticmethod
     def _map_speaker(local_speaker: str) -> str:
         mapping = {
-            "Vivian": "Cherry",
-            "Serena": "Lili",
-            "Uncle_Fu": "Longxiaochun",
-            "Dylan": "Longxiaochun",
+            "Ono_Anna": "Ono Anna",
             "Female": "Cherry",
-            "Male": "Longxiaochun"
+            "Male": "Ethan"
         }
-        return mapping.get(local_speaker, "Cherry")
+
+        mapped = mapping.get(local_speaker)
+        if mapped:
+            return mapped
+
+        return local_speaker
 
 
 class TTSServiceFactory:
