@@ -26,3 +26,5 @@ qwen3-tts-frontend/node_modules/
 qwen3-tts-frontend/dist/
 qwen3-tts-frontend/.env
 qwen3-tts-frontend/.env.local
+CLAUDE.md
+样本.mp3
