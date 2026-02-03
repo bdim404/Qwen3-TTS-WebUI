@@ -221,8 +221,9 @@ export const ttsApi = {
     }))
   },
 
-  getSpeakers: async (): Promise<Speaker[]> => {
-    const response = await apiClient.get<Speaker[]>(API_ENDPOINTS.TTS.SPEAKERS)
+  getSpeakers: async (backend?: string): Promise<Speaker[]> => {
+    const params = backend ? { backend } : {}
+    const response = await apiClient.get<Speaker[]>(API_ENDPOINTS.TTS.SPEAKERS, { params })
     return response.data.map((speaker) => ({
       name: speaker.name,
       description: SPEAKER_DESCRIPTIONS_ZH[speaker.name] || speaker.description,

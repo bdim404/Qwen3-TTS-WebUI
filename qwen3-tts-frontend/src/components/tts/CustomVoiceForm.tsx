@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ttsApi, jobApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
+import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
@@ -54,6 +55,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
+  const { preferences } = useUserPreferences()
 
   const {
     register,
@@ -93,9 +95,10 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const backend = preferences?.default_backend || 'local'
         const [langs, spks] = await Promise.all([
           ttsApi.getLanguages(),
-          ttsApi.getSpeakers(),
+          ttsApi.getSpeakers(backend),
         ])
         setLanguages(langs)
         setSpeakers(spks)
@@ -104,7 +107,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       }
     }
     fetchData()
-  }, [])
+  }, [preferences?.default_backend])
 
 
   const onSubmit = async (data: FormData) => {
