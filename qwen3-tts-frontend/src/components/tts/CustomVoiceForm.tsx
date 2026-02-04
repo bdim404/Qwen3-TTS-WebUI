@@ -210,7 +210,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
           onValueChange={(value: string) => {
             setSelectedSpeakerId(value)
             const item = unifiedSpeakers.find(s => s.id === value)
-            if (item?.source === 'builtin') {
+            if (item) {
               setValue('speaker', item.id)
             }
           }}
