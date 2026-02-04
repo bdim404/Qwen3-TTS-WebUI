@@ -665,13 +665,6 @@ async def create_voice_clone_job(
     }
 
 
-@router.get("/models")
-@limiter.limit("30/minute")
-async def list_models(request: Request):
-    model_manager = await ModelManager.get_instance()
-    return model_manager.get_model_info()
-
-
 @router.get("/speakers")
 @limiter.limit("30/minute")
 async def list_speakers(request: Request, backend: Optional[str] = "local"):

@@ -132,10 +132,12 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
 
     try {
       const backend = preferences?.default_backend || 'local'
+      const text = watch('text')
       const design = await voiceDesignApi.create({
         name: saveDesignName,
         instruct: instruct,
-        backend_type: backend
+        backend_type: backend,
+        preview_text: text || `${saveDesignName}的声音`
       })
 
       toast.success('音色设计已保存')

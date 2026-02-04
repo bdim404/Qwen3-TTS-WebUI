@@ -13,7 +13,6 @@ from db import crud
 from schemas.voice_design import (
     VoiceDesignCreate,
     VoiceDesignResponse,
-    VoiceDesignUpdate,
     VoiceDesignListResponse
 )
 
@@ -57,45 +56,6 @@ async def list_voice_designs(
 ):
     designs = crud.list_voice_designs(db, current_user.id, backend_type, skip, limit)
     return VoiceDesignListResponse(designs=[VoiceDesignResponse.from_orm(d) for d in designs], total=len(designs))
-
-@router.get("/{design_id}", response_model=VoiceDesignResponse)
-@limiter.limit("30/minute")
-async def get_voice_design(
-    request: Request,
-    design_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    design = crud.get_voice_design(db, design_id, current_user.id)
-    if not design:
-        raise HTTPException(status_code=404, detail="Voice design not found")
-    return VoiceDesignResponse.from_orm(design)
-
-@router.patch("/{design_id}", response_model=VoiceDesignResponse)
-@limiter.limit("30/minute")
-async def update_voice_design(
-    request: Request,
-    design_id: int,
-    data: VoiceDesignUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    design = crud.update_voice_design(db, design_id, current_user.id, data.name)
-    if not design:
-        raise HTTPException(status_code=404, detail="Voice design not found")
-    return VoiceDesignResponse.from_orm(design)
-
-@router.delete("/{design_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("30/minute")
-async def delete_voice_design(
-    request: Request,
-    design_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    success = crud.delete_voice_design(db, design_id, current_user.id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Voice design not found")
 
 @router.post("/{design_id}/prepare-clone")
 @limiter.limit("10/minute")

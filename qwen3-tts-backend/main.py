@@ -15,7 +15,7 @@ from core.config import settings
 from core.database import init_db
 from core.model_manager import ModelManager
 from core.cleanup import run_scheduled_cleanup
-from api import auth, jobs, tts, cache, metrics, users, voice_designs
+from api import auth, jobs, tts, users, voice_designs
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 logging.basicConfig(
@@ -130,8 +130,6 @@ if settings.LOG_LEVEL == "debug":
 app.include_router(auth.router)
 app.include_router(jobs.router)
 app.include_router(tts.router)
-app.include_router(cache.router)
-app.include_router(metrics.router)
 app.include_router(users.router)
 app.include_router(voice_designs.router)
 

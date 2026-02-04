@@ -329,25 +329,3 @@ def update_voice_design_usage(db: Session, design_id: int, user_id: int) -> Opti
         db.refresh(design)
     return design
 
-def update_voice_design(
-    db: Session,
-    design_id: int,
-    user_id: int,
-    name: Optional[str] = None
-) -> Optional[VoiceDesign]:
-    design = get_voice_design(db, design_id, user_id)
-    if not design:
-        return None
-    if name is not None:
-        design.name = name
-    db.commit()
-    db.refresh(design)
-    return design
-
-def delete_voice_design(db: Session, design_id: int, user_id: int) -> bool:
-    design = get_voice_design(db, design_id, user_id)
-    if not design:
-        return False
-    design.is_active = False
-    db.commit()
-    return True

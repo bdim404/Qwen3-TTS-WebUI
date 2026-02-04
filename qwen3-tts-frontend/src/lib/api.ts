@@ -399,31 +399,12 @@ export const voiceDesignApi = {
     return response.data
   },
 
-  get: async (id: number): Promise<VoiceDesign> => {
-    const response = await apiClient.get<VoiceDesign>(
-      API_ENDPOINTS.VOICE_DESIGNS.GET(id)
-    )
-    return response.data
-  },
-
   create: async (data: VoiceDesignCreate): Promise<VoiceDesign> => {
     const response = await apiClient.post<VoiceDesign>(
       API_ENDPOINTS.VOICE_DESIGNS.CREATE,
       data
     )
     return response.data
-  },
-
-  update: async (id: number, name: string): Promise<VoiceDesign> => {
-    const response = await apiClient.patch<VoiceDesign>(
-      API_ENDPOINTS.VOICE_DESIGNS.UPDATE(id),
-      { name }
-    )
-    return response.data
-  },
-
-  delete: async (id: number): Promise<void> => {
-    await apiClient.delete(API_ENDPOINTS.VOICE_DESIGNS.DELETE(id))
   },
 
   prepareClone: async (id: number): Promise<{ message: string; cache_id: number; ref_text: string }> => {

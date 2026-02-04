@@ -10,9 +10,6 @@ class VoiceDesignCreate(BaseModel):
     meta_data: Optional[Dict[str, Any]] = None
     preview_text: Optional[str] = None
 
-class VoiceDesignUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-
 class VoiceDesignResponse(BaseModel):
     id: int
     user_id: int
