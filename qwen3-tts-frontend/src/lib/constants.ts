@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
     GET: (id: number) => `/voice-designs/${id}`,
     UPDATE: (id: number) => `/voice-designs/${id}`,
     DELETE: (id: number) => `/voice-designs/${id}`,
+    PREPARE_CLONE: (id: number) => `/voice-designs/${id}/prepare-clone`,
   },
 } as const
 

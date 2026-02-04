@@ -52,6 +52,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
   })
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [saveDesignName, setSaveDesignName] = useState('')
+  const [isPreparing, setIsPreparing] = useState(false)
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
@@ -128,13 +129,29 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       toast.error('请输入设计名称')
       return
     }
+
     try {
-      await voiceDesignApi.create({
+      const backend = preferences?.default_backend || 'local'
+      const design = await voiceDesignApi.create({
         name: saveDesignName,
         instruct: instruct,
-        backend_type: preferences?.default_backend || 'local'
+        backend_type: backend
       })
+
       toast.success('音色设计已保存')
+
+      if (backend === 'local') {
+        setIsPreparing(true)
+        try {
+          await voiceDesignApi.prepareClone(design.id)
+          toast.success('音色克隆准备完成')
+        } catch (error) {
+          toast.error('准备克隆失败，但设计已保存')
+        } finally {
+          setIsPreparing(false)
+        }
+      }
+
       setShowSaveDialog(false)
       setSaveDesignName('')
     } catch (error) {
@@ -238,8 +255,8 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
             }}>
               取消
             </Button>
-            <Button type="button" onClick={handleSaveDesign}>
-              保存
+            <Button type="button" onClick={handleSaveDesign} disabled={isPreparing}>
+              {isPreparing ? '准备中...' : '保存'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -259,6 +259,9 @@ export const ttsApi = {
     if (data.x_vector_only_mode !== undefined) {
       formData.append('x_vector_only_mode', String(data.x_vector_only_mode))
     }
+    if (data.voice_design_id !== undefined) {
+      formData.append('voice_design_id', String(data.voice_design_id))
+    }
     if (data.max_new_tokens !== undefined) {
       formData.append('max_new_tokens', String(data.max_new_tokens))
     }
@@ -421,6 +424,13 @@ export const voiceDesignApi = {
 
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(API_ENDPOINTS.VOICE_DESIGNS.DELETE(id))
+  },
+
+  prepareClone: async (id: number): Promise<{ message: string; cache_id: number; ref_text: string }> => {
+    const response = await apiClient.post<{ message: string; cache_id: number; ref_text: string }>(
+      API_ENDPOINTS.VOICE_DESIGNS.PREPARE_CLONE(id)
+    )
+    return response.data
   },
 }
 

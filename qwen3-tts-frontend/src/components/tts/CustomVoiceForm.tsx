@@ -160,17 +160,32 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
 
       let result
       if (selectedItem?.source === 'saved-design') {
-        result = await ttsApi.createVoiceDesignJob({
-          text: data.text,
-          language: data.language,
-          instruct: selectedItem.instruct!,
-          saved_design_id: selectedItem.designId,
-          max_new_tokens: data.max_new_tokens,
-          temperature: data.temperature,
-          top_k: data.top_k,
-          top_p: data.top_p,
-          repetition_penalty: data.repetition_penalty,
-        })
+        if (selectedItem.backendType === 'local') {
+          result = await ttsApi.createVoiceCloneJob({
+            text: data.text,
+            language: data.language,
+            ref_audio: null,
+            voice_design_id: selectedItem.designId,
+            max_new_tokens: data.max_new_tokens,
+            temperature: data.temperature,
+            top_k: data.top_k,
+            top_p: data.top_p,
+            repetition_penalty: data.repetition_penalty,
+            backend: 'local',
+          })
+        } else {
+          result = await ttsApi.createVoiceDesignJob({
+            text: data.text,
+            language: data.language,
+            instruct: selectedItem.instruct!,
+            saved_design_id: selectedItem.designId,
+            max_new_tokens: data.max_new_tokens,
+            temperature: data.temperature,
+            top_k: data.top_k,
+            top_p: data.top_p,
+            repetition_penalty: data.repetition_penalty,
+          })
+        }
       } else {
         result = await ttsApi.createCustomVoiceJob(data)
       }

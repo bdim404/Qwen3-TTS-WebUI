@@ -47,6 +47,7 @@ export interface VoiceCloneForm {
   top_p?: number
   repetition_penalty?: number
   backend?: string
+  voice_design_id?: number
 }
 
 export type SpeakerSource = 'builtin' | 'saved-design'
