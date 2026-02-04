@@ -42,6 +42,13 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
 
     const result = await validateAudioFile(file)
 
+    console.log('录音验证结果:', {
+      valid: result.valid,
+      duration: result.duration,
+      recordingDuration: recordingDuration,
+      error: result.error
+    })
+
     if (result.valid && result.duration) {
       onChange(file)
       setAudioInfo({ duration: result.duration, size: file.size })
@@ -65,7 +72,9 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
     }
   }
 
-  const handleReset = () => {
+  const handleReset = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     clearRecording()
     setAudioInfo(null)
     setValidationError(null)
@@ -105,7 +114,14 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
               {(audioInfo.size / 1024 / 1024).toFixed(2)} MB · {audioInfo.duration.toFixed(1)} 秒
             </p>
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleReset}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -118,7 +134,7 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
       <Button
         type="button"
         variant={isRecording ? 'default' : 'outline'}
-        className={`w-full h-24 ${isRecording ? 'animate-pulse' : ''}`}
+        className={`w-full h-24 select-none ${isRecording ? 'animate-pulse' : ''}`}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -143,7 +159,14 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
       {validationError && (
         <div className="flex items-center justify-between p-2 border border-destructive rounded bg-destructive/10">
           <p className="text-sm text-destructive">{validationError}</p>
-          <Button type="button" variant="ghost" size="sm" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleReset}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>

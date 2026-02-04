@@ -23,7 +23,7 @@ interface UseAudioRecorderReturn {
 
 async function convertToWav(audioBlob: Blob): Promise<Blob> {
   const arrayBuffer = await audioBlob.arrayBuffer()
-  const audioContext = new AudioContext({ sampleRate: 24000 })
+  const audioContext = new AudioContext()
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
 
   const numberOfChannels = audioBuffer.numberOfChannels
