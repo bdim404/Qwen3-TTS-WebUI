@@ -58,6 +58,13 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   const { refresh } = useHistoryContext()
   const { preferences } = useUserPreferences()
 
+  const selectedSpeaker = useMemo(() =>
+    unifiedSpeakers.find(s => s.id === selectedSpeakerId),
+    [unifiedSpeakers, selectedSpeakerId]
+  )
+
+  const isInstructDisabled = selectedSpeaker?.source === 'saved-design'
+
   const {
     register,
     handleSubmit,
@@ -139,6 +146,12 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
     fetchData()
   }, [preferences?.default_backend])
 
+  useEffect(() => {
+    if (selectedSpeaker?.source === 'saved-design' && selectedSpeaker.instruct) {
+      setValue('instruct', selectedSpeaker.instruct)
+    }
+  }, [selectedSpeakerId, selectedSpeaker, setValue])
+
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
@@ -208,10 +221,16 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
         <Select
           value={selectedSpeakerId}
           onValueChange={(value: string) => {
-            setSelectedSpeakerId(value)
-            const item = unifiedSpeakers.find(s => s.id === value)
-            if (item) {
-              setValue('speaker', item.id)
+            const newSpeaker = unifiedSpeakers.find(s => s.id === value)
+            const previousSource = selectedSpeaker?.source
+
+            if (newSpeaker) {
+              setSelectedSpeakerId(value)
+              setValue('speaker', newSpeaker.id)
+
+              if (newSpeaker.source === 'builtin' && previousSource === 'saved-design') {
+                setValue('instruct', '')
+              }
             }
           }}
         >
@@ -277,18 +296,24 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
         <IconLabel icon={Sparkles} tooltip="情绪指导（可选）" />
         <Textarea
           {...register('instruct')}
-          placeholder="例如：温柔体贴，语速平缓，充满关怀"
+          placeholder={isInstructDisabled
+            ? "已使用音色设计的预设指导"
+            : "例如：温柔体贴，语速平缓，充满关怀"
+          }
           className="min-h-[40px] md:min-h-[60px]"
+          disabled={isInstructDisabled}
         />
-        <PresetSelector
-          presets={PRESET_INSTRUCTS}
-          onSelect={(preset) => {
-            setValue('instruct', preset.instruct)
-            if (preset.text) {
-              setValue('text', preset.text)
-            }
-          }}
-        />
+        {!isInstructDisabled && (
+          <PresetSelector
+            presets={PRESET_INSTRUCTS}
+            onSelect={(preset) => {
+              setValue('instruct', preset.instruct)
+              if (preset.text) {
+                setValue('text', preset.text)
+              }
+            }}
+          />
+        )}
         {errors.instruct && (
           <p className="text-sm text-destructive">{errors.instruct.message}</p>
         )}

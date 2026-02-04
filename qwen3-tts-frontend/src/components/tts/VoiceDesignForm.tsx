@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ttsApi, jobApi, voiceDesignApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
+import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
@@ -54,6 +55,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
+  const { preferences } = useUserPreferences()
 
   const {
     register,
@@ -130,7 +132,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       await voiceDesignApi.create({
         name: saveDesignName,
         instruct: instruct,
-        backend_type: 'local'
+        backend_type: preferences?.default_backend || 'local'
       })
       toast.success('音色设计已保存')
       setShowSaveDialog(false)
