@@ -28,6 +28,7 @@ class User(Base):
 
     jobs = relationship("Job", back_populates="user", cascade="all, delete-orphan")
     voice_caches = relationship("VoiceCache", back_populates="user", cascade="all, delete-orphan")
+    voice_designs = relationship("VoiceDesign", back_populates="user", cascade="all, delete-orphan")
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -77,3 +78,26 @@ class SystemSettings(Base):
     key = Column(String(100), unique=True, nullable=False, index=True)
     value = Column(JSON, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class VoiceDesign(Base):
+    __tablename__ = "voice_designs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    backend_type = Column(String(20), nullable=False, index=True)
+    instruct = Column(Text, nullable=False)
+    aliyun_voice_id = Column(String(255), nullable=True)
+    meta_data = Column(JSON, nullable=True)
+    preview_text = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_used = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    use_count = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    user = relationship("User", back_populates="voice_designs")
+
+    __table_args__ = (
+        Index('idx_user_backend', 'user_id', 'backend_type'),
+        Index('idx_user_active', 'user_id', 'is_active'),
+    )

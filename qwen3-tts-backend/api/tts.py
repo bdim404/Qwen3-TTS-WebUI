@@ -98,7 +98,8 @@ async def process_voice_design_job(
     user_id: int,
     request_data: dict,
     backend_type: str,
-    db_url: str
+    db_url: str,
+    saved_voice_id: Optional[str] = None
 ):
     from core.database import SessionLocal
     from core.tts_service import TTSServiceFactory
@@ -125,7 +126,10 @@ async def process_voice_design_job(
 
         backend = await TTSServiceFactory.get_backend(backend_type, user_api_key)
 
-        audio_bytes, sample_rate = await backend.generate_voice_design(request_data)
+        if backend_type == "aliyun" and saved_voice_id:
+            audio_bytes, sample_rate = await backend.generate_voice_design(request_data, saved_voice_id)
+        else:
+            audio_bytes, sample_rate = await backend.generate_voice_design(request_data)
 
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         filename = f"{user_id}_{job_id}_{timestamp}.wav"
@@ -374,7 +378,7 @@ async def create_voice_design_job(
     db: Session = Depends(get_db)
 ):
     from core.security import decrypt_api_key
-    from db.crud import get_user_preferences, can_user_use_local_model
+    from db.crud import get_user_preferences, can_user_use_local_model, get_voice_design, update_voice_design_usage
 
     user_prefs = get_user_preferences(db, current_user.id)
     preferred_backend = user_prefs.get("default_backend", "aliyun")
@@ -382,6 +386,24 @@ async def create_voice_design_job(
     can_use_local = can_user_use_local_model(current_user)
 
     backend_type = req_data.backend if hasattr(req_data, 'backend') and req_data.backend else preferred_backend
+
+    saved_voice_id = None
+
+    if req_data.saved_design_id:
+        saved_design = get_voice_design(db, req_data.saved_design_id, current_user.id)
+        if not saved_design:
+            raise HTTPException(status_code=404, detail="Saved voice design not found")
+
+        if saved_design.backend_type != backend_type:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Saved design backend ({saved_design.backend_type}) doesn't match current backend ({backend_type})"
+            )
+
+        req_data.instruct = saved_design.instruct
+        saved_voice_id = saved_design.aliyun_voice_id
+
+        update_voice_design_usage(db, req_data.saved_design_id, current_user.id)
 
     if backend_type == "local" and not can_use_local:
         raise HTTPException(
@@ -399,8 +421,9 @@ async def create_voice_design_job(
         validate_text_length(req_data.text)
         language = validate_language(req_data.language)
 
-        if not req_data.instruct or not req_data.instruct.strip():
-            raise ValueError("Instruct parameter is required for voice design")
+        if not req_data.saved_design_id:
+            if not req_data.instruct or not req_data.instruct.strip():
+                raise ValueError("Instruct parameter is required when saved_design_id is not provided")
 
         params = validate_generation_params({
             'max_new_tokens': req_data.max_new_tokens,
@@ -443,7 +466,8 @@ async def create_voice_design_job(
         current_user.id,
         request_data,
         backend_type,
-        str(settings.DATABASE_URL)
+        str(settings.DATABASE_URL),
+        saved_voice_id
     )
 
     return {

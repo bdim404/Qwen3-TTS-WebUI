@@ -30,7 +30,8 @@ class CustomVoiceRequest(BaseModel):
 class VoiceDesignRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=1000)
     language: str = Field(default="Auto")
-    instruct: str = Field(..., min_length=1)
+    instruct: Optional[str] = Field(default=None, min_length=1)
+    saved_design_id: Optional[int] = None
     max_new_tokens: Optional[int] = Field(default=2048, ge=128, le=4096)
     temperature: Optional[float] = Field(default=0.9, ge=0.1, le=2.0)
     top_k: Optional[int] = Field(default=50, ge=1, le=100)

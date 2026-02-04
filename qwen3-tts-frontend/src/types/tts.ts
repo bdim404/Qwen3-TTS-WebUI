@@ -25,6 +25,7 @@ export interface VoiceDesignForm {
   text: string
   language: string
   instruct: string
+  saved_design_id?: number
   max_new_tokens?: number
   temperature?: number
   top_k?: number
@@ -46,4 +47,16 @@ export interface VoiceCloneForm {
   top_p?: number
   repetition_penalty?: number
   backend?: string
+}
+
+export type SpeakerSource = 'builtin' | 'saved-design'
+
+export interface UnifiedSpeakerItem {
+  id: string
+  displayName: string
+  description: string
+  source: SpeakerSource
+  designId?: number
+  instruct?: string
+  backendType?: 'local' | 'aliyun'
 }

@@ -175,13 +175,17 @@ class AliyunTTSBackend(TTSBackend):
             language=params['language']
         )
 
-    async def generate_voice_design(self, params: dict) -> Tuple[bytes, int]:
+    async def generate_voice_design(self, params: dict, saved_voice_id: Optional[str] = None) -> Tuple[bytes, int]:
         from core.config import settings
 
-        voice_id = await self._create_voice_design(
-            instruct=params['instruct'],
-            preview_text=params['text']
-        )
+        if saved_voice_id:
+            voice_id = saved_voice_id
+            logger.info(f"Using saved Aliyun voice_id: {voice_id}")
+        else:
+            voice_id = await self._create_voice_design(
+                instruct=params['instruct'],
+                preview_text=params['text']
+            )
 
         model = settings.ALIYUN_MODEL_VD
 

@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from db.models import User, Job, VoiceCache, SystemSettings
+from db.models import User, Job, VoiceCache, SystemSettings, VoiceDesign
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
@@ -271,3 +271,83 @@ def update_system_setting(db: Session, key: str, value: dict) -> SystemSettings:
 
 def can_user_use_local_model(user: User) -> bool:
     return user.is_superuser or user.can_use_local_model
+
+def create_voice_design(
+    db: Session,
+    user_id: int,
+    name: str,
+    instruct: str,
+    backend_type: str,
+    aliyun_voice_id: Optional[str] = None,
+    meta_data: Optional[Dict[str, Any]] = None,
+    preview_text: Optional[str] = None
+) -> VoiceDesign:
+    design = VoiceDesign(
+        user_id=user_id,
+        name=name,
+        backend_type=backend_type,
+        instruct=instruct,
+        aliyun_voice_id=aliyun_voice_id,
+        meta_data=json.dumps(meta_data) if meta_data else None,
+        preview_text=preview_text,
+        created_at=datetime.utcnow(),
+        last_used=datetime.utcnow()
+    )
+    db.add(design)
+    db.commit()
+    db.refresh(design)
+    return design
+
+def get_voice_design(db: Session, design_id: int, user_id: int) -> Optional[VoiceDesign]:
+    return db.query(VoiceDesign).filter(
+        VoiceDesign.id == design_id,
+        VoiceDesign.user_id == user_id,
+        VoiceDesign.is_active == True
+    ).first()
+
+def list_voice_designs(
+    db: Session,
+    user_id: int,
+    backend_type: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[VoiceDesign]:
+    query = db.query(VoiceDesign).filter(
+        VoiceDesign.user_id == user_id,
+        VoiceDesign.is_active == True
+    )
+    if backend_type:
+        query = query.filter(VoiceDesign.backend_type == backend_type)
+    return query.order_by(VoiceDesign.last_used.desc()).offset(skip).limit(limit).all()
+
+def update_voice_design_usage(db: Session, design_id: int, user_id: int) -> Optional[VoiceDesign]:
+    design = get_voice_design(db, design_id, user_id)
+    if design:
+        design.last_used = datetime.utcnow()
+        design.use_count += 1
+        db.commit()
+        db.refresh(design)
+    return design
+
+def update_voice_design(
+    db: Session,
+    design_id: int,
+    user_id: int,
+    name: Optional[str] = None
+) -> Optional[VoiceDesign]:
+    design = get_voice_design(db, design_id, user_id)
+    if not design:
+        return None
+    if name is not None:
+        design.name = name
+    db.commit()
+    db.refresh(design)
+    return design
+
+def delete_voice_design(db: Session, design_id: int, user_id: int) -> bool:
+    design = get_voice_design(db, design_id, user_id)
+    if not design:
+        return False
+    design.is_active = False
+    db.commit()
+    return True

@@ -3,6 +3,7 @@ import type { LoginRequest, LoginResponse, User, PasswordChangeRequest, UserPref
 import type { Job, JobCreateResponse, JobListResponse, JobType } from '@/types/job'
 import type { Language, Speaker, CustomVoiceForm, VoiceDesignForm, VoiceCloneForm } from '@/types/tts'
 import type { UserCreateRequest, UserUpdateRequest, UserListResponse } from '@/types/user'
+import type { VoiceDesign, VoiceDesignCreate, VoiceDesignListResponse } from '@/types/voice-design'
 import { API_ENDPOINTS, LANGUAGE_NAMES, SPEAKER_DESCRIPTIONS_ZH } from '@/lib/constants'
 
 const apiClient = axios.create({
@@ -382,6 +383,44 @@ export const userApi = {
 
   deleteUser: async (id: number): Promise<void> => {
     await apiClient.delete(API_ENDPOINTS.USERS.DELETE(id))
+  },
+}
+
+export const voiceDesignApi = {
+  list: async (backend?: string): Promise<VoiceDesignListResponse> => {
+    const params = backend ? { backend_type: backend } : {}
+    const response = await apiClient.get<VoiceDesignListResponse>(
+      API_ENDPOINTS.VOICE_DESIGNS.LIST,
+      { params }
+    )
+    return response.data
+  },
+
+  get: async (id: number): Promise<VoiceDesign> => {
+    const response = await apiClient.get<VoiceDesign>(
+      API_ENDPOINTS.VOICE_DESIGNS.GET(id)
+    )
+    return response.data
+  },
+
+  create: async (data: VoiceDesignCreate): Promise<VoiceDesign> => {
+    const response = await apiClient.post<VoiceDesign>(
+      API_ENDPOINTS.VOICE_DESIGNS.CREATE,
+      data
+    )
+    return response.data
+  },
+
+  update: async (id: number, name: string): Promise<VoiceDesign> => {
+    const response = await apiClient.patch<VoiceDesign>(
+      API_ENDPOINTS.VOICE_DESIGNS.UPDATE(id),
+      { name }
+    )
+    return response.data
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.VOICE_DESIGNS.DELETE(id))
   },
 }
 

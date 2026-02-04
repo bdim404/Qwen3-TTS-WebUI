@@ -5,14 +5,14 @@ import { useEffect, useState, forwardRef, useImperativeHandle, useMemo } from 'r
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Globe2, User, Type, Sparkles, Play, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { IconLabel } from '@/components/IconLabel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { ttsApi, jobApi } from '@/lib/api'
+import { ttsApi, jobApi, voiceDesignApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
 import { useUserPreferences } from '@/contexts/UserPreferencesContext'
@@ -20,7 +20,7 @@ import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
 import { PRESET_INSTRUCTS, ADVANCED_PARAMS_INFO } from '@/lib/constants'
-import type { Language, Speaker } from '@/types/tts'
+import type { Language, UnifiedSpeakerItem } from '@/types/tts'
 
 const formSchema = z.object({
   text: z.string().min(1, '请输入要合成的文本').max(5000, '文本长度不能超过 5000 字符'),
@@ -42,7 +42,8 @@ export interface CustomVoiceFormHandle {
 
 const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   const [languages, setLanguages] = useState<Language[]>([])
-  const [speakers, setSpeakers] = useState<Speaker[]>([])
+  const [unifiedSpeakers, setUnifiedSpeakers] = useState<UnifiedSpeakerItem[]>([])
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [tempAdvancedParams, setTempAdvancedParams] = useState({
@@ -83,6 +84,16 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       setValue('text', params.text || '')
       setValue('language', params.language || 'Auto')
       setValue('speaker', params.speaker || '')
+
+      if (params.speaker) {
+        const item = unifiedSpeakers.find(s =>
+          s.source === 'builtin' && s.id === params.speaker
+        )
+        if (item) {
+          setSelectedSpeakerId(item.id)
+        }
+      }
+
       setValue('instruct', params.instruct || '')
       setValue('max_new_tokens', params.max_new_tokens || 2048)
       setValue('temperature', params.temperature || 0.3)
@@ -96,12 +107,31 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
     const fetchData = async () => {
       try {
         const backend = preferences?.default_backend || 'local'
-        const [langs, spks] = await Promise.all([
+        const [langs, builtinSpeakers, savedDesigns] = await Promise.all([
           ttsApi.getLanguages(),
           ttsApi.getSpeakers(backend),
+          voiceDesignApi.list(backend)
         ])
+
+        const designItems: UnifiedSpeakerItem[] = savedDesigns.designs.map(d => ({
+          id: `design-${d.id}`,
+          displayName: `${d.name} (自定义)`,
+          description: d.instruct.substring(0, 60) + (d.instruct.length > 60 ? '...' : ''),
+          source: 'saved-design',
+          designId: d.id,
+          instruct: d.instruct,
+          backendType: d.backend_type
+        }))
+
+        const builtinItems: UnifiedSpeakerItem[] = builtinSpeakers.map(s => ({
+          id: s.name,
+          displayName: s.name,
+          description: s.description,
+          source: 'builtin'
+        }))
+
         setLanguages(langs)
-        setSpeakers(spks)
+        setUnifiedSpeakers([...designItems, ...builtinItems])
       } catch (error) {
         toast.error('加载数据失败')
       }
@@ -113,7 +143,25 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
-      const result = await ttsApi.createCustomVoiceJob(data)
+      const selectedItem = unifiedSpeakers.find(s => s.id === selectedSpeakerId)
+
+      let result
+      if (selectedItem?.source === 'saved-design') {
+        result = await ttsApi.createVoiceDesignJob({
+          text: data.text,
+          language: data.language,
+          instruct: selectedItem.instruct!,
+          saved_design_id: selectedItem.designId,
+          max_new_tokens: data.max_new_tokens,
+          temperature: data.temperature,
+          top_k: data.top_k,
+          top_p: data.top_p,
+          repetition_penalty: data.repetition_penalty,
+        })
+      } else {
+        result = await ttsApi.createCustomVoiceJob(data)
+      }
+
       toast.success('任务已创建')
       startPolling(result.job_id)
       try {
@@ -158,18 +206,54 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       <div className="space-y-0.5">
         <IconLabel icon={User} tooltip="发音人" required />
         <Select
-          value={watch('speaker')}
-          onValueChange={(value: string) => setValue('speaker', value)}
+          value={selectedSpeakerId}
+          onValueChange={(value: string) => {
+            setSelectedSpeakerId(value)
+            const item = unifiedSpeakers.find(s => s.id === value)
+            if (item?.source === 'builtin') {
+              setValue('speaker', item.id)
+            }
+          }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="选择发音人" />
+            <SelectValue placeholder="选择发音人">
+              {selectedSpeakerId && (() => {
+                const item = unifiedSpeakers.find(s => s.id === selectedSpeakerId)
+                if (!item) return null
+                if (item.source === 'saved-design') {
+                  return item.displayName
+                }
+                return `${item.displayName} - ${item.description}`
+              })()}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {speakers.map((speaker) => (
-              <SelectItem key={speaker.name} value={speaker.name}>
-                {speaker.name} - {speaker.description}
-              </SelectItem>
-            ))}
+            {unifiedSpeakers.filter(s => s.source === 'saved-design').length > 0 && (
+              <SelectGroup>
+                <SelectLabel className="text-xs text-muted-foreground">我的音色设计</SelectLabel>
+                {unifiedSpeakers
+                  .filter(s => s.source === 'saved-design')
+                  .map(item => (
+                    <SelectItem key={item.id} value={item.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{item.displayName}</span>
+                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+              </SelectGroup>
+            )}
+
+            <SelectGroup>
+              <SelectLabel className="text-xs text-muted-foreground">内置发音人</SelectLabel>
+              {unifiedSpeakers
+                .filter(s => s.source === 'builtin')
+                .map(item => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.displayName} - {item.description}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
         {errors.speaker && (

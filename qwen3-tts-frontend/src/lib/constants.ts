@@ -27,6 +27,13 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/users/${id}`,
     DELETE: (id: number) => `/users/${id}`,
   },
+  VOICE_DESIGNS: {
+    LIST: '/voice-designs',
+    CREATE: '/voice-designs',
+    GET: (id: number) => `/voice-designs/${id}`,
+    UPDATE: (id: number) => `/voice-designs/${id}`,
+    DELETE: (id: number) => `/voice-designs/${id}`,
+  },
 } as const
 
 export const LANGUAGE_NAMES: Record<string, string> = {

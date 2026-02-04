@@ -8,11 +8,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Settings, Globe2, Type, Play, Palette } from 'lucide-react'
+import { Settings, Globe2, Type, Play, Palette, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { IconLabel } from '@/components/IconLabel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { ttsApi, jobApi } from '@/lib/api'
+import { ttsApi, jobApi, voiceDesignApi } from '@/lib/api'
 import { useJobPolling } from '@/hooks/useJobPolling'
 import { useHistoryContext } from '@/contexts/HistoryContext'
 import { LoadingState } from '@/components/LoadingState'
@@ -49,6 +49,8 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
     top_p: 0.7,
     repetition_penalty: 1.05
   })
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [saveDesignName, setSaveDesignName] = useState('')
 
   const { currentJob, isPolling, isCompleted, startPolling, elapsedTime } = useJobPolling()
   const { refresh } = useHistoryContext()
@@ -114,6 +116,30 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
     }
   }
 
+  const handleSaveDesign = async () => {
+    const instruct = watch('instruct')
+    if (!instruct || instruct.length < 10) {
+      toast.error('请先填写音色描述')
+      return
+    }
+    if (!saveDesignName.trim()) {
+      toast.error('请输入设计名称')
+      return
+    }
+    try {
+      await voiceDesignApi.create({
+        name: saveDesignName,
+        instruct: instruct,
+        backend_type: 'local'
+      })
+      toast.success('音色设计已保存')
+      setShowSaveDialog(false)
+      setSaveDesignName('')
+    } catch (error) {
+      toast.error('保存失败')
+    }
+  }
+
   const memoizedAudioUrl = useMemo(() => {
     if (!currentJob) return ''
     return jobApi.getAudioUrl(currentJob.id, currentJob.audio_url)
@@ -175,6 +201,47 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
           <p className="text-sm text-destructive">{errors.instruct.message}</p>
         )}
       </div>
+
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>保存音色设计</DialogTitle>
+            <DialogDescription>为当前音色设计命名并保存，以便后续快速使用</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="design-name">设计名称</Label>
+              <Input
+                id="design-name"
+                placeholder="例如：磁性男声"
+                value={saveDesignName}
+                onChange={(e) => setSaveDesignName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleSaveDesign()
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>音色描述</Label>
+              <p className="text-sm text-muted-foreground">{watch('instruct')}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => {
+              setShowSaveDialog(false)
+              setSaveDesignName('')
+            }}>
+              取消
+            </Button>
+            <Button type="button" onClick={handleSaveDesign}>
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={advancedOpen} onOpenChange={(open) => {
         if (open) {
@@ -355,6 +422,15 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
             audioUrl={memoizedAudioUrl}
             jobId={currentJob.id}
           />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowSaveDialog(true)}
+          >
+            <Save className="mr-2 h-4 w-4" />
+            保存音色设计
+          </Button>
         </div>
       )}
     </form>
