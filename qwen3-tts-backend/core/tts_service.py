@@ -83,19 +83,23 @@ class LocalTTSBackend(TTSBackend):
             audio_data = np.array(audio_data)
         return self._numpy_to_bytes(audio_data), 24000
 
-    async def generate_voice_clone(self, params: dict, ref_audio_bytes: bytes) -> Tuple[bytes, int]:
+    async def generate_voice_clone(self, params: dict, ref_audio_bytes: bytes = None, x_vector=None) -> Tuple[bytes, int]:
         from utils.audio import process_ref_audio
-
-        ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
 
         await self.model_manager.load_model("base")
         _, tts = await self.model_manager.get_current_model()
 
-        x_vector = tts.create_voice_clone_prompt(
-            ref_audio=(ref_audio_array, ref_sr),
-            ref_text=params.get('ref_text', ''),
-            x_vector_only_mode=False
-        )
+        if x_vector is None:
+            if ref_audio_bytes is None:
+                raise ValueError("Either ref_audio_bytes or x_vector must be provided")
+
+            ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
+
+            x_vector = tts.create_voice_clone_prompt(
+                ref_audio=(ref_audio_array, ref_sr),
+                ref_text=params.get('ref_text', ''),
+                x_vector_only_mode=False
+            )
 
         wavs, sample_rate = tts.generate_voice_clone(
             text=params['text'],

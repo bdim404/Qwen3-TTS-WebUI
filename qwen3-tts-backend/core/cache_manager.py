@@ -72,6 +72,36 @@ class VoiceCacheManager:
             logger.error(f"Cache retrieval error: {e}", exc_info=True)
             return None
 
+    async def get_cache_by_id(self, cache_id: int, db: Session) -> Optional[Dict[str, Any]]:
+        try:
+            cache_entry = db.query(VoiceCache).filter(VoiceCache.id == cache_id).first()
+            if not cache_entry:
+                logger.debug(f"Cache not found: id={cache_id}")
+                return None
+
+            cache_file = Path(cache_entry.cache_path)
+            if not cache_file.exists():
+                logger.warning(f"Cache file missing: {cache_file}")
+                return None
+
+            with open(cache_file, 'rb') as f:
+                cache_data = pickle.load(f)
+
+            cache_entry.last_accessed = datetime.utcnow()
+            cache_entry.access_count += 1
+            db.commit()
+
+            logger.info(f"Cache loaded by id: cache_id={cache_id}, access_count={cache_entry.access_count}")
+            return {
+                'cache_id': cache_entry.id,
+                'data': cache_data,
+                'metadata': cache_entry.meta_data
+            }
+
+        except Exception as e:
+            logger.error(f"Cache retrieval by id error: {e}", exc_info=True)
+            return None
+
     async def set_cache(
         self,
         user_id: int,
