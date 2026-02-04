@@ -344,16 +344,14 @@ export const jobApi = {
       if (audioPath.startsWith('http')) {
         if (audioPath.includes('localhost') || audioPath.includes('127.0.0.1')) {
           const url = new URL(audioPath)
-          return `${import.meta.env.VITE_API_URL}${url.pathname}`
+          return url.pathname
         }
         return audioPath
       } else {
-        const baseUrl = import.meta.env.VITE_API_URL
-        const normalizedPath = audioPath.startsWith('/') ? audioPath : `/${audioPath}`
-        return `${baseUrl}${normalizedPath}`
+        return audioPath.startsWith('/') ? audioPath : `/${audioPath}`
       }
     } else {
-      return `${import.meta.env.VITE_API_URL}${API_ENDPOINTS.JOBS.AUDIO(id)}`
+      return API_ENDPOINTS.JOBS.AUDIO(id)
     }
   },
 }
