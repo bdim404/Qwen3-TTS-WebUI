@@ -71,9 +71,9 @@ function VoiceCloneForm() {
       use_cache: true,
       x_vector_only_mode: false,
       max_new_tokens: 2048,
-      temperature: 0.3,
-      top_k: 20,
-      top_p: 0.7,
+      temperature: 0.9,
+      top_k: 50,
+      top_p: 1.0,
       repetition_penalty: 1.05,
     } as Partial<FormData>,
   })

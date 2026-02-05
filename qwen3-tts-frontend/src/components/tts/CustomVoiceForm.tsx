@@ -48,9 +48,9 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [tempAdvancedParams, setTempAdvancedParams] = useState({
     max_new_tokens: 2048,
-    temperature: 0.3,
-    top_k: 20,
-    top_p: 0.7,
+    temperature: 0.9,
+    top_k: 50,
+    top_p: 1.0,
     repetition_penalty: 1.05
   })
 
@@ -79,9 +79,9 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       speaker: '',
       instruct: '',
       max_new_tokens: 2048,
-      temperature: 0.3,
-      top_k: 20,
-      top_p: 0.7,
+      temperature: 0.9,
+      top_k: 50,
+      top_p: 1.0,
       repetition_penalty: 1.05,
     },
   })
@@ -103,9 +103,9 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
 
       setValue('instruct', params.instruct || '')
       setValue('max_new_tokens', params.max_new_tokens || 2048)
-      setValue('temperature', params.temperature || 0.3)
-      setValue('top_k', params.top_k || 20)
-      setValue('top_p', params.top_p || 0.7)
+      setValue('temperature', params.temperature || 0.9)
+      setValue('top_k', params.top_k || 50)
+      setValue('top_p', params.top_p || 1.0)
       setValue('repetition_penalty', params.repetition_penalty || 1.05)
     }
   }))
@@ -168,9 +168,6 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
             voice_design_id: selectedItem.designId,
             max_new_tokens: data.max_new_tokens,
             temperature: data.temperature,
-            top_k: data.top_k,
-            top_p: data.top_p,
-            repetition_penalty: data.repetition_penalty,
             backend: 'local',
           })
         } else {
@@ -181,9 +178,6 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
             saved_design_id: selectedItem.designId,
             max_new_tokens: data.max_new_tokens,
             temperature: data.temperature,
-            top_k: data.top_k,
-            top_p: data.top_p,
-            repetition_penalty: data.repetition_penalty,
           })
         }
       } else {
@@ -338,9 +332,9 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
         if (open) {
           setTempAdvancedParams({
             max_new_tokens: watch('max_new_tokens') || 2048,
-            temperature: watch('temperature') || 0.3,
-            top_k: watch('top_k') || 20,
-            top_p: watch('top_p') || 0.7,
+            temperature: watch('temperature') || 0.9,
+            top_k: watch('top_k') || 50,
+            top_p: watch('top_p') || 1.0,
             repetition_penalty: watch('repetition_penalty') || 1.05
           })
         }
@@ -390,7 +384,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
                 value={tempAdvancedParams.temperature}
                 onChange={(e) => setTempAdvancedParams({
                   ...tempAdvancedParams,
-                  temperature: parseFloat(e.target.value) || 0.3
+                  temperature: parseFloat(e.target.value) || 0.9
                 })}
               />
               <p className="text-sm text-muted-foreground">
