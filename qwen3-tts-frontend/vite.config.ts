@@ -12,21 +12,34 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'icons': ['lucide-react'],
-          'ui-vendor': [
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-label',
-            '@radix-ui/react-select',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-scroll-area',
-          ],
-          'form-vendor': ['react-hook-form', 'zod', '@hookform/resolvers'],
-          'utils': ['axios', 'clsx', 'tailwind-merge'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'radix-ui';
+            }
+            if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
+              return 'form-vendor';
+            }
+            if (id.includes('i18next')) {
+              return 'i18n';
+            }
+            if (id.includes('react-h5-audio-player') || id.includes('sonner')) {
+              return 'audio';
+            }
+            if (id.includes('axios') || id.includes('clsx') || id.includes('tailwind-merge') ||
+                id.includes('class-variance-authority') || id.includes('next-themes')) {
+              return 'utils';
+            }
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 500,
   },
 })
