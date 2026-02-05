@@ -15,39 +15,36 @@
 
 ## 界面预览
 
-### 亮色与暗黑模式
+### 桌面端 - 亮色模式
+![亮色模式](./images/lightmode-english.png)
 
+### 桌面端 - 暗黑模式
+![暗黑模式](./images/darkmode-chinese.png)
+
+### 桌面端 - 语音设计列表
+![语音设计列表](./images/custom-voice-list.png)
+
+### 桌面端 - 保存语音设计对话框
+![保存语音设计](./images/save-voice-design-dialog.png)
+
+### 桌面端 - 语音克隆
+![语音克隆](./images/clone-voice-recording.png)
+
+### 移动端 - 亮色与暗黑模式
 <table>
   <tr>
-    <td width="50%">
-      <img src="./images/lightmode-english.png" alt="亮色模式" />
-      <p align="center"><em>亮色模式 - 自定义语音</em></p>
-    </td>
-    <td width="50%">
-      <img src="./images/darkmode-chinese.png" alt="暗黑模式" />
-      <p align="center"><em>暗黑模式 - 自定义语音</em></p>
-    </td>
+    <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="移动端亮色模式" /></td>
+    <td width="50%"><img src="./images/mobile-darkmode-custom.png" alt="移动端暗黑模式" /></td>
   </tr>
 </table>
 
-### 语音设计
-
-<p align="center">
-  <img src="./images/custom-voice-list.png" alt="语音设计列表" width="80%" />
-</p>
-<p align="center"><em>管理您的自定义语音设计</em></p>
-
-<p align="center">
-  <img src="./images/save-voice-design-dialog.png" alt="保存语音设计" width="60%" />
-</p>
-<p align="center"><em>保存语音设计对话框</em></p>
-
-### 语音克隆
-
-<p align="center">
-  <img src="./images/clone-voice-recording.png" alt="语音克隆" width="80%" />
-</p>
-<p align="center"><em>通过录音或上传音频克隆声音</em></p>
+### 移动端 - 设置与历史记录
+<table>
+  <tr>
+    <td width="50%"><img src="./images/mobile-settings.png" alt="移动端设置" /></td>
+    <td width="50%"><img src="./images/mobile-history.png" alt="移动端历史记录" /></td>
+  </tr>
+</table>
 
 ## 技术栈
 

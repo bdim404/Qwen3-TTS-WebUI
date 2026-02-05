@@ -15,39 +15,36 @@ A text-to-speech web application based on Qwen3-TTS, supporting custom voice, vo
 
 ## Interface Preview
 
-### Light & Dark Mode
+### Desktop - Light Mode
+![Light Mode](./images/lightmode-english.png)
 
+### Desktop - Dark Mode
+![Dark Mode](./images/darkmode-chinese.png)
+
+### Desktop - Voice Design List
+![Voice Design List](./images/custom-voice-list.png)
+
+### Desktop - Save Voice Design Dialog
+![Save Voice Design](./images/save-voice-design-dialog.png)
+
+### Desktop - Voice Cloning
+![Voice Cloning](./images/clone-voice-recording.png)
+
+### Mobile - Light & Dark Mode
 <table>
   <tr>
-    <td width="50%">
-      <img src="./images/lightmode-english.png" alt="Light Mode" />
-      <p align="center"><em>Light Mode - Custom Voice</em></p>
-    </td>
-    <td width="50%">
-      <img src="./images/darkmode-chinese.png" alt="Dark Mode" />
-      <p align="center"><em>Dark Mode - Custom Voice</em></p>
-    </td>
+    <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="Mobile Light Mode" /></td>
+    <td width="50%"><img src="./images/mobile-darkmode-custom.png" alt="Mobile Dark Mode" /></td>
   </tr>
 </table>
 
-### Voice Design
-
-<p align="center">
-  <img src="./images/custom-voice-list.png" alt="Voice Design List" width="80%" />
-</p>
-<p align="center"><em>Manage your custom voice designs</em></p>
-
-<p align="center">
-  <img src="./images/save-voice-design-dialog.png" alt="Save Voice Design" width="60%" />
-</p>
-<p align="center"><em>Save voice design dialog</em></p>
-
-### Voice Cloning
-
-<p align="center">
-  <img src="./images/clone-voice-recording.png" alt="Voice Cloning" width="80%" />
-</p>
-<p align="center"><em>Clone voices by recording or uploading audio</em></p>
+### Mobile - Settings & History
+<table>
+  <tr>
+    <td width="50%"><img src="./images/mobile-settings.png" alt="Mobile Settings" /></td>
+    <td width="50%"><img src="./images/mobile-history.png" alt="Mobile History" /></td>
+  </tr>
+</table>
 
 ## Tech Stack
 
