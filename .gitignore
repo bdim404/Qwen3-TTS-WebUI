@@ -31,3 +31,7 @@ CLAUDE.md
 aliyun.md
 nginx.conf
 deploy.md
+qwen3-tts-backend/scripts
+qwen3-tts-backend/examples
+qwen3-tts-backend/qwen3-tts.service
+qwen3-tts-frontend/.env.production
