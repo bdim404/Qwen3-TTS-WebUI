@@ -85,11 +85,15 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   }, [])
 
   const handleDownload = useCallback(() => {
-    const link = document.createElement('a')
-    link.href = blobUrl || audioUrl
-    link.download = `tts-${jobId}-${Date.now()}.wav`
-    link.click()
-  }, [blobUrl, audioUrl, jobId])
+    if (useMobileMode) {
+      window.open(blobUrl || audioUrl, '_blank')
+    } else {
+      const link = document.createElement('a')
+      link.href = blobUrl || audioUrl
+      link.download = `tts-${jobId}-${Date.now()}.wav`
+      link.click()
+    }
+  }, [blobUrl, audioUrl, jobId, useMobileMode])
 
   if (isLoading) {
     return (
@@ -131,6 +135,8 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
         customVolumeControls={[]}
         showJumpControls={false}
         volume={1}
+        preload="metadata"
+        autoPlayAfterSrcChange={false}
       />
     </div>
   )
