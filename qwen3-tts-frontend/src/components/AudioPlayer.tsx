@@ -12,34 +12,15 @@ interface AudioPlayerProps {
   jobId: number
 }
 
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-}
-
 const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   const { t } = useTranslation('common')
   const [blobUrl, setBlobUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [useMobileMode, setUseMobileMode] = useState(false)
   const previousAudioUrlRef = useRef<string>('')
 
   useEffect(() => {
-    setUseMobileMode(isMobileDevice())
-  }, [])
-
-  useEffect(() => {
     if (!audioUrl || audioUrl === previousAudioUrlRef.current) return
-
-    if (useMobileMode) {
-      const token = localStorage.getItem('token')
-      const separator = audioUrl.includes('?') ? '&' : '?'
-      const urlWithToken = token ? `${audioUrl}${separator}token=${token}` : audioUrl
-      setBlobUrl(urlWithToken)
-      previousAudioUrlRef.current = audioUrl
-      setIsLoading(false)
-      return
-    }
 
     let active = true
     const prevBlobUrl = blobUrl
@@ -76,7 +57,7 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
     return () => {
       active = false
     }
-  }, [audioUrl, useMobileMode])
+  }, [audioUrl, blobUrl, t])
 
   useEffect(() => {
     return () => {
@@ -85,15 +66,11 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   }, [])
 
   const handleDownload = useCallback(() => {
-    if (useMobileMode) {
-      window.open(blobUrl || audioUrl, '_blank')
-    } else {
-      const link = document.createElement('a')
-      link.href = blobUrl || audioUrl
-      link.download = `tts-${jobId}-${Date.now()}.wav`
-      link.click()
-    }
-  }, [blobUrl, audioUrl, jobId, useMobileMode])
+    const link = document.createElement('a')
+    link.href = blobUrl || audioUrl
+    link.download = `tts-${jobId}-${Date.now()}.wav`
+    link.click()
+  }, [blobUrl, audioUrl, jobId])
 
   if (isLoading) {
     return (
