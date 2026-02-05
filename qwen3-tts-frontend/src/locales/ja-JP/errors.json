@@ -1,0 +1,42 @@
+{
+  "http": {
+    "400": "リクエストパラメータエラー",
+    "401": "認証されていません。ログインしてください",
+    "403": "アクセスが禁止されています",
+    "404": "リクエストされたリソースが存在しません",
+    "500": "サーバー内部エラー",
+    "502": "ゲートウェイエラー",
+    "503": "サービスが一時的に利用できません",
+    "default": "リクエストに失敗しました。後でもう一度お試しください"
+  },
+  "fieldNames": {
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "text": "テキスト",
+    "language": "言語",
+    "speaker": "話者",
+    "instruct": "感情指示",
+    "name": "名前",
+    "description": "説明",
+    "audio_file": "オーディオファイル",
+    "reference_audio": "参照オーディオ",
+    "reference_text": "参照テキスト",
+    "api_key": "APIキー",
+    "backend": "バックエンドサービス"
+  },
+  "validation": {
+    "required": "{{field}}を入力してください",
+    "minLength": "{{field}}は少なくとも{{min}}文字必要です",
+    "maxLength": "{{field}}は{{max}}文字を超えることはできません",
+    "invalid": "{{field}}の形式が正しくありません",
+    "notFound": "{{field}}が見つかりません",
+    "alreadyExists": "{{field}}は既に存在します",
+    "uploadFailed": "{{field}}のアップロードに失敗しました",
+    "fileTooLarge": "ファイルサイズは{{size}}MBを超えることはできません",
+    "invalidFileType": "サポートされていないファイルタイプです"
+  },
+  "networkError": "ネットワーク接続に失敗しました。ネットワークを確認してください",
+  "unknownError": "不明なエラー",
+  "operationFailed": "操作に失敗しました",
+  "tryAgain": "もう一度お試しください"
+}

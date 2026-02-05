@@ -1,0 +1,42 @@
+{
+  "http": {
+    "400": "Invalid request parameters",
+    "401": "Unauthorized, please login",
+    "403": "Access forbidden",
+    "404": "Requested resource not found",
+    "500": "Internal server error",
+    "502": "Gateway error",
+    "503": "Service temporarily unavailable",
+    "default": "Request failed, please try again later"
+  },
+  "fieldNames": {
+    "username": "Username",
+    "password": "Password",
+    "text": "Text",
+    "language": "Language",
+    "speaker": "Speaker",
+    "instruct": "Emotion instruction",
+    "name": "Name",
+    "description": "Description",
+    "audio_file": "Audio file",
+    "reference_audio": "Reference audio",
+    "reference_text": "Reference text",
+    "api_key": "API key",
+    "backend": "Backend service"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "minLength": "{{field}} must be at least {{min}} characters",
+    "maxLength": "{{field}} cannot exceed {{max}} characters",
+    "invalid": "{{field}} format is invalid",
+    "notFound": "{{field}} not found",
+    "alreadyExists": "{{field}} already exists",
+    "uploadFailed": "{{field}} upload failed",
+    "fileTooLarge": "File size cannot exceed {{size}}MB",
+    "invalidFileType": "Unsupported file type"
+  },
+  "networkError": "Network connection failed, please check your network",
+  "unknownError": "Unknown error",
+  "operationFailed": "Operation failed",
+  "tryAgain": "Please try again"
+}

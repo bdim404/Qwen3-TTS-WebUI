@@ -1,0 +1,12 @@
+{
+  "home": "首頁",
+  "settings": "設定",
+  "userManagement": "使用者管理",
+  "logout": "登出",
+  "login": "登入",
+  "toggleTheme": "切換主題",
+  "changeLanguage": "切換語言",
+  "customVoiceTab": "自訂",
+  "voiceDesignTab": "設計",
+  "voiceCloneTab": "複製"
+}

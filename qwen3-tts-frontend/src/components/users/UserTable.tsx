@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,10 +12,12 @@ interface UserTableProps {
 }
 
 export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps) {
+  const { t, i18n } = useTranslation(['user', 'common'])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-muted-foreground">加载中...</div>
+        <div className="text-muted-foreground">{t('common:loading')}</div>
       </div>
     )
   }
@@ -22,7 +25,7 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
   if (users.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-muted-foreground">暂无用户</div>
+        <div className="text-muted-foreground">{t('user:noUsers')}</div>
       </div>
     )
   }
@@ -34,13 +37,13 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
           <thead className="border-b">
             <tr className="text-left">
               <th className="px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">用户名</th>
-              <th className="px-4 py-3 font-medium">邮箱</th>
-              <th className="px-4 py-3 font-medium">状态</th>
-              <th className="px-4 py-3 font-medium">角色</th>
-              <th className="px-4 py-3 font-medium">权限</th>
-              <th className="px-4 py-3 font-medium">创建时间</th>
-              <th className="px-4 py-3 font-medium text-right">操作</th>
+              <th className="px-4 py-3 font-medium">{t('user:username')}</th>
+              <th className="px-4 py-3 font-medium">{t('user:email')}</th>
+              <th className="px-4 py-3 font-medium">{t('common:status')}</th>
+              <th className="px-4 py-3 font-medium">{t('user:role')}</th>
+              <th className="px-4 py-3 font-medium">{t('common:actions')}</th>
+              <th className="px-4 py-3 font-medium">{t('user:createdAt')}</th>
+              <th className="px-4 py-3 font-medium text-right">{t('common:actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -51,21 +54,21 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
                 <td className="px-4 py-3">{user.email}</td>
                 <td className="px-4 py-3">
                   <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                    {user.is_active ? '活跃' : '停用'}
+                    {user.is_active ? t('user:active') : t('user:inactive')}
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={user.is_superuser ? 'destructive' : 'outline'}>
-                    {user.is_superuser ? '超级管理员' : '普通用户'}
+                    {user.is_superuser ? t('user:superuser') : t('user:normalUser')}
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
                   {(user.is_superuser || user.can_use_local_model) && (
-                    <Badge variant="secondary">本地模型</Badge>
+                    <Badge variant="secondary">{t('user:localModelPermission')}</Badge>
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  {new Date(user.created_at).toLocaleString('zh-CN')}
+                  {new Date(user.created_at).toLocaleString(i18n.language)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
@@ -120,32 +123,32 @@ export function UserTable({ users, isLoading, onEdit, onDelete }: UserTableProps
                 <span>{user.id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">邮箱:</span>
+                <span className="text-muted-foreground">{t('user:email')}:</span>
                 <span className="truncate ml-2">{user.email}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">状态:</span>
+                <span className="text-muted-foreground">{t('common:status')}:</span>
                 <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                  {user.is_active ? '活跃' : '停用'}
+                  {user.is_active ? t('user:active') : t('user:inactive')}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">角色:</span>
+                <span className="text-muted-foreground">{t('user:role')}:</span>
                 <Badge variant={user.is_superuser ? 'destructive' : 'outline'}>
-                  {user.is_superuser ? '超级管理员' : '普通用户'}
+                  {user.is_superuser ? t('user:superuser') : t('user:normalUser')}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">权限:</span>
+                <span className="text-muted-foreground">{t('common:actions')}:</span>
                 {(user.is_superuser || user.can_use_local_model) ? (
-                  <Badge variant="secondary">本地模型</Badge>
+                  <Badge variant="secondary">{t('user:localModelPermission')}</Badge>
                 ) : (
-                  <span className="text-xs text-muted-foreground">无</span>
+                  <span className="text-xs text-muted-foreground">{t('user:noPermission')}</span>
                 )}
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">创建时间:</span>
-                <span className="text-xs">{new Date(user.created_at).toLocaleString('zh-CN')}</span>
+                <span className="text-muted-foreground">{t('user:createdAt')}:</span>
+                <span className="text-xs">{new Date(user.created_at).toLocaleString(i18n.language)}</span>
               </div>
             </div>
           </div>

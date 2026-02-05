@@ -1,0 +1,12 @@
+{
+  "home": "首页",
+  "settings": "设置",
+  "userManagement": "用户管理",
+  "logout": "退出登录",
+  "login": "登录",
+  "toggleTheme": "切换主题",
+  "changeLanguage": "切换语言",
+  "customVoiceTab": "自定义",
+  "voiceDesignTab": "设计",
+  "voiceCloneTab": "克隆"
+}

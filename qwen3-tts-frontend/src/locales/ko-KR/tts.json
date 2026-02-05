@@ -1,0 +1,80 @@
+{
+  "customVoice": "맞춤 음성",
+  "voiceDesign": "음성 디자인",
+  "voiceClone": "음성 복제",
+  "text": "텍스트",
+  "textPlaceholder": "합성할 텍스트를 입력하세요...",
+  "language": "언어",
+  "speaker": "화자",
+  "instruct": "감정 지시",
+  "instructPlaceholder": "예: 매우 기쁨, 조금 슬픔...",
+  "customSpeaker": "맞춤 화자",
+  "customSpeakerPlaceholder": "예: Vivian, Alice...",
+  "presetInstructs": "프리셋 감정",
+  "generate": "음성 생성",
+  "generating": "생성 중...",
+  "generationSuccess": "음성이 성공적으로 생성되었습니다",
+  "generationFailed": "음성 생성에 실패했습니다",
+  "audioPlayer": "오디오 플레이어",
+  "noAudio": "오디오 없음",
+  "downloadAudio": "오디오 다운로드",
+  "playAudio": "재생",
+  "pauseAudio": "일시정지",
+  "backend": "백엔드 서비스",
+  "localBackend": "로컬 모델",
+  "aliyunBackend": "Alibaba Cloud API",
+  "backendSwitched": "백엔드가 전환되었습니다",
+  "backendError": "백엔드 서비스 오류",
+  "languageLabel": "언어",
+  "speakerLabel": "화자",
+  "speakerPlaceholder": "화자 선택",
+  "textLabel": "합성 텍스트",
+  "instructLabel": "감정 가이던스 (선택사항)",
+  "instructPlaceholderDesign": "음성 디자인의 프리셋 가이던스 사용",
+  "instructPlaceholderDefault": "예: 부드럽고 배려심 있는, 느린 속도, 따뜻함이 가득한",
+  "advancedOptions": "고급 옵션",
+  "advancedOptionsTitle": "고급 매개변수 설정",
+  "advancedOptionsDescription": "생성 매개변수를 조정하여 오디오 품질 및 생성 길이를 제어합니다",
+  "creating": "생성 중...",
+  "taskCreated": "작업이 생성되었습니다",
+  "taskCreateFailed": "작업 생성에 실패했습니다",
+  "loadDataFailed": "데이터 로드에 실패했습니다",
+  "myVoiceDesigns": "내 음성 디자인",
+  "builtinSpeakers": "내장 화자",
+  "designDescriptionLabel": "음성 설명",
+  "designDescriptionPlaceholder": "예: 성숙한 남성, 낮고 자성적인, 권위적인",
+  "saveDesignButton": "음성 디자인 저장",
+  "saveDesignTitle": "음성 디자인 저장",
+  "saveDesignDescription": "현재 음성 디자인에 이름을 지정하고 저장하여 빠르게 사용할 수 있습니다",
+  "designNameLabel": "디자인 이름",
+  "designNamePlaceholder": "예: 자성적인 남성 목소리",
+  "preparing": "준비 중...",
+  "designSaved": "음성 디자인이 저장되었습니다",
+  "clonePrepared": "음성 복제 준비가 완료되었습니다",
+  "clonePrepareFailed": "복제 준비에 실패했지만 디자인은 저장되었습니다",
+  "saveFailed": "저장에 실패했습니다",
+  "fillDesignDescription": "음성 설명을 먼저 입력하세요",
+  "fillDesignName": "디자인 이름을 입력하세요",
+  "advancedParams": {
+    "maxNewTokens": {
+      "label": "최대 생성 길이",
+      "description": "생성되는 오디오의 최대 길이를 제어합니다. 값이 클수록 더 긴 오디오를 생성할 수 있지만 처리 시간도 증가합니다"
+    },
+    "temperature": {
+      "label": "온도",
+      "description": "생성의 무작위성을 제어합니다. 값이 높을수록 더 다양한 출력, 낮을수록 더 안정적이고 일관된 출력이 됩니다"
+    },
+    "topK": {
+      "label": "Top K",
+      "description": "샘플링 시 확률이 가장 높은 K개의 후보만 고려합니다. 값이 작을수록 확정적이고, 클수록 다양해집니다"
+    },
+    "topP": {
+      "label": "Top P (핵 샘플링)",
+      "description": "누적 확률 임계값. 누적 확률이 P에 도달하는 후보에서 샘플링합니다. 출력 다양성을 제어합니다"
+    },
+    "repetitionPenalty": {
+      "label": "반복 페널티",
+      "description": "반복적인 콘텐츠 생성을 억제합니다. 값이 클수록 반복을 더 피하지만, 과도하게 크면 자연스러움에 영향을 줄 수 있습니다"
+    }
+  }
+}

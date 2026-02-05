@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Upload, X, FileAudio } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,7 @@ interface FileUploaderProps {
 }
 
 export function FileUploader({ value, onChange, error }: FileUploaderProps) {
+  const { t } = useTranslation('voice')
   const inputRef = useRef<HTMLInputElement>(null)
   const { validateAudioFile } = useAudioValidation()
   const [isValidating, setIsValidating] = useState(false)
@@ -33,7 +35,7 @@ export function FileUploader({ value, onChange, error }: FileUploaderProps) {
       onChange(file)
       setAudioInfo({ duration: result.duration, size: file.size })
     } else {
-      toast.error(result.error || '文件验证失败')
+      toast.error(result.error || t('validationFailed'))
       e.target.value = ''
     }
   }
@@ -56,7 +58,7 @@ export function FileUploader({ value, onChange, error }: FileUploaderProps) {
           disabled={isValidating}
         >
           <Upload className="mr-2 h-4 w-4" />
-          {isValidating ? '验证中...' : '选择音频文件'}
+          {isValidating ? t('validating') : t('selectAudioFile')}
         </Button>
       ) : (
         <div className="flex items-center gap-2 p-3 border rounded">
@@ -65,7 +67,7 @@ export function FileUploader({ value, onChange, error }: FileUploaderProps) {
             <p className="text-sm font-medium truncate">{value.name}</p>
             {audioInfo && (
               <p className="text-xs text-muted-foreground">
-                {(audioInfo.size / 1024 / 1024).toFixed(2)} MB · {audioInfo.duration.toFixed(1)} 秒
+                {(audioInfo.size / 1024 / 1024).toFixed(2)} MB · {audioInfo.duration.toFixed(1)} {t('seconds')}
               </p>
             )}
           </div>

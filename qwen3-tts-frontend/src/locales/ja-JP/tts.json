@@ -1,0 +1,80 @@
+{
+  "customVoice": "カスタム音声",
+  "voiceDesign": "音声デザイン",
+  "voiceClone": "音声クローン",
+  "text": "テキスト",
+  "textPlaceholder": "合成するテキストを入力してください...",
+  "language": "言語",
+  "speaker": "話者",
+  "instruct": "感情指示",
+  "instructPlaceholder": "例：とても嬉しい、少し悲しい...",
+  "customSpeaker": "カスタム話者",
+  "customSpeakerPlaceholder": "例：Vivian、Alice...",
+  "presetInstructs": "プリセット感情",
+  "generate": "音声生成",
+  "generating": "生成中...",
+  "generationSuccess": "音声の生成に成功しました",
+  "generationFailed": "音声の生成に失敗しました",
+  "audioPlayer": "オーディオプレーヤー",
+  "noAudio": "オーディオがありません",
+  "downloadAudio": "オーディオをダウンロード",
+  "playAudio": "再生",
+  "pauseAudio": "一時停止",
+  "backend": "バックエンドサービス",
+  "localBackend": "ローカルモデル",
+  "aliyunBackend": "Alibaba Cloud API",
+  "backendSwitched": "バックエンドを切り替えました",
+  "backendError": "バックエンドサービスエラー",
+  "languageLabel": "言語",
+  "speakerLabel": "話者",
+  "speakerPlaceholder": "話者を選択",
+  "textLabel": "合成テキスト",
+  "instructLabel": "感情ガイダンス（オプション）",
+  "instructPlaceholderDesign": "音声デザインのプリセットガイダンスを使用",
+  "instructPlaceholderDefault": "例：優しく思いやりのある、ゆっくりとしたペース、温かみのある",
+  "advancedOptions": "詳細オプション",
+  "advancedOptionsTitle": "詳細パラメータ設定",
+  "advancedOptionsDescription": "生成パラメータを調整して、オーディオ品質と生成長を制御します",
+  "creating": "作成中...",
+  "taskCreated": "タスクを作成しました",
+  "taskCreateFailed": "タスクの作成に失敗しました",
+  "loadDataFailed": "データの読み込みに失敗しました",
+  "myVoiceDesigns": "マイ音声デザイン",
+  "builtinSpeakers": "組み込み話者",
+  "designDescriptionLabel": "音声説明",
+  "designDescriptionPlaceholder": "例：成熟した男性、低くて磁性的、権威的",
+  "saveDesignButton": "音声デザインを保存",
+  "saveDesignTitle": "音声デザインを保存",
+  "saveDesignDescription": "現在の音声デザインに名前を付けて保存し、今後すばやく使用できるようにします",
+  "designNameLabel": "デザイン名",
+  "designNamePlaceholder": "例：磁性的な男性の声",
+  "preparing": "準備中...",
+  "designSaved": "音声デザインを保存しました",
+  "clonePrepared": "音声クローンの準備が完了しました",
+  "clonePrepareFailed": "クローンの準備に失敗しましたが、デザインは保存されました",
+  "saveFailed": "保存に失敗しました",
+  "fillDesignDescription": "音声説明を入力してください",
+  "fillDesignName": "デザイン名を入力してください",
+  "advancedParams": {
+    "maxNewTokens": {
+      "label": "最大生成長",
+      "description": "生成されるオーディオの最大長を制御します。値が大きいほど長いオーディオを生成できますが、処理時間も増加します"
+    },
+    "temperature": {
+      "label": "温度",
+      "description": "生成のランダム性を制御します。値が高いほど多様な出力、低いほど安定した一貫性のある出力になります"
+    },
+    "topK": {
+      "label": "Top K",
+      "description": "サンプリング時に確率が最も高いK個の候補のみを考慮します。値が小さいほど確定的、大きいほど多様になります"
+    },
+    "topP": {
+      "label": "Top P (ニュークリアスサンプリング)",
+      "description": "累積確率の閾値。累積確率がPに達する候補からサンプリングします。出力の多様性を制御します"
+    },
+    "repetitionPenalty": {
+      "label": "繰り返しペナルティ",
+      "description": "繰り返しコンテンツの生成を抑制します。値が大きいほど繰り返しを避けますが、過度に大きいと自然さに影響する可能性があります"
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "customVoice": "自訂音色",
+  "voiceDesign": "音色設計",
+  "voiceClone": "音色複製",
+  "text": "文字",
+  "textPlaceholder": "請輸入要合成的文字...",
+  "language": "語言",
+  "speaker": "發言人",
+  "instruct": "情感指令",
+  "instructPlaceholder": "例如：非常開心、有點難過...",
+  "customSpeaker": "自訂發言人",
+  "customSpeakerPlaceholder": "例如：Vivian、Alice...",
+  "presetInstructs": "預設情感",
+  "generate": "生成語音",
+  "generating": "生成中...",
+  "generationSuccess": "語音生成成功",
+  "generationFailed": "語音生成失敗",
+  "audioPlayer": "音訊播放器",
+  "noAudio": "暫無音訊",
+  "downloadAudio": "下載音訊",
+  "playAudio": "播放",
+  "pauseAudio": "暫停",
+  "backend": "後端服務",
+  "localBackend": "本機模型",
+  "aliyunBackend": "阿里雲API",
+  "backendSwitched": "後端已切換",
+  "backendError": "後端服務錯誤",
+  "languageLabel": "語言",
+  "speakerLabel": "發音人",
+  "speakerPlaceholder": "選擇發音人",
+  "textLabel": "合成文字",
+  "instructLabel": "情緒指導（可選）",
+  "instructPlaceholderDesign": "已使用音色設計的預設指導",
+  "instructPlaceholderDefault": "例如：溫柔體貼，語速平緩，充滿關懷",
+  "advancedOptions": "進階選項",
+  "advancedOptionsTitle": "進階參數設定",
+  "advancedOptionsDescription": "調整生成參數以控制音訊品質和生成長度",
+  "creating": "建立中...",
+  "taskCreated": "任務已建立",
+  "taskCreateFailed": "建立任務失敗",
+  "loadDataFailed": "載入資料失敗",
+  "myVoiceDesigns": "我的音色設計",
+  "builtinSpeakers": "內建發音人",
+  "designDescriptionLabel": "音色描述",
+  "designDescriptionPlaceholder": "例如：成熟男性,低沉磁性,充滿權威感",
+  "saveDesignButton": "儲存音色設計",
+  "saveDesignTitle": "儲存音色設計",
+  "saveDesignDescription": "為目前音色設計命名並儲存，以便後續快速使用",
+  "designNameLabel": "設計名稱",
+  "designNamePlaceholder": "例如：磁性男聲",
+  "preparing": "準備中...",
+  "designSaved": "音色設計已儲存",
+  "clonePrepared": "音色複製準備完成",
+  "clonePrepareFailed": "準備複製失敗，但設計已儲存",
+  "saveFailed": "儲存失敗",
+  "fillDesignDescription": "請先填寫音色描述",
+  "fillDesignName": "請輸入設計名稱",
+  "advancedParams": {
+    "maxNewTokens": {
+      "label": "最大生成長度",
+      "description": "控制生成音訊的最大長度。值越大，可生成的音訊越長，但處理時間也會增加"
+    },
+    "temperature": {
+      "label": "溫度",
+      "description": "控制生成的隨機性。值越高生成越隨機多樣，值越低越穩定一致"
+    },
+    "topK": {
+      "label": "Top K",
+      "description": "採樣時只考慮概率最高的 K 個候選。值越小生成越確定，越大越多樣"
+    },
+    "topP": {
+      "label": "Top P (核採樣)",
+      "description": "累積概率閾值，只從累積概率達到 P 的候選中採樣。控制輸出多樣性"
+    },
+    "repetitionPenalty": {
+      "label": "重複懲罰",
+      "description": "懲罰重複內容的生成。值越大越避免重複，但過大可能影響自然度"
+    }
+  }
+}

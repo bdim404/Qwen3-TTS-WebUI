@@ -1,0 +1,12 @@
+{
+  "home": "Home",
+  "settings": "Settings",
+  "userManagement": "User Management",
+  "logout": "Logout",
+  "login": "Login",
+  "toggleTheme": "Toggle Theme",
+  "changeLanguage": "Change Language",
+  "customVoiceTab": "Custom",
+  "voiceDesignTab": "Design",
+  "voiceCloneTab": "Clone"
+}

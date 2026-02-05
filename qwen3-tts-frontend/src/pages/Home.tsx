@@ -1,4 +1,5 @@
 import { useState, useRef, lazy, Suspense, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navbar } from '@/components/Navbar'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -15,6 +16,7 @@ const VoiceDesignForm = lazy(() => import('@/components/tts/VoiceDesignForm'))
 const VoiceCloneForm = lazy(() => import('@/components/tts/VoiceCloneForm'))
 
 function Home() {
+  const { t } = useTranslation('nav')
   const [currentTab, setCurrentTab] = useState('custom-voice')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
@@ -52,15 +54,15 @@ function Home() {
                 <TabsList className="grid w-full grid-cols-3 h-9">
                   <TabsTrigger value="custom-voice" variant="default">
                     <User className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">自定义</span>
+                    <span className="hidden md:inline">{t('customVoiceTab')}</span>
                   </TabsTrigger>
                   <TabsTrigger value="voice-design" variant="secondary">
                     <Palette className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">设计</span>
+                    <span className="hidden md:inline">{t('voiceDesignTab')}</span>
                   </TabsTrigger>
                   <TabsTrigger value="voice-clone" variant="outline">
                     <Copy className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">克隆</span>
+                    <span className="hidden md:inline">{t('voiceCloneTab')}</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

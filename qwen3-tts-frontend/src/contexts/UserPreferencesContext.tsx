@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { authApi } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserPreferences } from '@/types/auth'
+import i18n from '@/locales'
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null
@@ -10,6 +11,7 @@ interface UserPreferencesContextType {
   hasAliyunKey: boolean
   refetchPreferences: () => Promise<void>
   isBackendAvailable: (backend: string) => boolean
+  changeLanguage: (lang: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR') => Promise<void>
 }
 
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined)
@@ -35,6 +37,10 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
       setPreferences(prefs)
       setHasAliyunKey(keyVerification.valid)
+
+      if (prefs.language) {
+        i18n.changeLanguage(prefs.language)
+      }
 
       const cacheKey = `user_preferences_${user.id}`
       localStorage.setItem(cacheKey, JSON.stringify(prefs))
@@ -80,6 +86,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     return preferences.available_backends.includes(backend)
   }
 
+  const changeLanguage = async (lang: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR') => {
+    await i18n.changeLanguage(lang)
+    await updatePreferences({ language: lang })
+  }
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -89,6 +100,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         hasAliyunKey,
         refetchPreferences: fetchPreferences,
         isBackendAvailable,
+        changeLanguage,
       }}
     >
       {children}

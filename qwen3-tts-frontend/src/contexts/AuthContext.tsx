@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '@/lib/api'
 import type { User, LoginRequest, AuthState } from '@/types/auth'
 
@@ -12,6 +13,7 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation('auth')
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -49,10 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await authApi.getCurrentUser()
       setUser(currentUser)
 
-      toast.success('登录成功')
+      toast.success(t('loginSuccess'))
       navigate('/')
     } catch (error: any) {
-      const message = error.response?.data?.detail || '登录失败，请检查用户名和密码'
+      const message = error.response?.data?.detail || t('loginFailedCheckCredentials')
       toast.error(message)
       throw error
     }
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token')
     setToken(null)
     setUser(null)
-    toast.success('已退出登录')
+    toast.success(t('logoutSuccess'))
     navigate('/login')
   }
 

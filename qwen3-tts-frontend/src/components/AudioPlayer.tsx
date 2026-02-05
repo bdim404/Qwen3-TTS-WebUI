@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import AudioPlayerLib from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ const isMobileDevice = () => {
 }
 
 const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
+  const { t } = useTranslation('common')
   const [blobUrl, setBlobUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -60,7 +62,7 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
       } catch (error) {
         console.error("Failed to load audio:", error)
         if (active) {
-          setLoadError('Failed to load audio')
+          setLoadError(t('failedToLoadAudio'))
         }
       } finally {
         if (active) {
@@ -92,7 +94,7 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-4 border rounded-lg">
-        <span className="text-sm text-muted-foreground">Loading...</span>
+        <span className="text-sm text-muted-foreground">{t('loadingAudio')}</span>
       </div>
     )
   }

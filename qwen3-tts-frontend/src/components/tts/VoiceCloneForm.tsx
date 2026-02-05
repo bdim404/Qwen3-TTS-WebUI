@@ -2,6 +2,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useEffect, useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,27 +22,45 @@ import { AudioPlayer } from '@/components/AudioPlayer'
 import { FileUploader } from '@/components/FileUploader'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { PresetSelector } from '@/components/PresetSelector'
-import { PRESET_REF_TEXTS, ADVANCED_PARAMS_INFO } from '@/lib/constants'
 import type { Language } from '@/types/tts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const formSchema = z.object({
-  text: z.string().min(1, '请输入要合成的文本').max(5000, '文本长度不能超过 5000 字符'),
-  language: z.string().optional(),
-  ref_audio: z.instanceof(File, { message: '请上传参考音频' }),
-  ref_text: z.string().optional(),
-  use_cache: z.boolean().optional(),
-  x_vector_only_mode: z.boolean().optional(),
-  max_new_tokens: z.number().min(1).max(10000).optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  top_k: z.number().min(1).max(100).optional(),
-  top_p: z.number().min(0).max(1).optional(),
-  repetition_penalty: z.number().min(0).max(2).optional(),
-})
-
-type FormData = z.infer<typeof formSchema>
+type FormData = {
+  text: string
+  language?: string
+  ref_audio: File
+  ref_text?: string
+  use_cache?: boolean
+  x_vector_only_mode?: boolean
+  max_new_tokens?: number
+  temperature?: number
+  top_k?: number
+  top_p?: number
+  repetition_penalty?: number
+}
 
 function VoiceCloneForm() {
+  const { t } = useTranslation('tts')
+  const { t: tCommon } = useTranslation('common')
+  const { t: tVoice } = useTranslation('voice')
+  const { t: tErrors } = useTranslation('errors')
+  const { t: tConstants } = useTranslation('constants')
+
+  const PRESET_REF_TEXTS = useMemo(() => tConstants('presetRefTexts', { returnObjects: true }) as Array<{ label: string; text: string }>, [tConstants])
+
+  const formSchema = z.object({
+    text: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.text') })).max(5000, tErrors('validation.maxLength', { field: tErrors('fieldNames.text'), max: 5000 })),
+    language: z.string().optional(),
+    ref_audio: z.instanceof(File, { message: tErrors('validation.required', { field: tErrors('fieldNames.reference_audio') }) }),
+    ref_text: z.string().optional(),
+    use_cache: z.boolean().optional(),
+    x_vector_only_mode: z.boolean().optional(),
+    max_new_tokens: z.number().min(1).max(10000).optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    top_k: z.number().min(1).max(100).optional(),
+    top_p: z.number().min(0).max(1).optional(),
+    repetition_penalty: z.number().min(0).max(2).optional(),
+  })
   const [languages, setLanguages] = useState<Language[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
@@ -84,11 +103,11 @@ function VoiceCloneForm() {
         const langs = await ttsApi.getLanguages()
         setLanguages(langs)
       } catch (error) {
-        toast.error('加载数据失败')
+        toast.error(t('loadDataFailed'))
       }
     }
     fetchData()
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (inputTab === 'record' && PRESET_REF_TEXTS.length > 0) {
@@ -96,7 +115,7 @@ function VoiceCloneForm() {
     } else if (inputTab === 'upload') {
       setValue('ref_text', '')
     }
-  }, [inputTab])
+  }, [inputTab, setValue])
 
   const handleNextStep = async () => {
     // Validate step 1 fields
@@ -113,13 +132,13 @@ function VoiceCloneForm() {
         ...data,
         ref_audio: data.ref_audio,
       })
-      toast.success('任务已创建')
+      toast.success(t('taskCreated'))
       startPolling(result.job_id)
       try {
         await refresh()
       } catch { }
     } catch (error) {
-      toast.error('创建任务失败')
+      toast.error(t('taskCreateFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -136,12 +155,12 @@ function VoiceCloneForm() {
       <div className="flex items-center justify-center space-x-4 mb-6">
         <div className={`flex items-center space-x-2 ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === 1 ? 'border-primary bg-primary/10' : 'border-muted'}`}>1</div>
-          <span className="text-sm font-medium">音频素材</span>
+          <span className="text-sm font-medium">{tVoice('step1Title')}</span>
         </div>
         <div className="w-8 h-[2px] bg-muted" />
         <div className={`flex items-center space-x-2 ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === 2 ? 'border-primary bg-primary/10' : 'border-muted'}`}>2</div>
-          <span className="text-sm font-medium">合成设置</span>
+          <span className="text-sm font-medium">{tVoice('step2Title')}</span>
         </div>
       </div>
 
@@ -151,17 +170,17 @@ function VoiceCloneForm() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              上传音频
+              {tVoice('uploadTab')}
             </TabsTrigger>
             <TabsTrigger value="record" className="flex items-center gap-2">
               <Mic className="h-4 w-4" />
-              在线录制
+              {tVoice('recordTab')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-4 mt-4">
             <div className="space-y-0.5">
-              <Label>参考音频文件</Label>
+              <Label>{tVoice('refAudioLabel')}</Label>
               <Controller
                 name="ref_audio"
                 control={control}
@@ -175,10 +194,10 @@ function VoiceCloneForm() {
               />
             </div>
             <div className="space-y-0.5">
-              <Label>参考文稿（可选，提高准确率）</Label>
+              <Label>{tVoice('refTextLabel')}</Label>
               <Textarea
                 {...register('ref_text')}
-                placeholder="参考音频对应的文本内容..."
+                placeholder={tVoice('refTextPlaceholder')}
                 className="min-h-[100px]"
               />
               <PresetSelector
@@ -188,14 +207,14 @@ function VoiceCloneForm() {
             </div>
 
             <Button type="button" className="w-full mt-6" onClick={handleNextStep}>
-              下一步
+              {tVoice('nextStep')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </TabsContent>
 
           <TabsContent value="record" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label className="text-base font-medium">请朗读以下任一段落：</Label>
+              <Label className="text-base font-medium">{tVoice('readPrompt')}</Label>
               <div className="grid grid-cols-3 gap-2">
                 {PRESET_REF_TEXTS.map((preset, i) => {
                   const isSelected = watch('ref_text') === preset.text
@@ -213,10 +232,10 @@ function VoiceCloneForm() {
                 })}
               </div>
               <div className="space-y-0.5 pt-2">
-                <Label>当前参考文本</Label>
+                <Label>{tVoice('currentRefText')}</Label>
                 <Textarea
                   {...register('ref_text')}
-                  placeholder="选中的文本将显示在这里..."
+                  placeholder={tVoice('currentRefTextPlaceholder')}
                   className="min-h-[80px]"
                 />
               </div>
@@ -227,7 +246,7 @@ function VoiceCloneForm() {
               <div className="space-y-3">
                 {watch('ref_audio') && (
                   <Button type="button" className="w-full" onClick={handleNextStep}>
-                    下一步
+                    {tVoice('nextStep')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 )}
@@ -254,7 +273,7 @@ function VoiceCloneForm() {
       <div className={step === 2 ? 'block space-y-4' : 'hidden'}>
         {/* Step 2: Synthesis Options */}
         <div className="space-y-0.5">
-          <IconLabel icon={Globe2} tooltip="语言（可选）" />
+          <IconLabel icon={Globe2} tooltip={tVoice('languageOptional')} />
           <Select
             value={watch('language')}
             onValueChange={(value: string) => setValue('language', value)}
@@ -265,7 +284,7 @@ function VoiceCloneForm() {
             <SelectContent>
               {languages.map((lang) => (
                 <SelectItem key={lang.code} value={lang.code}>
-                  {lang.name}
+                  {tConstants(`languages.${lang.code}`, { defaultValue: lang.name })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -273,10 +292,10 @@ function VoiceCloneForm() {
         </div>
 
         <div className="space-y-0.5">
-          <IconLabel icon={Type} tooltip="合成文本" required />
+          <IconLabel icon={Type} tooltip={t('textLabel')} required />
           <Textarea
             {...register('text')}
-            placeholder="输入要合成的文本..."
+            placeholder={t('textPlaceholder')}
             className="min-h-[120px]"
           />
           <PresetSelector
@@ -296,7 +315,7 @@ function VoiceCloneForm() {
               onCheckedChange={(c) => setValue('x_vector_only_mode', c as boolean)}
             />
             <Label htmlFor="x_vector_only_mode" className="text-sm font-normal cursor-pointer">
-              快速模式
+              {tVoice('fastMode')}
             </Label>
           </div>
 
@@ -307,7 +326,7 @@ function VoiceCloneForm() {
               onCheckedChange={(c) => setValue('use_cache', c as boolean)}
             />
             <Label htmlFor="use_cache" className="text-sm font-normal cursor-pointer">
-              使用缓存
+              {tVoice('useCache')}
             </Label>
           </div>
         </div>
@@ -323,18 +342,18 @@ function VoiceCloneForm() {
           <DialogTrigger asChild>
             <Button type="button" variant="outline" className="w-full">
               <Settings className="mr-2 h-4 w-4" />
-              高级选项
+              {t('advancedOptions')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>高级参数设置</DialogTitle>
-              <DialogDescription>调整生成参数以控制音频质量和生成长度</DialogDescription>
+              <DialogTitle>{t('advancedOptionsTitle')}</DialogTitle>
+              <DialogDescription>{t('advancedOptionsDescription')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="dialog-max_new_tokens">
-                  {ADVANCED_PARAMS_INFO.max_new_tokens.label}
+                  {t('advancedParams.maxNewTokens.label')}
                 </Label>
                 <Input
                   id="dialog-max_new_tokens"
@@ -348,7 +367,7 @@ function VoiceCloneForm() {
                   })}
                 />
                 <p className="text-sm text-muted-foreground">
-                  {ADVANCED_PARAMS_INFO.max_new_tokens.description}
+                  {t('advancedParams.maxNewTokens.description')}
                 </p>
               </div>
             </div>
@@ -360,7 +379,7 @@ function VoiceCloneForm() {
                   setAdvancedOpen(false)
                 }}
               >
-                取消
+                {tCommon('cancel')}
               </Button>
               <Button
                 type="button"
@@ -369,7 +388,7 @@ function VoiceCloneForm() {
                   setAdvancedOpen(false)
                 }}
               >
-                确定
+                {tCommon('ok')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -378,18 +397,18 @@ function VoiceCloneForm() {
         <div className="flex gap-3 pt-4">
           <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            上一步
+            {tVoice('prevStep')}
           </Button>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button type="submit" className="flex-1" disabled={isLoading || isPolling}>
                   <Play className="mr-2 h-4 w-4" />
-                  {isLoading ? '创建中...' : '生成语音'}
+                  {isLoading ? t('creating') : t('generate')}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>生成语音</p>
+                <p>{t('generate')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

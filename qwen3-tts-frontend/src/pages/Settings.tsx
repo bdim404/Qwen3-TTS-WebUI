@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, Trash2, Check, X } from 'lucide-react'
 import { Navbar } from '@/components/Navbar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,19 +25,21 @@ import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { authApi } from '@/lib/api'
 import type { PasswordChangeRequest } from '@/types/auth'
 
-const apiKeySchema = z.object({
-  api_key: z.string().min(1, '请输入 API 密钥'),
+const createApiKeySchema = (t: (key: string) => string) => z.object({
+  api_key: z.string().min(1, t('auth:validation.apiKeyRequired')),
 })
 
-type ApiKeyFormValues = z.infer<typeof apiKeySchema>
-
 export default function Settings() {
+  const { t } = useTranslation(['settings', 'auth', 'user', 'common'])
   const { user } = useAuth()
   const { preferences, hasAliyunKey, updatePreferences, refetchPreferences, isBackendAvailable } = useUserPreferences()
   const [showApiKey, setShowApiKey] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+
+  const apiKeySchema = createApiKeySchema(t)
+  type ApiKeyFormValues = z.infer<typeof apiKeySchema>
 
   const form = useForm<ApiKeyFormValues>({
     resolver: zodResolver(apiKeySchema),
@@ -48,9 +51,9 @@ export default function Settings() {
   const handleBackendChange = async (value: string) => {
     try {
       await updatePreferences({ default_backend: value as 'local' | 'aliyun' })
-      toast.success(`已切换到${value === 'local' ? '本地' : '阿里云'}模式`)
+      toast.success(value === 'local' ? t('settings:switchedToLocal') : t('settings:switchedToAliyun'))
     } catch (error) {
-      toast.error('保存失败，请重试')
+      toast.error(t('settings:saveFailed'))
     }
   }
 
@@ -60,9 +63,9 @@ export default function Settings() {
       await authApi.setAliyunKey(data.api_key)
       await refetchPreferences()
       form.reset()
-      toast.success('API 密钥已更新并验证成功')
+      toast.success(t('settings:apiKeyUpdated'))
     } catch (error: any) {
-      toast.error(error.message || 'API 密钥验证失败')
+      toast.error(error.message || t('settings:apiKeyVerifyFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -73,20 +76,20 @@ export default function Settings() {
       setIsLoading(true)
       const result = await authApi.verifyAliyunKey()
       if (result.valid) {
-        toast.success('API 密钥验证成功')
+        toast.success(t('settings:apiKeySaved'))
       } else {
-        toast.error(result.message || 'API 密钥无效')
+        toast.error(result.message || t('settings:apiKeyVerifyFailed'))
       }
       await refetchPreferences()
     } catch (error: any) {
-      toast.error(error.message || '验证失败')
+      toast.error(error.message || t('settings:verifyFailed'))
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleDeleteKey = async () => {
-    if (!confirm('确定要删除阿里云 API 密钥吗？删除后将自动切换到本地模式。')) {
+    if (!confirm(t('settings:deleteKeyConfirm'))) {
       return
     }
 
@@ -94,9 +97,9 @@ export default function Settings() {
       setIsLoading(true)
       await authApi.deleteAliyunKey()
       await refetchPreferences()
-      toast.success('API 密钥已删除，已切换到本地模式')
+      toast.success(t('settings:keyDeleted'))
     } catch (error: any) {
-      toast.error(error.message || '删除失败')
+      toast.error(error.message || t('settings:deleteFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -106,10 +109,10 @@ export default function Settings() {
     try {
       setIsPasswordLoading(true)
       await authApi.changePassword(data)
-      toast.success('密码修改成功')
+      toast.success(t('settings:passwordChangeSuccess'))
       setShowPasswordDialog(false)
     } catch (error: any) {
-      toast.error(error.message || '密码修改失败')
+      toast.error(error.message || t('settings:passwordChangeFailed'))
       throw error
     } finally {
       setIsPasswordLoading(false)
@@ -127,14 +130,14 @@ export default function Settings() {
       <main className="flex-1 overflow-y-auto container mx-auto p-3 sm:p-6 max-w-[800px]">
         <div className="space-y-3 sm:space-y-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">设置</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">管理您的账户设置和偏好</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">{t('settings:title')}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">{t('settings:description')}</p>
           </div>
 
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">后端偏好</CardTitle>
-              <CardDescription className="text-sm">选择默认的 TTS 后端模式</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">{t('settings:backendPreference')}</CardTitle>
+              <CardDescription className="text-sm">{t('settings:backendPreferenceDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
               <RadioGroup
@@ -150,11 +153,11 @@ export default function Settings() {
                     disabled={!isBackendAvailable('local')}
                   />
                   <Label htmlFor="backend-local" className="flex-1 cursor-pointer">
-                    <div className="font-medium text-sm sm:text-base">本地模型</div>
+                    <div className="font-medium text-sm sm:text-base">{t('settings:localModel')}</div>
                     <div className="text-xs sm:text-sm text-muted-foreground">
                       {!isBackendAvailable('local')
-                        ? '请联系管理员开启使用本地模型权限'
-                        : '免费使用本地 Qwen3-TTS 模型'
+                        ? t('settings:localModelNoPermission')
+                        : t('settings:localModelDescription')
                       }
                     </div>
                   </Label>
@@ -162,8 +165,8 @@ export default function Settings() {
                 <div className="flex items-center space-x-2 sm:space-x-3 border rounded-lg p-3 sm:p-4 hover:bg-accent/50 cursor-pointer">
                   <RadioGroupItem value="aliyun" id="backend-aliyun" />
                   <Label htmlFor="backend-aliyun" className="flex-1 cursor-pointer">
-                    <div className="font-medium text-sm sm:text-base">阿里云 API</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">使用阿里云 TTS 服务</div>
+                    <div className="font-medium text-sm sm:text-base">{t('settings:aliyunApi')}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">{t('settings:aliyunApiDescription')}</div>
                   </Label>
                 </div>
               </RadioGroup>
@@ -172,21 +175,21 @@ export default function Settings() {
 
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">阿里云 API 密钥</CardTitle>
-              <CardDescription className="text-sm">管理您的阿里云 API 密钥配置</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">{t('settings:aliyunApiKey')}</CardTitle>
+              <CardDescription className="text-sm">{t('settings:apiKeyDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
               <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <span className="text-muted-foreground">当前状态:</span>
+                <span className="text-muted-foreground">{t('settings:currentStatus')}</span>
                 {hasAliyunKey ? (
                   <span className="flex items-center gap-1 text-green-600">
                     <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                    已配置并有效
+                    {t('settings:configured')}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                    未配置
+                    {t('settings:notConfigured')}
                   </span>
                 )}
               </div>
@@ -198,7 +201,7 @@ export default function Settings() {
                     name="api_key"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm sm:text-base">API 密钥</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">{t('settings:apiKey')}</FormLabel>
                         <FormControl>
                           <div className="flex gap-2">
                             <div className="relative flex-1">
@@ -231,7 +234,7 @@ export default function Settings() {
 
                   <div className="flex flex-wrap gap-2">
                     <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-initial">
-                      {isLoading ? '更新中...' : hasAliyunKey ? '更新密钥' : '添加密钥'}
+                      {isLoading ? t('settings:updating') : hasAliyunKey ? t('settings:updateKey') : t('settings:addKey')}
                     </Button>
                     {hasAliyunKey && (
                       <>
@@ -242,7 +245,7 @@ export default function Settings() {
                           disabled={isLoading}
                           className="flex-1 sm:flex-initial"
                         >
-                          验证密钥
+                          {t('settings:verifyKey')}
                         </Button>
                         <Button
                           type="button"
@@ -253,7 +256,7 @@ export default function Settings() {
                           className="sm:w-auto sm:px-4"
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="hidden sm:inline sm:ml-2">删除密钥</span>
+                          <span className="hidden sm:inline sm:ml-2">{t('settings:deleteKey')}</span>
                         </Button>
                       </>
                     )}
@@ -265,20 +268,20 @@ export default function Settings() {
 
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">账户信息</CardTitle>
-              <CardDescription className="text-sm">您的账户基本信息</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">{t('settings:accountInfo')}</CardTitle>
+              <CardDescription className="text-sm">{t('settings:accountInfoDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
               <div className="grid gap-1.5 sm:gap-2">
-                <Label className="text-sm sm:text-base">用户名</Label>
+                <Label className="text-sm sm:text-base">{t('user:username')}</Label>
                 <Input value={user.username} disabled />
               </div>
               <div className="grid gap-1.5 sm:gap-2">
-                <Label className="text-sm sm:text-base">邮箱</Label>
+                <Label className="text-sm sm:text-base">{t('settings:email')}</Label>
                 <Input value={user.email} disabled />
               </div>
               <div>
-                <Button onClick={() => setShowPasswordDialog(true)} className="w-full sm:w-auto">修改密码</Button>
+                <Button onClick={() => setShowPasswordDialog(true)} className="w-full sm:w-auto">{t('settings:changePassword')}</Button>
               </div>
             </CardContent>
           </Card>

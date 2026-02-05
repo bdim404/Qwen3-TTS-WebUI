@@ -1,0 +1,80 @@
+{
+  "customVoice": "Custom Voice",
+  "voiceDesign": "Voice Design",
+  "voiceClone": "Voice Clone",
+  "text": "Text",
+  "textPlaceholder": "Enter text to synthesize...",
+  "language": "Language",
+  "speaker": "Speaker",
+  "instruct": "Emotion Instruction",
+  "instructPlaceholder": "e.g., very happy, a bit sad...",
+  "customSpeaker": "Custom Speaker",
+  "customSpeakerPlaceholder": "e.g., Vivian, Alice...",
+  "presetInstructs": "Preset Emotions",
+  "generate": "Generate Speech",
+  "generating": "Generating...",
+  "generationSuccess": "Speech generated successfully",
+  "generationFailed": "Speech generation failed",
+  "audioPlayer": "Audio Player",
+  "noAudio": "No audio",
+  "downloadAudio": "Download Audio",
+  "playAudio": "Play",
+  "pauseAudio": "Pause",
+  "backend": "Backend Service",
+  "localBackend": "Local Model",
+  "aliyunBackend": "Aliyun API",
+  "backendSwitched": "Backend switched",
+  "backendError": "Backend service error",
+  "languageLabel": "Language",
+  "speakerLabel": "Speaker",
+  "speakerPlaceholder": "Select speaker",
+  "textLabel": "Text to synthesize",
+  "instructLabel": "Emotion guidance (optional)",
+  "instructPlaceholderDesign": "Using preset guidance from voice design",
+  "instructPlaceholderDefault": "e.g., gentle and caring, slow pace, full of warmth",
+  "advancedOptions": "Advanced Options",
+  "advancedOptionsTitle": "Advanced Parameter Settings",
+  "advancedOptionsDescription": "Adjust generation parameters to control audio quality and generation length",
+  "creating": "Creating...",
+  "taskCreated": "Task created",
+  "taskCreateFailed": "Failed to create task",
+  "loadDataFailed": "Failed to load data",
+  "myVoiceDesigns": "My Voice Designs",
+  "builtinSpeakers": "Built-in Speakers",
+  "designDescriptionLabel": "Voice description",
+  "designDescriptionPlaceholder": "e.g., Mature male, deep and magnetic, authoritative",
+  "saveDesignButton": "Save Voice Design",
+  "saveDesignTitle": "Save Voice Design",
+  "saveDesignDescription": "Name and save the current voice design for quick future use",
+  "designNameLabel": "Design name",
+  "designNamePlaceholder": "e.g., Magnetic Male Voice",
+  "preparing": "Preparing...",
+  "designSaved": "Voice design saved",
+  "clonePrepared": "Voice clone preparation completed",
+  "clonePrepareFailed": "Clone preparation failed, but design saved",
+  "saveFailed": "Save failed",
+  "fillDesignDescription": "Please fill in voice description first",
+  "fillDesignName": "Please enter design name",
+  "advancedParams": {
+    "maxNewTokens": {
+      "label": "Max Generation Length",
+      "description": "Controls the maximum length of generated audio. Higher values allow longer audio but increase processing time"
+    },
+    "temperature": {
+      "label": "Temperature",
+      "description": "Controls generation randomness. Higher values produce more varied output, lower values are more stable and consistent"
+    },
+    "topK": {
+      "label": "Top K",
+      "description": "Only considers the K most probable candidates during sampling. Smaller values are more deterministic, larger values are more diverse"
+    },
+    "topP": {
+      "label": "Top P (Nucleus Sampling)",
+      "description": "Cumulative probability threshold for sampling. Controls output diversity by sampling from candidates with cumulative probability up to P"
+    },
+    "repetitionPenalty": {
+      "label": "Repetition Penalty",
+      "description": "Penalizes repetitive content generation. Higher values avoid repetition more, but excessive values may affect naturalness"
+    }
+  }
+}

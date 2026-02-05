@@ -35,4 +35,5 @@ export interface UserPreferences {
   default_backend: 'local' | 'aliyun'
   onboarding_completed: boolean
   available_backends?: string[]
+  language?: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR'
 }

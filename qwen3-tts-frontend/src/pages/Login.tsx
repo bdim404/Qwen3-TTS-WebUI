@@ -1,5 +1,6 @@
 import { useForm, type ControllerRenderProps } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,19 +22,23 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 
-const loginSchema = z.object({
-  username: z
-    .string()
-    .min(3, '用户名至少需要 3 个字符')
-    .max(20, '用户名不能超过 20 个字符'),
-  password: z.string().min(8, '密码至少需要 8 个字符'),
-})
-
-type LoginFormValues = z.infer<typeof loginSchema>
+type LoginFormValues = {
+  username: string
+  password: string
+}
 
 function Login() {
   const { login } = useAuth()
+  const { t } = useTranslation('auth')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const loginSchema = z.object({
+    username: z
+      .string()
+      .min(3, t('validation.usernameMinLength', { min: 3 }))
+      .max(20, t('validation.usernameMaxLength', { max: 20 })),
+    password: z.string().min(8, t('validation.passwordMinLength', { min: 8 })),
+  })
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -58,8 +63,8 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>登录</CardTitle>
-          <CardDescription>登录到 Qwen3-TTS-WebUI 系统</CardDescription>
+          <CardTitle>{t('login')}</CardTitle>
+          <CardDescription>{t('loginPrompt')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -69,9 +74,9 @@ function Login() {
                 name="username"
                 render={({ field }: { field: ControllerRenderProps<LoginFormValues, 'username'> }) => (
                   <FormItem>
-                    <FormLabel>用户名</FormLabel>
+                    <FormLabel>{t('username')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入用户名" {...field} />
+                      <Input placeholder={t('usernamePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -82,11 +87,11 @@ function Login() {
                 name="password"
                 render={({ field }: { field: ControllerRenderProps<LoginFormValues, 'password'> }) => (
                   <FormItem>
-                    <FormLabel>密码</FormLabel>
+                    <FormLabel>{t('password')}</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="请输入密码"
+                        placeholder={t('passwordPlaceholder')}
                         {...field}
                       />
                     </FormControl>
@@ -95,7 +100,7 @@ function Login() {
                 )}
               />
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? '登录中...' : '登录'}
+                {isSubmitting ? t('loggingIn') : t('loginButton')}
               </Button>
             </form>
           </Form>

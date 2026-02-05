@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -23,22 +24,20 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { User } from '@/types/auth'
 
-const userFormSchema = z.object({
-  username: z.string().min(3, '用户名至少3个字符').max(20, '用户名最多20个字符'),
-  email: z.string().email('请输入有效的邮箱地址'),
+const createUserFormSchema = (t: (key: string) => string) => z.object({
+  username: z.string().min(3, t('user:validation.usernameMinLength')).max(20, t('user:validation.usernameMaxLength')),
+  email: z.string().email(t('user:validation.emailInvalid')),
   password: z.string().optional(),
   is_active: z.boolean(),
   is_superuser: z.boolean(),
   can_use_local_model: z.boolean(),
 })
 
-type UserFormValues = z.infer<typeof userFormSchema>
-
 interface UserDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   user?: User | null
-  onSubmit: (data: UserFormValues) => Promise<void>
+  onSubmit: (data: any) => Promise<void>
   isLoading: boolean
 }
 
@@ -49,7 +48,11 @@ export function UserDialog({
   onSubmit,
   isLoading,
 }: UserDialogProps) {
+  const { t } = useTranslation(['user', 'common'])
   const isEditing = !!user
+
+  const userFormSchema = createUserFormSchema(t)
+  type UserFormValues = z.infer<typeof userFormSchema>
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -94,9 +97,9 @@ export function UserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? '编辑用户' : '创建用户'}</DialogTitle>
+          <DialogTitle>{isEditing ? t('user:editUserDialog') : t('user:createUserDialog')}</DialogTitle>
           <DialogDescription>
-            {isEditing ? '修改用户信息和权限设置' : '创建新用户并配置基本信息'}
+            {isEditing ? t('user:editUserDescription') : t('user:createUserDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,7 +110,7 @@ export function UserDialog({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>用户名</FormLabel>
+                  <FormLabel>{t('user:username')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -121,7 +124,7 @@ export function UserDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>邮箱</FormLabel>
+                  <FormLabel>{t('user:email')}</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} />
                   </FormControl>
@@ -136,7 +139,7 @@ export function UserDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    密码{isEditing && ' (留空则不修改)'}
+                    {isEditing ? t('user:passwordOptional') : t('user:password')}
                   </FormLabel>
                   <FormControl>
                     <Input type="password" {...field} />
@@ -158,7 +161,7 @@ export function UserDialog({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>激活状态</FormLabel>
+                    <FormLabel>{t('user:isActive')}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -176,7 +179,7 @@ export function UserDialog({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>超级管理员</FormLabel>
+                    <FormLabel>{t('user:isSuperuser')}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -194,9 +197,9 @@ export function UserDialog({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>本地模型权限</FormLabel>
+                    <FormLabel>{t('user:canUseLocalModel')}</FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      允许用户使用本地 TTS 模型
+                      {t('user:canUseLocalModelDescription')}
                     </p>
                   </div>
                 </FormItem>
@@ -211,10 +214,10 @@ export function UserDialog({
                 disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                取消
+                {t('common:cancel')}
               </Button>
               <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-                {isLoading ? '保存中...' : '保存'}
+                {isLoading ? t('user:saving') : t('common:save')}
               </Button>
             </DialogFooter>
           </form>

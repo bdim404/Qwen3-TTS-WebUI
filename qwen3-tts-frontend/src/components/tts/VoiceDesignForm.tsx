@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useEffect, useState, forwardRef, useImperativeHandle, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,27 +20,41 @@ import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 import { LoadingState } from '@/components/LoadingState'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { PresetSelector } from '@/components/PresetSelector'
-import { PRESET_VOICE_DESIGNS, ADVANCED_PARAMS_INFO } from '@/lib/constants'
 import type { Language } from '@/types/tts'
 
-const formSchema = z.object({
-  text: z.string().min(1, '请输入要合成的文本').max(5000, '文本长度不能超过 5000 字符'),
-  language: z.string().min(1, '请选择语言'),
-  instruct: z.string().min(10, '音色描述至少需要 10 个字符').max(500, '音色描述不能超过 500 字符'),
-  max_new_tokens: z.number().min(1).max(10000).optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  top_k: z.number().min(1).max(100).optional(),
-  top_p: z.number().min(0).max(1).optional(),
-  repetition_penalty: z.number().min(0).max(2).optional(),
-})
-
-type FormData = z.infer<typeof formSchema>
+type FormData = {
+  text: string
+  language: string
+  instruct: string
+  max_new_tokens?: number
+  temperature?: number
+  top_k?: number
+  top_p?: number
+  repetition_penalty?: number
+}
 
 export interface VoiceDesignFormHandle {
   loadParams: (params: any) => void
 }
 
 const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
+  const { t } = useTranslation('tts')
+  const { t: tCommon } = useTranslation('common')
+  const { t: tErrors } = useTranslation('errors')
+  const { t: tConstants } = useTranslation('constants')
+
+  const PRESET_VOICE_DESIGNS = useMemo(() => tConstants('presetVoiceDesigns', { returnObjects: true }) as Array<{ label: string; instruct: string; text: string }>, [tConstants])
+
+  const formSchema = z.object({
+    text: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.text') })).max(5000, tErrors('validation.maxLength', { field: tErrors('fieldNames.text'), max: 5000 })),
+    language: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.language') })),
+    instruct: z.string().min(10, tErrors('validation.minLength', { field: tErrors('fieldNames.instruct'), min: 10 })).max(500, tErrors('validation.maxLength', { field: tErrors('fieldNames.instruct'), max: 500 })),
+    max_new_tokens: z.number().min(1).max(10000).optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    top_k: z.number().min(1).max(100).optional(),
+    top_p: z.number().min(0).max(1).optional(),
+    repetition_penalty: z.number().min(0).max(2).optional(),
+  })
   const [languages, setLanguages] = useState<Language[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
@@ -97,23 +112,23 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
         const langs = await ttsApi.getLanguages()
         setLanguages(langs)
       } catch (error) {
-        toast.error('加载数据失败')
+        toast.error(t('loadDataFailed'))
       }
     }
     fetchData()
-  }, [])
+  }, [t])
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
       const result = await ttsApi.createVoiceDesignJob(data)
-      toast.success('任务已创建')
+      toast.success(t('taskCreated'))
       startPolling(result.job_id)
       try {
         await refresh()
       } catch {}
     } catch (error) {
-      toast.error('创建任务失败')
+      toast.error(t('taskCreateFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -122,11 +137,11 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
   const handleSaveDesign = async () => {
     const instruct = watch('instruct')
     if (!instruct || instruct.length < 10) {
-      toast.error('请先填写音色描述')
+      toast.error(t('fillDesignDescription'))
       return
     }
     if (!saveDesignName.trim()) {
-      toast.error('请输入设计名称')
+      toast.error(t('fillDesignName'))
       return
     }
 
@@ -140,15 +155,15 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
         preview_text: text || `${saveDesignName}的声音`
       })
 
-      toast.success('音色设计已保存')
+      toast.success(t('designSaved'))
 
       if (backend === 'local') {
         setIsPreparing(true)
         try {
           await voiceDesignApi.prepareClone(design.id)
-          toast.success('音色克隆准备完成')
+          toast.success(t('clonePrepared'))
         } catch (error) {
-          toast.error('准备克隆失败，但设计已保存')
+          toast.error(t('clonePrepareFailed'))
         } finally {
           setIsPreparing(false)
         }
@@ -157,7 +172,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       setShowSaveDialog(false)
       setSaveDesignName('')
     } catch (error) {
-      toast.error('保存失败')
+      toast.error(t('saveFailed'))
     }
   }
 
@@ -169,7 +184,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
       <div className="space-y-0.5">
-        <IconLabel icon={Globe2} tooltip="语言" required />
+        <IconLabel icon={Globe2} tooltip={t('languageLabel')} required />
         <Select
           value={watch('language')}
           onValueChange={(value: string) => setValue('language', value)}
@@ -180,7 +195,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
           <SelectContent>
             {languages.map((lang) => (
               <SelectItem key={lang.code} value={lang.code}>
-                {lang.name}
+                {tConstants(`languages.${lang.code}`, { defaultValue: lang.name })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -191,10 +206,10 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       </div>
 
       <div className="space-y-0.5">
-        <IconLabel icon={Type} tooltip="合成文本" required />
+        <IconLabel icon={Type} tooltip={t('textLabel')} required />
         <Textarea
           {...register('text')}
-          placeholder="输入要合成的文本..."
+          placeholder={t('textPlaceholder')}
           className="min-h-[40px] md:min-h-[60px]"
         />
         {errors.text && (
@@ -203,10 +218,10 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       </div>
 
       <div className="space-y-0.5">
-        <IconLabel icon={Palette} tooltip="音色描述" required />
+        <IconLabel icon={Palette} tooltip={t('designDescriptionLabel')} required />
         <Textarea
           {...register('instruct')}
-          placeholder="例如：成熟男性,低沉磁性,充满权威感"
+          placeholder={t('designDescriptionPlaceholder')}
           className="min-h-[40px] md:min-h-[60px]"
         />
         <PresetSelector
@@ -226,15 +241,15 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>保存音色设计</DialogTitle>
-            <DialogDescription>为当前音色设计命名并保存，以便后续快速使用</DialogDescription>
+            <DialogTitle>{t('saveDesignTitle')}</DialogTitle>
+            <DialogDescription>{t('saveDesignDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="design-name">设计名称</Label>
+              <Label htmlFor="design-name">{t('designNameLabel')}</Label>
               <Input
                 id="design-name"
-                placeholder="例如：磁性男声"
+                placeholder={t('designNamePlaceholder')}
                 value={saveDesignName}
                 onChange={(e) => setSaveDesignName(e.target.value)}
                 onKeyDown={(e) => {
@@ -246,7 +261,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
               />
             </div>
             <div className="space-y-2">
-              <Label>音色描述</Label>
+              <Label>{t('designDescriptionLabel')}</Label>
               <p className="text-sm text-muted-foreground">{watch('instruct')}</p>
             </div>
           </div>
@@ -255,10 +270,10 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
               setShowSaveDialog(false)
               setSaveDesignName('')
             }}>
-              取消
+              {tCommon('cancel')}
             </Button>
             <Button type="button" onClick={handleSaveDesign} disabled={isPreparing}>
-              {isPreparing ? '准备中...' : '保存'}
+              {isPreparing ? t('preparing') : tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -279,18 +294,18 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
         <DialogTrigger asChild>
           <Button type="button" variant="outline" className="w-full">
             <Settings className="mr-2 h-4 w-4" />
-            高级选项
+            {t('advancedOptions')}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>高级参数设置</DialogTitle>
-            <DialogDescription>调整生成参数以控制音频质量和生成长度</DialogDescription>
+            <DialogTitle>{t('advancedOptionsTitle')}</DialogTitle>
+            <DialogDescription>{t('advancedOptionsDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="dialog-max_new_tokens">
-                {ADVANCED_PARAMS_INFO.max_new_tokens.label}
+                {t('advancedParams.maxNewTokens.label')}
               </Label>
               <Input
                 id="dialog-max_new_tokens"
@@ -304,12 +319,12 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 })}
               />
               <p className="text-sm text-muted-foreground">
-                {ADVANCED_PARAMS_INFO.max_new_tokens.description}
+                {t('advancedParams.maxNewTokens.description')}
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dialog-temperature">
-                {ADVANCED_PARAMS_INFO.temperature.label}
+                {t('advancedParams.temperature.label')}
               </Label>
               <Input
                 id="dialog-temperature"
@@ -324,12 +339,12 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 })}
               />
               <p className="text-sm text-muted-foreground">
-                {ADVANCED_PARAMS_INFO.temperature.description}
+                {t('advancedParams.temperature.description')}
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dialog-top_k">
-                {ADVANCED_PARAMS_INFO.top_k.label}
+                {t('advancedParams.topK.label')}
               </Label>
               <Input
                 id="dialog-top_k"
@@ -343,12 +358,12 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 })}
               />
               <p className="text-sm text-muted-foreground">
-                {ADVANCED_PARAMS_INFO.top_k.description}
+                {t('advancedParams.topK.description')}
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dialog-top_p">
-                {ADVANCED_PARAMS_INFO.top_p.label}
+                {t('advancedParams.topP.label')}
               </Label>
               <Input
                 id="dialog-top_p"
@@ -363,12 +378,12 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 })}
               />
               <p className="text-sm text-muted-foreground">
-                {ADVANCED_PARAMS_INFO.top_p.description}
+                {t('advancedParams.topP.description')}
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dialog-repetition_penalty">
-                {ADVANCED_PARAMS_INFO.repetition_penalty.label}
+                {t('advancedParams.repetitionPenalty.label')}
               </Label>
               <Input
                 id="dialog-repetition_penalty"
@@ -383,7 +398,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 })}
               />
               <p className="text-sm text-muted-foreground">
-                {ADVANCED_PARAMS_INFO.repetition_penalty.description}
+                {t('advancedParams.repetitionPenalty.description')}
               </p>
             </div>
           </div>
@@ -402,7 +417,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 setAdvancedOpen(false)
               }}
             >
-              取消
+              {tCommon('cancel')}
             </Button>
             <Button
               type="button"
@@ -415,7 +430,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
                 setAdvancedOpen(false)
               }}
             >
-              确定
+              {tCommon('ok')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -426,11 +441,11 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
           <TooltipTrigger asChild>
             <Button type="submit" className="w-full" disabled={isLoading || isPolling}>
               <Play className="mr-2 h-4 w-4" />
-              {isLoading ? '创建中...' : '生成语音'}
+              {isLoading ? t('creating') : t('generate')}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>生成语音</p>
+            <p>{t('generate')}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -450,7 +465,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
             onClick={() => setShowSaveDialog(true)}
           >
             <Save className="mr-2 h-4 w-4" />
-            保存音色设计
+            {t('saveDesignButton')}
           </Button>
         </div>
       )}

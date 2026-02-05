@@ -1,0 +1,12 @@
+{
+  "home": "ホーム",
+  "settings": "設定",
+  "userManagement": "ユーザー管理",
+  "logout": "ログアウト",
+  "login": "ログイン",
+  "toggleTheme": "テーマ切替",
+  "changeLanguage": "言語変更",
+  "customVoiceTab": "カスタム",
+  "voiceDesignTab": "デザイン",
+  "voiceCloneTab": "クローン"
+}

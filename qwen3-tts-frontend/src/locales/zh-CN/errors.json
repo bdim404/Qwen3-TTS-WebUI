@@ -1,0 +1,42 @@
+{
+  "http": {
+    "400": "请求参数错误",
+    "401": "未授权，请登录",
+    "403": "禁止访问",
+    "404": "请求的资源不存在",
+    "500": "服务器内部错误",
+    "502": "网关错误",
+    "503": "服务暂时不可用",
+    "default": "请求失败，请稍后重试"
+  },
+  "fieldNames": {
+    "username": "用户名",
+    "password": "密码",
+    "text": "文本",
+    "language": "语言",
+    "speaker": "发言人",
+    "instruct": "情感指令",
+    "name": "名称",
+    "description": "描述",
+    "audio_file": "音频文件",
+    "reference_audio": "参考音频",
+    "reference_text": "参考文本",
+    "api_key": "API密钥",
+    "backend": "后端服务"
+  },
+  "validation": {
+    "required": "{{field}}不能为空",
+    "minLength": "{{field}}至少需要 {{min}} 个字符",
+    "maxLength": "{{field}}不能超过 {{max}} 个字符",
+    "invalid": "{{field}}格式不正确",
+    "notFound": "未找到{{field}}",
+    "alreadyExists": "{{field}}已存在",
+    "uploadFailed": "{{field}}上传失败",
+    "fileTooLarge": "文件大小不能超过 {{size}}MB",
+    "invalidFileType": "不支持的文件类型"
+  },
+  "networkError": "网络连接失败，请检查网络",
+  "unknownError": "未知错误",
+  "operationFailed": "操作失败",
+  "tryAgain": "请重试"
+}

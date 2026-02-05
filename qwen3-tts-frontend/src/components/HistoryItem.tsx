@@ -1,4 +1,5 @@
 import { memo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Job } from '@/types/job'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,17 +29,19 @@ const jobTypeBadgeVariant = {
   voice_clone: 'outline' as const,
 }
 
-const jobTypeLabel = {
-  custom_voice: '自定义音色',
-  voice_design: '音色设计',
-  voice_clone: '声音克隆',
-}
-
 const HistoryItem = memo(({ job, onDelete }: HistoryItemProps) => {
+  const { t } = useTranslation('job')
+  const { t: tCommon } = useTranslation('common')
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
 
+  const jobTypeLabel = {
+    custom_voice: t('typeCustomVoice'),
+    voice_design: t('typeVoiceDesign'),
+    voice_clone: t('typeVoiceClone'),
+  }
+
   const getLanguageDisplay = (lang: string | undefined) => {
-    if (!lang || lang === 'Auto') return '自动检测'
+    if (!lang || lang === 'Auto') return t('autoDetect')
     return lang
   }
 
@@ -68,31 +71,31 @@ const HistoryItem = memo(({ job, onDelete }: HistoryItemProps) => {
       <div className="space-y-2 text-sm">
         {job.parameters?.text && (
           <div>
-            <span className="text-muted-foreground">文本内容: </span>
+            <span className="text-muted-foreground">{t('synthesisText')}: </span>
             <span className="line-clamp-2">{job.parameters.text}</span>
           </div>
         )}
 
         <div className="text-muted-foreground">
-          语言: {getLanguageDisplay(job.parameters?.language)}
+          {t('language')}{getLanguageDisplay(job.parameters?.language)}
         </div>
 
         {job.type === 'custom_voice' && job.parameters?.speaker && (
           <div className="text-muted-foreground">
-            发音人: {job.parameters.speaker}
+            {t('speaker')}{job.parameters.speaker}
           </div>
         )}
 
         {job.type === 'voice_design' && job.parameters?.instruct && (
           <div>
-            <span className="text-muted-foreground">音色描述: </span>
+            <span className="text-muted-foreground">{t('voiceDescription')}: </span>
             <span className="text-xs line-clamp-2">{job.parameters.instruct}</span>
           </div>
         )}
 
         {job.type === 'voice_clone' && job.parameters?.ref_text && (
           <div>
-            <span className="text-muted-foreground">参考文本: </span>
+            <span className="text-muted-foreground">{t('referenceText')}: </span>
             <span className="text-xs line-clamp-1">{job.parameters.ref_text}</span>
           </div>
         )}
@@ -101,14 +104,14 @@ const HistoryItem = memo(({ job, onDelete }: HistoryItemProps) => {
       {job.status === 'processing' && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>处理中...</span>
+          <span>{t('statusProcessing')}</span>
         </div>
       )}
 
       {job.status === 'pending' && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="w-4 h-4" />
-          <span>等待处理...</span>
+          <span>{t('statusPending')}</span>
         </div>
       )}
 
@@ -132,18 +135,18 @@ const HistoryItem = memo(({ job, onDelete }: HistoryItemProps) => {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>确认删除</AlertDialogTitle>
+              <AlertDialogTitle>{t('deleteJob')}</AlertDialogTitle>
               <AlertDialogDescription>
-                确定要删除这条历史记录吗？此操作无法撤销。
+                {t('deleteJobConfirm')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>取消</AlertDialogCancel>
+              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => onDelete(job.id)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                删除
+                {tCommon('delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

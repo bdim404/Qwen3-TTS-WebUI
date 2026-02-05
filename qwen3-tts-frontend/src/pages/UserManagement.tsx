@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { Navbar } from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,7 @@ import type { User } from '@/types/auth'
 import type { UserCreateRequest, UserUpdateRequest } from '@/types/user'
 
 export default function UserManagement() {
+  const { t } = useTranslation(['user', 'common'])
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -26,7 +28,7 @@ export default function UserManagement() {
       const response = await userApi.listUsers()
       setUsers(response.users)
     } catch (error: any) {
-      toast.error(error.message || '加载用户列表失败')
+      toast.error(error.message || t('user:loadUsersFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -60,15 +62,15 @@ export default function UserManagement() {
           delete updateData.password
         }
         await userApi.updateUser(selectedUser.id, updateData)
-        toast.success('用户更新成功')
+        toast.success(t('user:userUpdateSuccess'))
       } else {
         await userApi.createUser(data as UserCreateRequest)
-        toast.success('用户创建成功')
+        toast.success(t('user:userCreateSuccess'))
       }
       setUserDialogOpen(false)
       await loadUsers()
     } catch (error: any) {
-      toast.error(error.message || '操作失败')
+      toast.error(error.message || t('user:operationFailed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -80,11 +82,11 @@ export default function UserManagement() {
     try {
       setIsSubmitting(true)
       await userApi.deleteUser(selectedUser.id)
-      toast.success('用户删除成功')
+      toast.success(t('user:userDeleteSuccess'))
       setDeleteDialogOpen(false)
       await loadUsers()
     } catch (error: any) {
-      toast.error(error.message || '删除失败')
+      toast.error(error.message || t('user:deleteFailed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -96,10 +98,10 @@ export default function UserManagement() {
       <div className="container mx-auto p-4 sm:p-6">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <CardTitle>用户管理</CardTitle>
+            <CardTitle>{t('user:userManagement')}</CardTitle>
             <Button onClick={handleCreateUser} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              创建用户
+              {t('user:createUser')}
             </Button>
           </CardHeader>
           <CardContent>

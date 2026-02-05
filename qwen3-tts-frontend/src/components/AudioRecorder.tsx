@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Mic, Trash2, RotateCcw, FileAudio } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ interface AudioRecorderProps {
 }
 
 export function AudioRecorder({ onChange }: AudioRecorderProps) {
+  const { t } = useTranslation('voice')
   const {
     isRecording,
     recordingDuration,
@@ -54,7 +56,7 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
       setAudioInfo({ duration: result.duration, size: file.size })
       setValidationError(null)
     } else {
-      setValidationError(result.error || '录音验证失败')
+      setValidationError(result.error || t('recordingValidationFailed'))
       clearRecording()
       onChange(null)
     }
@@ -98,7 +100,7 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
   if (!isSupported) {
     return (
       <div className="p-4 border rounded bg-muted text-muted-foreground text-sm">
-        您的浏览器不支持录音功能
+        {t('browserNotSupported')}
       </div>
     )
   }
@@ -109,9 +111,9 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
         <div className="flex items-center gap-2 p-3 border rounded">
           <FileAudio className="h-5 w-5 text-muted-foreground" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium">录制完成</p>
+            <p className="text-sm font-medium">{t('recordingComplete')}</p>
             <p className="text-xs text-muted-foreground">
-              {(audioInfo.size / 1024 / 1024).toFixed(2)} MB · {audioInfo.duration.toFixed(1)} 秒
+              {(audioInfo.size / 1024 / 1024).toFixed(2)} MB · {audioInfo.duration.toFixed(1)} {t('seconds')}
             </p>
           </div>
           <Button
@@ -148,10 +150,10 @@ export function AudioRecorder({ onChange }: AudioRecorderProps) {
           {isRecording ? (
             <>
               <span className="text-lg font-semibold">{recordingDuration.toFixed(1)}s</span>
-              <span className="text-xs">松开完成</span>
+              <span className="text-xs">{t('releaseToFinish')}</span>
             </>
           ) : (
-            <span>按住录音</span>
+            <span>{t('holdToRecord')}</span>
           )}
         </div>
       </Button>
