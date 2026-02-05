@@ -10,7 +10,44 @@ A text-to-speech web application based on Qwen3-TTS, supporting custom voice, vo
 - Voice Design: Create voices from natural language descriptions
 - Voice Cloning: Clone voices from uploaded audio
 - Dual Backend Support: Switch between local model and Aliyun TTS API
+- Multi-language Support: English, 简体中文, 繁體中文, 日本語, 한국어
 - JWT auth, async tasks, voice cache, dark mode
+
+## Interface Preview
+
+### Light & Dark Mode
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="./images/lightmode-english.png" alt="Light Mode" />
+      <p align="center"><em>Light Mode - Custom Voice</em></p>
+    </td>
+    <td width="50%">
+      <img src="./images/darkmode-chinese.png" alt="Dark Mode" />
+      <p align="center"><em>Dark Mode - Custom Voice</em></p>
+    </td>
+  </tr>
+</table>
+
+### Voice Design
+
+<p align="center">
+  <img src="./images/custom-voice-list.png" alt="Voice Design List" width="80%" />
+</p>
+<p align="center"><em>Manage your custom voice designs</em></p>
+
+<p align="center">
+  <img src="./images/save-voice-design-dialog.png" alt="Save Voice Design" width="60%" />
+</p>
+<p align="center"><em>Save voice design dialog</em></p>
+
+### Voice Cloning
+
+<p align="center">
+  <img src="./images/clone-voice-recording.png" alt="Voice Cloning" width="80%" />
+</p>
+<p align="center"><em>Clone voices by recording or uploading audio</em></p>
 
 ## Tech Stack
 
