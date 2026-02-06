@@ -3,6 +3,7 @@ import { authApi } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserPreferences } from '@/types/auth'
 import i18n from '@/locales'
+import { loadFontsForLanguage, detectBrowserLanguage } from '@/lib/fontManager'
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null
@@ -24,6 +25,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
   const fetchPreferences = async () => {
     if (!isAuthenticated || !user) {
+      const browserLang = detectBrowserLanguage()
+      await loadFontsForLanguage(browserLang)
       setIsLoading(false)
       return
     }
@@ -38,9 +41,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       setPreferences(prefs)
       setHasAliyunKey(keyVerification.valid)
 
-      if (prefs.language) {
-        i18n.changeLanguage(prefs.language)
-      }
+      const lang = prefs.language || detectBrowserLanguage()
+      await Promise.all([
+        i18n.changeLanguage(lang),
+        loadFontsForLanguage(lang),
+      ])
 
       const cacheKey = `user_preferences_${user.id}`
       localStorage.setItem(cacheKey, JSON.stringify(prefs))
@@ -48,8 +53,14 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       const cacheKey = `user_preferences_${user.id}`
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
-        setPreferences(JSON.parse(cached))
+        const cachedPrefs = JSON.parse(cached)
+        setPreferences(cachedPrefs)
+        if (cachedPrefs.language) {
+          await loadFontsForLanguage(cachedPrefs.language)
+        }
       } else {
+        const browserLang = detectBrowserLanguage()
+        await loadFontsForLanguage(browserLang)
         setPreferences({ default_backend: 'aliyun', onboarding_completed: false })
       }
     } finally {
@@ -87,7 +98,10 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   }
 
   const changeLanguage = async (lang: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR') => {
-    await i18n.changeLanguage(lang)
+    await Promise.all([
+      i18n.changeLanguage(lang),
+      loadFontsForLanguage(lang),
+    ])
     await updatePreferences({ language: lang })
   }
 
