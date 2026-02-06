@@ -177,27 +177,47 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
       let result
       if (selectedItem?.source === 'saved-design') {
         if (selectedItem.backendType === 'local') {
-          result = await ttsApi.createVoiceCloneJob({
-            text: data.text,
-            language: data.language,
-            ref_audio: null,
-            voice_design_id: selectedItem.designId,
-            max_new_tokens: data.max_new_tokens,
-            temperature: data.temperature,
-            backend: 'local',
+          const formData = new FormData()
+          formData.append('text', data.text)
+          formData.append('language', data.language)
+          formData.append('voice_design_id', String(selectedItem.designId))
+          formData.append('max_new_tokens', String(data.max_new_tokens ?? 2048))
+          formData.append('temperature', String(data.temperature ?? 0.9))
+          formData.append('backend', 'local')
+
+          const token = localStorage.getItem('token')
+          const baseURL = import.meta.env.VITE_API_URL || ''
+          const response = await fetch(`${baseURL}/tts/voice-clone`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
           })
+
+          if (!response.ok) {
+            throw new Error('Failed to create voice clone job')
+          }
+
+          result = await response.json()
         } else {
           result = await ttsApi.createVoiceDesignJob({
             text: data.text,
             language: data.language,
-            instruct: selectedItem.instruct!,
             saved_design_id: selectedItem.designId,
-            max_new_tokens: data.max_new_tokens,
-            temperature: data.temperature,
+            max_new_tokens: data.max_new_tokens ?? 2048,
+            temperature: data.temperature ?? 0.9,
           })
         }
       } else {
-        result = await ttsApi.createCustomVoiceJob(data)
+        result = await ttsApi.createCustomVoiceJob({
+          text: data.text,
+          language: data.language,
+          speaker: data.speaker,
+          instruct: data.instruct,
+          max_new_tokens: data.max_new_tokens ?? 2048,
+          temperature: data.temperature ?? 0.9,
+        })
       }
 
       toast.success(t('taskCreated'))

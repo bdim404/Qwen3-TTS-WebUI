@@ -24,7 +24,7 @@ export interface CustomVoiceForm {
 export interface VoiceDesignForm {
   text: string
   language: string
-  instruct: string
+  instruct?: string
   saved_design_id?: number
   max_new_tokens?: number
   temperature?: number
