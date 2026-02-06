@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useHistoryContext } from '@/contexts/HistoryContext'
 import { HistoryItem } from '@/components/HistoryItem'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -36,7 +37,13 @@ function HistorySidebarContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 pt-4 pb-6">
+      <div className="px-4 pt-4 pb-3">
+        <Link to="/" className="flex items-center gap-2 mb-6">
+          <img src="/qwen.svg" alt="Qwen" className="h-6 w-6" />
+          <h1 className="text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity">
+            Qwen3-TTS-WebUI
+          </h1>
+        </Link>
         <h2 className="text-lg font-semibold">{t('historyTitle')}</h2>
         <p className="text-sm text-muted-foreground">{t('historyCount', { count: jobs.length })}</p>
       </div>

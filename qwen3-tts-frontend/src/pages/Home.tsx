@@ -33,19 +33,19 @@ function Home() {
 
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-background">
+    <div className="h-screen overflow-hidden flex bg-background">
       <OnboardingDialog
         open={showOnboarding}
         onComplete={() => setShowOnboarding(false)}
       />
 
-      <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <HistorySidebar
+        open={sidebarOpen}
+        onOpenChange={setSidebarOpen}
+      />
 
-      <div className="flex-1 flex overflow-hidden">
-        <HistorySidebar
-          open={sidebarOpen}
-          onOpenChange={setSidebarOpen}
-        />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
         <main className="flex-1 overflow-y-auto flex items-start md:items-center justify-center">
           <div className="w-full container mx-auto p-3 md:p-6 max-w-[800px] md:max-w-[700px]">
