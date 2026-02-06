@@ -26,7 +26,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const fetchPreferences = async () => {
     if (!isAuthenticated || !user) {
       const browserLang = detectBrowserLanguage()
-      await loadFontsForLanguage(browserLang)
+      loadFontsForLanguage(browserLang)
       setIsLoading(false)
       return
     }
@@ -42,10 +42,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       setHasAliyunKey(keyVerification.valid)
 
       const lang = prefs.language || detectBrowserLanguage()
-      await Promise.all([
-        i18n.changeLanguage(lang),
-        loadFontsForLanguage(lang),
-      ])
+      loadFontsForLanguage(lang)
+      await i18n.changeLanguage(lang)
 
       const cacheKey = `user_preferences_${user.id}`
       localStorage.setItem(cacheKey, JSON.stringify(prefs))
@@ -56,11 +54,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const cachedPrefs = JSON.parse(cached)
         setPreferences(cachedPrefs)
         if (cachedPrefs.language) {
-          await loadFontsForLanguage(cachedPrefs.language)
+          loadFontsForLanguage(cachedPrefs.language)
         }
       } else {
         const browserLang = detectBrowserLanguage()
-        await loadFontsForLanguage(browserLang)
+        loadFontsForLanguage(browserLang)
         setPreferences({ default_backend: 'aliyun', onboarding_completed: false })
       }
     } finally {
@@ -98,10 +96,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   }
 
   const changeLanguage = async (lang: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR') => {
-    await Promise.all([
-      i18n.changeLanguage(lang),
-      loadFontsForLanguage(lang),
-    ])
+    loadFontsForLanguage(lang)
+    await i18n.changeLanguage(lang)
     await updatePreferences({ language: lang })
   }
 

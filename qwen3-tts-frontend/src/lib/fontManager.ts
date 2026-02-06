@@ -85,11 +85,11 @@ function createFontFace(config: FontConfig): FontFace {
   return new FontFace(config.name, `url(${config.file}) format('woff2')`, descriptors)
 }
 
-export async function loadFontsForLanguage(language: Language): Promise<void> {
+export function loadFontsForLanguage(language: Language): void {
   const configs = fontConfigs[language]
   if (!configs) return
 
-  const loadPromises = configs.map(async (config) => {
+  configs.forEach((config) => {
     const fontKey = `${config.name}-${config.file}`
 
     if (loadedFonts.has(fontKey)) {
@@ -98,15 +98,12 @@ export async function loadFontsForLanguage(language: Language): Promise<void> {
 
     try {
       const fontFace = createFontFace(config)
-      await fontFace.load()
       document.fonts.add(fontFace)
       loadedFonts.add(fontKey)
     } catch (error) {
-      console.warn(`Failed to load font ${config.file}:`, error)
+      console.warn(`Failed to register font ${config.file}:`, error)
     }
   })
-
-  await Promise.all(loadPromises)
 }
 
 export function detectBrowserLanguage(): Language {
@@ -141,13 +138,11 @@ export function preloadBaseFont(): void {
     return
   }
 
-  const fontFace = createFontFace(baseConfig)
-  fontFace.load()
-    .then(() => {
-      document.fonts.add(fontFace)
-      loadedFonts.add(fontKey)
-    })
-    .catch((error) => {
-      console.warn('Failed to preload base font:', error)
-    })
+  try {
+    const fontFace = createFontFace(baseConfig)
+    document.fonts.add(fontFace)
+    loadedFonts.add(fontKey)
+  } catch (error) {
+    console.warn('Failed to register base font:', error)
+  }
 }
