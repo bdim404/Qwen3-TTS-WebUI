@@ -12,7 +12,12 @@ const Textarea = React.forwardRef<
 
   const adjustHeight = React.useCallback((element: HTMLTextAreaElement) => {
     element.style.height = 'auto'
-    element.style.height = `${element.scrollHeight}px`
+    const maxHeight = window.innerWidth >= 768
+      ? Math.min(400, window.innerHeight * 0.5)
+      : window.innerHeight * 0.6
+    const newHeight = Math.min(element.scrollHeight, maxHeight)
+    element.style.height = `${newHeight}px`
+    element.style.overflowY = element.scrollHeight > maxHeight ? 'auto' : 'hidden'
   }, [])
 
   React.useLayoutEffect(() => {
@@ -41,7 +46,7 @@ const Textarea = React.forwardRef<
   return (
     <textarea
       className={cn(
-        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm max-h-[80vh] md:max-h-[400px] overflow-y-auto",
+        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-none overflow-hidden",
         className
       )}
       ref={internalRef}
