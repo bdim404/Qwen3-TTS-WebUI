@@ -457,6 +457,7 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
           <AudioPlayer
             audioUrl={memoizedAudioUrl}
             jobId={currentJob.id}
+            text={currentJob.parameters?.text}
           />
           <Button
             type="button"

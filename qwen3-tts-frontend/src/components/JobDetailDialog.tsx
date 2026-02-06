@@ -219,7 +219,7 @@ const JobDetailDialog = memo(({ job, open, onOpenChange }: JobDetailDialogProps)
                 <Separator />
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">{t('job:audioPlayback')}</h3>
-                  <AudioPlayer audioUrl={audioUrl} jobId={job.id} />
+                  <AudioPlayer audioUrl={audioUrl} jobId={job.id} text={job.parameters?.text} />
                 </div>
               </>
             )}

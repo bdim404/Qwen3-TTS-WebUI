@@ -542,6 +542,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
           <AudioPlayer
             audioUrl={memoizedAudioUrl}
             jobId={currentJob.id}
+            text={currentJob.parameters?.text}
           />
         </div>
       )}

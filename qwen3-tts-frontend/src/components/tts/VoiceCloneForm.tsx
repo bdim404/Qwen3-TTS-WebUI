@@ -422,6 +422,7 @@ function VoiceCloneForm() {
           <AudioPlayer
             audioUrl={memoizedAudioUrl}
             jobId={currentJob.id}
+            text={currentJob.parameters?.text}
           />
         </div>
       )}

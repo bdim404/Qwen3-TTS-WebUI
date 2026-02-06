@@ -9,6 +9,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['@arraypress/waveform-player']
+  },
   build: {
     rollupOptions: {
       output: {
@@ -29,7 +32,7 @@ export default defineConfig({
             if (id.includes('i18next')) {
               return 'i18n';
             }
-            if (id.includes('react-h5-audio-player') || id.includes('sonner')) {
+            if (id.includes('@arraypress/waveform-player') || id.includes('sonner')) {
               return 'audio';
             }
             if (id.includes('axios') || id.includes('clsx') || id.includes('tailwind-merge') ||

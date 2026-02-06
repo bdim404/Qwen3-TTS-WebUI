@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback, memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import AudioPlayerLib from 'react-h5-audio-player'
-import 'react-h5-audio-player/lib/styles.css'
+import WaveformPlayer from '@arraypress/waveform-player'
+import '@arraypress/waveform-player/dist/waveform-player.css'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
 import apiClient from '@/lib/api'
@@ -10,14 +10,17 @@ import styles from './AudioPlayer.module.css'
 interface AudioPlayerProps {
   audioUrl: string
   jobId: number
+  text?: string
 }
 
-const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
+const AudioPlayer = memo(({ audioUrl, jobId, text }: AudioPlayerProps) => {
   const { t } = useTranslation('common')
   const [blobUrl, setBlobUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const previousAudioUrlRef = useRef<string>('')
+  const containerRef = useRef<HTMLDivElement>(null)
+  const playerInstanceRef = useRef<WaveformPlayer | null>(null)
 
   useEffect(() => {
     if (!audioUrl || audioUrl === previousAudioUrlRef.current) return
@@ -65,6 +68,49 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
     }
   }, [])
 
+  useEffect(() => {
+    if (!containerRef.current || !blobUrl) return
+
+    const truncateText = (str: string, maxLength: number = 30) => {
+      if (!str) return ''
+      return str.length > maxLength ? str.substring(0, maxLength) + '...' : str
+    }
+
+    const player = new WaveformPlayer(containerRef.current, {
+      url: blobUrl,
+      waveformStyle: 'mirror',
+      height: 60,
+      barWidth: 3,
+      barSpacing: 1,
+      samples: 200,
+      showTime: true,
+      showPlaybackSpeed: false,
+      autoplay: false,
+      enableMediaSession: true,
+      title: text ? truncateText(text) : undefined,
+    })
+
+    playerInstanceRef.current = player
+
+    setTimeout(() => {
+      if (containerRef.current) {
+        const buttons = containerRef.current.querySelectorAll('button')
+        buttons.forEach(btn => {
+          if (!btn.hasAttribute('type')) {
+            btn.setAttribute('type', 'button')
+          }
+        })
+      }
+    }, 0)
+
+    return () => {
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.destroy()
+        playerInstanceRef.current = null
+      }
+    }
+  }, [blobUrl, text])
+
   const handleDownload = useCallback(() => {
     const link = document.createElement('a')
     link.href = blobUrl || audioUrl
@@ -94,27 +140,16 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
 
   return (
     <div className={styles.audioPlayerWrapper}>
-      <AudioPlayerLib
-        src={blobUrl}
-        layout="horizontal"
-        customAdditionalControls={[
-          <Button
-            key="download"
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleDownload}
-            className={styles.downloadButton}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        ]}
-        customVolumeControls={[]}
-        showJumpControls={false}
-        volume={1}
-        preload="metadata"
-        autoPlayAfterSrcChange={false}
-      />
+      <div ref={containerRef} className={styles.waveformContainer} />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={handleDownload}
+        className={styles.downloadButton}
+      >
+        <Download className="h-4 w-4" />
+      </Button>
     </div>
   )
 })
