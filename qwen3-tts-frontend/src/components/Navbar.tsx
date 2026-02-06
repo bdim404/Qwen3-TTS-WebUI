@@ -1,4 +1,4 @@
-import { Menu, LogOut, Users, Settings, AudioLines, Globe } from 'lucide-react'
+import { Menu, LogOut, Users, Settings, Globe } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -36,7 +36,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
 
       <div className="flex-1">
         <Link to="/" className="flex items-center gap-2">
-          <AudioLines className="h-6 w-6 md:hidden" />
+          <img src="/qwen.svg" alt="Qwen" className="h-6 w-6" />
           <h1 className="hidden md:block text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity">
             Qwen3-TTS-WebUI
           </h1>
