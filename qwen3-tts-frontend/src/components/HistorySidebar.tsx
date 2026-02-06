@@ -36,7 +36,7 @@ function HistorySidebarContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
+      <div className="px-4 pt-4 pb-6">
         <h2 className="text-lg font-semibold">{t('historyTitle')}</h2>
         <p className="text-sm text-muted-foreground">{t('historyCount', { count: jobs.length })}</p>
       </div>
@@ -89,7 +89,7 @@ function HistorySidebarContent() {
 export function HistorySidebar({ open, onOpenChange }: HistorySidebarProps) {
   return (
     <>
-      <aside className="hidden lg:block w-[320px] border-r h-full">
+      <aside className="hidden lg:block w-[320px] h-full bg-muted/30">
         <HistorySidebarContent />
       </aside>
 
