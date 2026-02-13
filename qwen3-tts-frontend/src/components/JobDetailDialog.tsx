@@ -83,7 +83,7 @@ const JobDetailDialog = memo(({ job, open, onOpenChange }: JobDetailDialogProps)
           <DialogDescription>{t('job:detailsDescription')}</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">{t('job:basicInfo')}</h3>
