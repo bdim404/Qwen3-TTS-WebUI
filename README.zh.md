@@ -25,28 +25,11 @@
 ### 桌面端 - 暗黑模式
 ![暗黑模式](./images/darkmode-chinese.png)
 
-### 桌面端 - 语音设计列表
-![语音设计列表](./images/custom-voice-list.png)
-
-### 桌面端 - 保存语音设计对话框
-![保存语音设计](./images/save-voice-design-dialog.png)
-
-### 桌面端 - 语音克隆
-![语音克隆](./images/clone-voice-recording.png)
-
-### 移动端 - 亮色与暗黑模式
+### 移动端
 <table>
   <tr>
     <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="移动端亮色模式" /></td>
-    <td width="50%"><img src="./images/mobile-darkmode-custom.png" alt="移动端暗黑模式" /></td>
-  </tr>
-</table>
-
-### 移动端 - 设置与历史记录
-<table>
-  <tr>
     <td width="50%"><img src="./images/mobile-settings.png" alt="移动端设置" /></td>
-    <td width="50%"><img src="./images/mobile-history.png" alt="移动端历史记录" /></td>
   </tr>
 </table>
 

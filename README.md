@@ -25,28 +25,11 @@
 ### Desktop - Dark Mode
 ![Dark Mode](./images/darkmode-chinese.png)
 
-### Desktop - Voice Design List
-![Voice Design List](./images/custom-voice-list.png)
-
-### Desktop - Save Voice Design Dialog
-![Save Voice Design](./images/save-voice-design-dialog.png)
-
-### Desktop - Voice Cloning
-![Voice Cloning](./images/clone-voice-recording.png)
-
-### Mobile - Light & Dark Mode
+### Mobile
 <table>
   <tr>
     <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="Mobile Light Mode" /></td>
-    <td width="50%"><img src="./images/mobile-darkmode-custom.png" alt="Mobile Dark Mode" /></td>
-  </tr>
-</table>
-
-### Mobile - Settings & History
-<table>
-  <tr>
     <td width="50%"><img src="./images/mobile-settings.png" alt="Mobile Settings" /></td>
-    <td width="50%"><img src="./images/mobile-history.png" alt="Mobile History" /></td>
   </tr>
 </table>
 

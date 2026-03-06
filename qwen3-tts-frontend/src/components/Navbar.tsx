@@ -1,5 +1,5 @@
-import { Menu, LogOut, Users, Settings, Globe } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Menu, LogOut, Users, Settings, Globe, Home } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +20,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
   const { logout, user } = useAuth()
   const { changeLanguage } = useUserPreferences()
   const { t, i18n } = useTranslation(['nav', 'constants'])
+  const location = useLocation()
 
   return (
     <nav className="h-16 flex items-center justify-end px-4 gap-2">
@@ -32,6 +33,14 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
+      )}
+
+      {location.pathname !== '/' && (
+        <Link to="/" className="mr-auto">
+          <Button variant="ghost" size="icon">
+            <Home className="h-5 w-5" />
+          </Button>
+        </Link>
       )}
 
       {user?.is_superuser && (
