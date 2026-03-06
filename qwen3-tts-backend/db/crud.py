@@ -280,7 +280,10 @@ def create_voice_design(
     backend_type: str,
     aliyun_voice_id: Optional[str] = None,
     meta_data: Optional[Dict[str, Any]] = None,
-    preview_text: Optional[str] = None
+    preview_text: Optional[str] = None,
+    voice_cache_id: Optional[int] = None,
+    ref_audio_path: Optional[str] = None,
+    ref_text: Optional[str] = None,
 ) -> VoiceDesign:
     design = VoiceDesign(
         user_id=user_id,
@@ -290,6 +293,9 @@ def create_voice_design(
         aliyun_voice_id=aliyun_voice_id,
         meta_data=meta_data,
         preview_text=preview_text,
+        voice_cache_id=voice_cache_id,
+        ref_audio_path=ref_audio_path,
+        ref_text=ref_text,
         created_at=datetime.utcnow(),
         last_used=datetime.utcnow()
     )

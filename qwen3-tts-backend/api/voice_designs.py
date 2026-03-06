@@ -81,6 +81,95 @@ async def list_voice_designs(
     total = crud.count_voice_designs(db, current_user.id, backend_type)
     return VoiceDesignListResponse(designs=[to_voice_design_response(d) for d in designs], total=total)
 
+@router.post("/prepare-and-create", response_model=VoiceDesignResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+async def prepare_and_create_voice_design(
+    request: Request,
+    data: VoiceDesignCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from core.tts_service import TTSServiceFactory
+    from core.cache_manager import VoiceCacheManager
+    from utils.audio import process_ref_audio, extract_audio_features
+    from core.config import settings
+    from db.crud import can_user_use_local_model
+    from datetime import datetime
+
+    if not can_user_use_local_model(current_user):
+        raise HTTPException(status_code=403, detail="Local model access required")
+
+    try:
+        backend = await TTSServiceFactory.get_backend("local")
+        ref_text = data.preview_text or data.instruct[:100]
+
+        ref_audio_bytes, _ = await backend.generate_voice_design({
+            "text": ref_text,
+            "language": "Auto",
+            "instruct": data.instruct,
+            "max_new_tokens": 2048,
+            "temperature": 0.3,
+            "top_k": 10,
+            "top_p": 0.5,
+            "repetition_penalty": 1.05
+        })
+
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        ref_filename = f"voice_design_new_{timestamp}.wav"
+        ref_audio_path = Path(settings.OUTPUT_DIR) / ref_filename
+        with open(ref_audio_path, 'wb') as f:
+            f.write(ref_audio_bytes)
+
+        ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
+
+        from core.model_manager import ModelManager
+        model_manager = await ModelManager.get_instance()
+        await model_manager.load_model("base")
+        _, tts = await model_manager.get_current_model()
+        if tts is None:
+            raise RuntimeError("Failed to load base model")
+
+        x_vector = tts.create_voice_clone_prompt(
+            ref_audio=(ref_audio_array, ref_sr),
+            ref_text=ref_text,
+            x_vector_only_mode=True
+        )
+
+        cache_manager = await VoiceCacheManager.get_instance()
+        ref_audio_hash = cache_manager.get_audio_hash(ref_audio_bytes)
+        features = extract_audio_features(ref_audio_array, ref_sr)
+        metadata = {
+            'duration': features['duration'],
+            'sample_rate': features['sample_rate'],
+            'ref_text': ref_text,
+            'x_vector_only_mode': True,
+            'instruct': data.instruct
+        }
+        cache_id = await cache_manager.set_cache(
+            current_user.id, ref_audio_hash, x_vector, metadata, db
+        )
+
+        design = crud.create_voice_design(
+            db=db,
+            user_id=current_user.id,
+            name=data.name,
+            instruct=data.instruct,
+            backend_type="local",
+            meta_data=data.meta_data,
+            preview_text=data.preview_text,
+            voice_cache_id=cache_id,
+            ref_audio_path=str(ref_audio_path),
+            ref_text=ref_text,
+        )
+
+        logger.info(f"Voice design created with clone prompt: design_id={design.id}, cache_id={cache_id}")
+        return to_voice_design_response(design)
+
+    except Exception as e:
+        logger.error(f"Failed to prepare and create voice design: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to prepare voice design")
+
+
 @router.post("/{design_id}/prepare-clone")
 @limiter.limit("10/minute")
 async def prepare_voice_clone_prompt(

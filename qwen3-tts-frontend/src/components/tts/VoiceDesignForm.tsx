@@ -145,28 +145,27 @@ const VoiceDesignForm = forwardRef<VoiceDesignFormHandle>((_props, ref) => {
       return
     }
 
+    const backend = preferences?.default_backend || 'local'
+    const text = watch('text')
+    const designData = {
+      name: saveDesignName,
+      instruct: instruct,
+      backend_type: backend,
+      preview_text: text || `${saveDesignName}的声音`
+    }
+
     try {
-      const backend = preferences?.default_backend || 'local'
-      const text = watch('text')
-      const design = await voiceDesignApi.create({
-        name: saveDesignName,
-        instruct: instruct,
-        backend_type: backend,
-        preview_text: text || `${saveDesignName}的声音`
-      })
-
-      toast.success(t('designSaved'))
-
       if (backend === 'local') {
         setIsPreparing(true)
         try {
-          await voiceDesignApi.prepareClone(design.id)
-          toast.success(t('clonePrepared'))
-        } catch (error) {
-          toast.error(t('clonePrepareFailed'))
+          await voiceDesignApi.prepareAndCreate(designData)
+          toast.success(t('designSaved'))
         } finally {
           setIsPreparing(false)
         }
+      } else {
+        await voiceDesignApi.create(designData)
+        toast.success(t('designSaved'))
       }
 
       setShowSaveDialog(false)

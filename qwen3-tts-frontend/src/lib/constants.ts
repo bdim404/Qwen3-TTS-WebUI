@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
   VOICE_DESIGNS: {
     LIST: '/voice-designs',
     CREATE: '/voice-designs',
+    PREPARE_AND_CREATE: '/voice-designs/prepare-and-create',
     PREPARE_CLONE: (id: number) => `/voice-designs/${id}/prepare-clone`,
   },
 } as const

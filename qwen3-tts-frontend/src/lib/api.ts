@@ -432,6 +432,14 @@ export const voiceDesignApi = {
     return response.data
   },
 
+  prepareAndCreate: async (data: VoiceDesignCreate): Promise<VoiceDesign> => {
+    const response = await apiClient.post<VoiceDesign>(
+      API_ENDPOINTS.VOICE_DESIGNS.PREPARE_AND_CREATE,
+      data
+    )
+    return response.data
+  },
+
   prepareClone: async (id: number): Promise<{ message: string; cache_id: number; ref_text: string }> => {
     const response = await apiClient.post<{ message: string; cache_id: number; ref_text: string }>(
       API_ENDPOINTS.VOICE_DESIGNS.PREPARE_CLONE(id)
