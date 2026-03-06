@@ -6,17 +6,20 @@
   border-radius: var(--radius);
   padding: 0.75rem;
   background: transparent;
+  width: 100%;
 }
 
 .waveformContainer {
   flex: 1;
   min-width: 0;
+  width: 100%;
 }
 
 .audioPlayerWrapper :global(.waveform-player) {
   background: transparent;
   border: none;
   padding: 0;
+  width: 100%;
 }
 
 .audioPlayerWrapper :global(.waveform-btn) {
@@ -35,42 +38,35 @@
   border-radius: 3px;
 }
 
-.audioPlayerWrapper :global(.waveform-info) {
-  position: relative;
-  justify-content: center;
-}
-
-.audioPlayerWrapper :global(.waveform-text) {
-  text-align: center;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
 .audioPlayerWrapper :global(.waveform-title) {
   display: none;
 }
 
 .audioPlayerWrapper :global(.waveform-body) {
-  display: flex;
-  justify-content: center;
+  width: 100%;
+  align-items: center;
 }
 
 .audioPlayerWrapper :global(.waveform-track) {
-  flex-shrink: 0;
+  width: 100%;
+}
+
+.audioPlayerWrapper :global(.waveform-info) {
+  justify-content: center;
+}
+
+.audioPlayerWrapper :global(.waveform-text) {
+  display: none;
 }
 
 .audioPlayerWrapper :global(.waveform-time) {
   color: hsl(var(--muted-foreground));
   font-size: 0.875rem;
   font-weight: 500;
-  position: absolute;
-  right: 0;
 }
 
 .downloadButton {
+  flex-shrink: 0;
   min-height: 40px;
   min-width: 40px;
 }
