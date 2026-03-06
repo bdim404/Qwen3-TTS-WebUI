@@ -219,9 +219,6 @@ npm install
 # Create configuration file
 cp .env.example .env
 
-# Edit .env to set backend URL
-echo "VITE_API_URL=http://localhost:8000" > .env
-
 # Start development server
 npm run dev
 ```

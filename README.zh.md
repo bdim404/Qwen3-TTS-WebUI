@@ -219,9 +219,6 @@ npm install
 # 创建配置文件
 cp .env.example .env
 
-# 编辑 .env 设置后端地址
-echo "VITE_API_URL=http://localhost:8000" > .env
-
 # 启动开发服务器
 npm run dev
 ```
