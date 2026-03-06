@@ -170,6 +170,17 @@ async def prepare_and_create_voice_design(
         raise HTTPException(status_code=500, detail="Failed to prepare voice design")
 
 
+@router.delete("/{design_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_voice_design(
+    design_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    deleted = crud.delete_voice_design(db, design_id, current_user.id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Voice design not found")
+
+
 @router.post("/{design_id}/prepare-clone")
 @limiter.limit("10/minute")
 async def prepare_voice_clone_prompt(

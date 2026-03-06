@@ -55,5 +55,12 @@
   "browserNotSupported": "브라우저가 녹음 기능을 지원하지 않습니다",
   "recordingComplete": "녹음 완료",
   "releaseToFinish": "놓아서 완료",
-  "holdToRecord": "길게 눌러서 녹음"
+  "holdToRecord": "길게 눌러서 녹음",
+  "myVoices": "내 음성",
+  "loadFailed": "음성 불러오기 실패",
+  "deleteFailed": "삭제 실패",
+  "deleteConfirmDesc": "「{{name}}」을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "local": "로컬",
+  "aliyun": "Aliyun",
+  "deleting": "삭제 중..."
 }

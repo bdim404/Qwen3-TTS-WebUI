@@ -8,5 +8,6 @@
   "changeLanguage": "言語変更",
   "customVoiceTab": "カスタム",
   "voiceDesignTab": "音色作成",
-  "voiceCloneTab": "クローン"
+  "voiceCloneTab": "クローン",
+  "voiceManagement": "音声管理"
 }

@@ -15,6 +15,7 @@ const Login = lazy(() => import('@/pages/Login'))
 const Home = lazy(() => import('@/pages/Home'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const UserManagement = lazy(() => import('@/pages/UserManagement'))
+const VoiceManagement = lazy(() => import('@/pages/VoiceManagement'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -98,6 +99,14 @@ function App() {
                     <SuperAdminRoute>
                       <UserManagement />
                     </SuperAdminRoute>
+                  }
+                />
+                <Route
+                  path="/voices"
+                  element={
+                    <ProtectedRoute>
+                      <VoiceManagement />
+                    </ProtectedRoute>
                   }
                 />
               </Routes>

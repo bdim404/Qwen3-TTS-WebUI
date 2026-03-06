@@ -432,6 +432,10 @@ export const voiceDesignApi = {
     return response.data
   },
 
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.VOICE_DESIGNS.DELETE(id))
+  },
+
   prepareAndCreate: async (data: VoiceDesignCreate): Promise<VoiceDesign> => {
     const response = await apiClient.post<VoiceDesign>(
       API_ENDPOINTS.VOICE_DESIGNS.PREPARE_AND_CREATE,

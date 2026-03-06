@@ -8,5 +8,6 @@
   "changeLanguage": "Change Language",
   "customVoiceTab": "Custom",
   "voiceDesignTab": "Create Voice",
-  "voiceCloneTab": "Clone"
+  "voiceCloneTab": "Clone",
+  "voiceManagement": "Voice Management"
 }

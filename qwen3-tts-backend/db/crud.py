@@ -339,6 +339,14 @@ def count_voice_designs(
         query = query.filter(VoiceDesign.backend_type == backend_type)
     return query.count()
 
+def delete_voice_design(db: Session, design_id: int, user_id: int) -> bool:
+    design = get_voice_design(db, design_id, user_id)
+    if not design:
+        return False
+    db.delete(design)
+    db.commit()
+    return True
+
 def update_voice_design_usage(db: Session, design_id: int, user_id: int) -> Optional[VoiceDesign]:
     design = get_voice_design(db, design_id, user_id)
     if design:

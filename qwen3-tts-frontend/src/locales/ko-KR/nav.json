@@ -8,5 +8,6 @@
   "changeLanguage": "언어 변경",
   "customVoiceTab": "커스텀",
   "voiceDesignTab": "음색 생성",
-  "voiceCloneTab": "복제"
+  "voiceCloneTab": "복제",
+  "voiceManagement": "음성 관리"
 }

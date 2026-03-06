@@ -55,5 +55,12 @@
   "browserNotSupported": "Your browser does not support recording",
   "recordingComplete": "Recording complete",
   "releaseToFinish": "Release to finish",
-  "holdToRecord": "Hold to record"
+  "holdToRecord": "Hold to record",
+  "myVoices": "My Voices",
+  "loadFailed": "Failed to load voices",
+  "deleteFailed": "Delete failed",
+  "deleteConfirmDesc": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+  "local": "Local",
+  "aliyun": "Aliyun",
+  "deleting": "Deleting..."
 }

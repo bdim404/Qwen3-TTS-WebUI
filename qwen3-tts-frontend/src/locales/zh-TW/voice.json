@@ -55,5 +55,12 @@
   "browserNotSupported": "您的瀏覽器不支援錄音功能",
   "recordingComplete": "錄製完成",
   "releaseToFinish": "放開完成",
-  "holdToRecord": "按住錄音"
+  "holdToRecord": "按住錄音",
+  "myVoices": "我的音色",
+  "loadFailed": "載入音色失敗",
+  "deleteFailed": "刪除失敗",
+  "deleteConfirmDesc": "確定要刪除「{{name}}」嗎？此操作無法撤銷。",
+  "local": "本地",
+  "aliyun": "阿里雲",
+  "deleting": "刪除中..."
 }

@@ -1,4 +1,4 @@
-import { Menu, LogOut, Users, Settings, Globe, Home } from 'lucide-react'
+import { Menu, LogOut, Users, Settings, Globe, Home, Mic } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -42,6 +42,12 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
           </Button>
         </Link>
       )}
+
+      <Link to="/voices">
+        <Button variant="ghost" size="icon">
+          <Mic className="h-5 w-5" />
+        </Button>
+      </Link>
 
       {user?.is_superuser && (
         <Link to="/users">

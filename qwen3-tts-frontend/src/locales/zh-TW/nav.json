@@ -8,5 +8,6 @@
   "changeLanguage": "切換語言",
   "customVoiceTab": "自訂",
   "voiceDesignTab": "創造音色",
-  "voiceCloneTab": "複製"
+  "voiceCloneTab": "複製",
+  "voiceManagement": "音色管理"
 }

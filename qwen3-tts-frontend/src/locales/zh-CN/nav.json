@@ -8,5 +8,6 @@
   "changeLanguage": "切换语言",
   "customVoiceTab": "自定义",
   "voiceDesignTab": "创造音色",
-  "voiceCloneTab": "克隆"
+  "voiceCloneTab": "克隆",
+  "voiceManagement": "音色管理"
 }

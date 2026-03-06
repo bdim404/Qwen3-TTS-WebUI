@@ -55,5 +55,12 @@
   "browserNotSupported": "お使いのブラウザは録音機能をサポートしていません",
   "recordingComplete": "録音完了",
   "releaseToFinish": "離して完了",
-  "holdToRecord": "長押しで録音"
+  "holdToRecord": "長押しで録音",
+  "myVoices": "マイ音声",
+  "loadFailed": "音声の読み込みに失敗しました",
+  "deleteFailed": "削除に失敗しました",
+  "deleteConfirmDesc": "「{{name}}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "local": "ローカル",
+  "aliyun": "Aliyun",
+  "deleting": "削除中..."
 }
