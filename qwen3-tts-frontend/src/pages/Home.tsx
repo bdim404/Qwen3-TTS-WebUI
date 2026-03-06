@@ -44,10 +44,10 @@ function Home() {
         onOpenChange={setSidebarOpen}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-muted/30">
         <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 overflow-y-auto flex items-start md:items-center justify-center">
+        <main className="flex-1 overflow-y-auto flex items-start md:items-center justify-center lg:rounded-tl-2xl bg-background">
           <div className="w-full container mx-auto p-3 md:p-6 max-w-[800px] md:max-w-[700px]">
             <Tabs value={currentTab} onValueChange={setCurrentTab}>
               <TabsList className="grid w-full grid-cols-3 h-9 mb-3">

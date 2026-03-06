@@ -22,7 +22,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
   const { t, i18n } = useTranslation(['nav', 'constants'])
 
   return (
-    <nav className="h-16 bg-background flex items-center justify-end px-4 gap-2">
+    <nav className="h-16 flex items-center justify-end px-4 gap-2">
       {onToggleSidebar && (
         <Button
           variant="ghost"
