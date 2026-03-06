@@ -78,6 +78,14 @@ async def create_user(
 
     return user
 
+@router.get("/me", response_model=User)
+@limiter.limit("30/minute")
+async def get_current_user_info(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+
 @router.get("/{user_id}", response_model=User)
 @limiter.limit("30/minute")
 async def get_user(

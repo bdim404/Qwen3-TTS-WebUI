@@ -42,6 +42,32 @@
 
 **Frontend**: React 19 + TypeScript + Vite + Tailwind + Shadcn/ui
 
+## Docker Deployment
+
+Pre-built images are available on Docker Hub: [bdim404/qwen3-tts-backend](https://hub.docker.com/r/bdim404/qwen3-tts-backend), [bdim404/qwen3-tts-frontend](https://hub.docker.com/r/bdim404/qwen3-tts-frontend)
+
+**Prerequisites**: Docker, Docker Compose, NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+
+```bash
+git clone https://github.com/bdim404/Qwen3-TTS-WebUI.git
+cd Qwen3-TTS-webUI
+
+# Download models to docker/models/ (see Installation > Download Models below)
+mkdir -p docker/models docker/data
+
+# Configure
+cp docker/.env.example docker/.env
+# Edit docker/.env and set SECRET_KEY
+
+# Start (CPU only)
+docker compose -f docker/docker-compose.yml up -d
+
+# Start (with GPU)
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.gpu.yml up -d
+```
+
+Access the application at `http://localhost`. Default credentials: `admin` / `admin123456`
+
 ## Installation
 
 ### Prerequisites

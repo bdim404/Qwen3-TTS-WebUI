@@ -22,6 +22,9 @@ wheels/
 venv/
 env/
 Qwen/
+docker/models/
+docker/data/
+docker/.env
 qwen3-tts-frontend/node_modules/
 qwen3-tts-frontend/dist/
 qwen3-tts-frontend/.env

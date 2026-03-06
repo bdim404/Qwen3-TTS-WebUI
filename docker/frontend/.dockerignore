@@ -1,0 +1,12 @@
+.git
+docs
+images
+**/__pycache__
+**/*.pyc
+qwen3-tts-backend
+qwen_tts
+qwen3-tts-frontend/node_modules
+qwen3-tts-frontend/dist
+qwen3-tts-frontend/.env
+models
+data

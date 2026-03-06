@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in docker/.env}
+      MODEL_DEVICE: ${MODEL_DEVICE:-cuda:0}
+      MODEL_BASE_PATH: /app/Qwen
+      DATABASE_URL: sqlite:////app/data/qwen_tts.db
+      CACHE_DIR: /app/voice_cache
+      OUTPUT_DIR: /app/outputs
+    volumes:
+      - ./models:/app/Qwen
+      - ./data/db:/app/data
+      - ./data/cache:/app/voice_cache
+      - ./data/outputs:/app/outputs
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

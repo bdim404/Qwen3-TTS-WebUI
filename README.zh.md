@@ -42,6 +42,32 @@
 
 **前端**: React 19 + TypeScript + Vite + Tailwind + Shadcn/ui
 
+## Docker 部署
+
+预构建镜像已发布至 Docker Hub：[bdim404/qwen3-tts-backend](https://hub.docker.com/r/bdim404/qwen3-tts-backend)、[bdim404/qwen3-tts-frontend](https://hub.docker.com/r/bdim404/qwen3-tts-frontend)
+
+**前置要求**：Docker、Docker Compose、NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+
+```bash
+git clone https://github.com/bdim404/Qwen3-TTS-WebUI.git
+cd Qwen3-TTS-webUI
+
+# 下载模型到 docker/models/（参见下方"安装部署 > 下载模型"）
+mkdir -p docker/models docker/data
+
+# 配置
+cp docker/.env.example docker/.env
+# 编辑 docker/.env，设置 SECRET_KEY
+
+# 启动（仅 CPU）
+docker compose -f docker/docker-compose.yml up -d
+
+# 启动（GPU 加速）
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.gpu.yml up -d
+```
+
+访问 `http://localhost`，默认账号：`admin` / `admin123456`
+
 ## 安装部署
 
 ### 环境要求
