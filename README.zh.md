@@ -283,14 +283,6 @@ ALIYUN_MODEL_VD=qwen3-tts-vd-realtime-2026-01-15
 - 超级管理员可以控制是否为所有用户启用本地模型
 - 获取阿里云 API 密钥，请访问 [阿里云控制台](https://dashscope.console.aliyun.com/)
 
-### 前端配置
-
-前端 `.env`：
-
-```env
-VITE_API_URL=http://localhost:8000
-```
-
 ## 使用说明
 
 ### 切换后端
@@ -310,25 +302,6 @@ VITE_API_URL=http://localhost:8000
 3. 点击"更新密钥"保存并验证
 4. 系统会在保存前验证密钥的有效性
 5. 可随时使用删除按钮删除密钥
-
-## API
-
-```
-POST /auth/register          - 注册
-POST /auth/token             - 登录
-POST /tts/custom-voice       - 自定义语音（支持 backend 参数）
-POST /tts/voice-design       - 语音设计（支持 backend 参数）
-POST /tts/voice-clone        - 语音克隆（支持 backend 参数）
-GET  /jobs                   - 任务列表
-GET  /jobs/{id}/download     - 下载结果
-```
-
-**Backend 参数：**
-
-所有 TTS 接口都支持可选的 `backend` 参数来指定使用的 TTS 后端：
-- `backend: "local"` - 使用本地 Qwen3-TTS 模型
-- `backend: "aliyun"` - 使用阿里云 TTS API
-- 如果不指定，则使用用户的默认后端设置
 
 ## 特别鸣谢
 

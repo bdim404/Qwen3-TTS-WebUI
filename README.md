@@ -283,14 +283,6 @@ ALIYUN_MODEL_VD=qwen3-tts-vd-realtime-2026-01-15
 - Superuser can enable/disable local model access for all users
 - To obtain an Aliyun API key, visit the [Aliyun Console](https://dashscope.console.aliyun.com/)
 
-### Frontend Configuration
-
-Frontend `.env`:
-
-```env
-VITE_API_URL=http://localhost:8000
-```
-
 ## Usage
 
 ### Switching Between Backends
@@ -310,25 +302,6 @@ VITE_API_URL=http://localhost:8000
 3. Click "更新密钥" to save and validate
 4. The system will verify the key before saving
 5. You can delete the key anytime using the delete button
-
-## API
-
-```
-POST /auth/register          - Register
-POST /auth/token             - Login
-POST /tts/custom-voice       - Custom voice (supports backend parameter)
-POST /tts/voice-design       - Voice design (supports backend parameter)
-POST /tts/voice-clone        - Voice cloning (supports backend parameter)
-GET  /jobs                   - Job list
-GET  /jobs/{id}/download     - Download result
-```
-
-**Backend Parameter:**
-
-All TTS endpoints support an optional `backend` parameter to specify the TTS backend:
-- `backend: "local"` - Use local Qwen3-TTS model
-- `backend: "aliyun"` - Use Aliyun TTS API
-- If not specified, uses the user's default backend setting
 
 ## Acknowledgments
 
