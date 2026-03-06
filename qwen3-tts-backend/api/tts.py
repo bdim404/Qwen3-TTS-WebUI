@@ -2,7 +2,7 @@ import logging
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File, Form, Request, status
 from sqlalchemy.orm import Session
 from typing import Optional
 from slowapi import Limiter
@@ -30,6 +30,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tts", tags=["tts"])
 
 limiter = Limiter(key_func=get_remote_address)
+
+
+async def read_upload_with_size_limit(upload_file: UploadFile, max_size_bytes: int) -> bytes:
+    chunks = []
+    total = 0
+    while True:
+        chunk = await upload_file.read(1024 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_size_bytes:
+            raise ValueError(f"Audio file exceeds {max_size_bytes // (1024 * 1024)}MB limit")
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 async def process_custom_voice_job(
@@ -85,7 +99,7 @@ async def process_custom_voice_job(
         job = db.query(Job).filter(Job.id == job_id).first()
         if job:
             job.status = JobStatus.FAILED
-            job.error_message = str(e)
+            job.error_message = "Job processing failed"
             job.completed_at = datetime.utcnow()
             db.commit()
 
@@ -150,7 +164,7 @@ async def process_voice_design_job(
         job = db.query(Job).filter(Job.id == job_id).first()
         if job:
             job.status = JobStatus.FAILED
-            job.error_message = str(e)
+            job.error_message = "Job processing failed"
             job.completed_at = datetime.utcnow()
             db.commit()
 
@@ -303,7 +317,7 @@ async def process_voice_clone_job(
         job = db.query(Job).filter(Job.id == job_id).first()
         if job:
             job.status = JobStatus.FAILED
-            job.error_message = str(e)
+            job.error_message = "Job processing failed"
             job.completed_at = datetime.utcnow()
             db.commit()
 
@@ -594,7 +608,8 @@ async def create_voice_clone_job(
             if not ref_audio:
                 raise ValueError("Either ref_audio or voice_design_id must be provided")
 
-            ref_audio_data = await ref_audio.read()
+            max_audio_size_bytes = settings.MAX_AUDIO_SIZE_MB * 1024 * 1024
+            ref_audio_data = await read_upload_with_size_limit(ref_audio, max_audio_size_bytes)
 
             if not validate_ref_audio(ref_audio_data, max_size_mb=settings.MAX_AUDIO_SIZE_MB):
                 raise ValueError("Invalid reference audio: must be 1-30s duration and ≤10MB")

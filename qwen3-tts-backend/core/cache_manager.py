@@ -1,10 +1,10 @@
 import hashlib
-import pickle
 import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 import logging
+import numpy as np
 
 from sqlalchemy.orm import Session
 from db.crud import (
@@ -58,8 +58,13 @@ class VoiceCacheManager:
                 delete_cache_entry(db, cache_entry.id, user_id)
                 return None
 
+            resolved_cache_file = cache_file.resolve()
+            if not resolved_cache_file.is_relative_to(self.cache_dir.resolve()):
+                logger.warning(f"Cache path out of cache dir: {resolved_cache_file}")
+                return None
+
             with open(cache_file, 'rb') as f:
-                cache_data = pickle.load(f)
+                cache_data = np.load(f, allow_pickle=False)
 
             logger.info(f"Cache hit: user={user_id}, hash={ref_audio_hash[:8]}..., access_count={cache_entry.access_count}")
             return {
@@ -84,8 +89,13 @@ class VoiceCacheManager:
                 logger.warning(f"Cache file missing: {cache_file}")
                 return None
 
+            resolved_cache_file = cache_file.resolve()
+            if not resolved_cache_file.is_relative_to(self.cache_dir.resolve()):
+                logger.warning(f"Cache path out of cache dir: {resolved_cache_file}")
+                return None
+
             with open(cache_file, 'rb') as f:
-                cache_data = pickle.load(f)
+                cache_data = np.load(f, allow_pickle=False)
 
             cache_entry.last_accessed = datetime.utcnow()
             cache_entry.access_count += 1
@@ -112,11 +122,16 @@ class VoiceCacheManager:
     ) -> str:
         async with self._lock:
             try:
-                cache_filename = f"{user_id}_{ref_audio_hash}.pkl"
+                cache_filename = f"{user_id}_{ref_audio_hash}.npy"
                 cache_path = self.cache_dir / cache_filename
 
+                if hasattr(cache_data, "detach"):
+                    cache_data = cache_data.detach().cpu().numpy()
+                elif not isinstance(cache_data, np.ndarray):
+                    cache_data = np.asarray(cache_data, dtype=np.float32)
+
                 with open(cache_path, 'wb') as f:
-                    pickle.dump(cache_data, f)
+                    np.save(f, cache_data, allow_pickle=False)
 
                 cache_entry = create_cache_entry(
                     db=db,

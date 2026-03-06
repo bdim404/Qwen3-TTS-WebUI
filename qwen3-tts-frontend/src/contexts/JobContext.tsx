@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { jobApi } from '@/lib/api'
 import type { Job, JobStatus } from '@/types/job'
@@ -25,13 +25,27 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const [elapsedTime, setElapsedTime] = useState(0)
 
   const { refresh: historyRefresh } = useHistoryContext()
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const clearIntervals = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current)
+      timeIntervalRef.current = null
+    }
+  }, [])
 
   const stopJob = useCallback(() => {
+    clearIntervals()
     setCurrentJob(null)
     setStatus(null)
     setError(null)
     setElapsedTime(0)
-  }, [])
+  }, [clearIntervals])
 
   const resetJob = useCallback(() => {
     setError(null)
@@ -45,14 +59,12 @@ export function JobProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const startJob = useCallback((jobId: number) => {
+    clearIntervals()
     // Reset state for new job
     setCurrentJob(null)
     setStatus('pending')
     setError(null)
     setElapsedTime(0)
-
-    let pollInterval: ReturnType<typeof setInterval> | null = null
-    let timeInterval: ReturnType<typeof setInterval> | null = null
 
     const poll = async () => {
       try {
@@ -61,15 +73,13 @@ export function JobProvider({ children }: { children: ReactNode }) {
         setStatus(job.status)
 
         if (job.status === 'completed') {
-          if (pollInterval) clearInterval(pollInterval)
-          if (timeInterval) clearInterval(timeInterval)
+          clearIntervals()
           toast.success('任务完成！')
           try {
             historyRefresh()
           } catch {}
         } else if (job.status === 'failed') {
-          if (pollInterval) clearInterval(pollInterval)
-          if (timeInterval) clearInterval(timeInterval)
+          clearIntervals()
           setError(job.error_message || '任务失败')
           toast.error(job.error_message || '任务失败')
           try {
@@ -77,8 +87,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
           } catch {}
         }
       } catch (error: any) {
-        if (pollInterval) clearInterval(pollInterval)
-        if (timeInterval) clearInterval(timeInterval)
+        clearIntervals()
         const message = error.response?.data?.detail || '获取任务状态失败'
         setError(message)
         toast.error(message)
@@ -86,16 +95,17 @@ export function JobProvider({ children }: { children: ReactNode }) {
     }
 
     poll()
-    pollInterval = setInterval(poll, POLL_INTERVAL)
-    timeInterval = setInterval(() => {
+    pollIntervalRef.current = setInterval(poll, POLL_INTERVAL)
+    timeIntervalRef.current = setInterval(() => {
       setElapsedTime((prev) => prev + 1)
     }, 1000)
+  }, [historyRefresh, clearIntervals])
 
+  useEffect(() => {
     return () => {
-      if (pollInterval) clearInterval(pollInterval)
-      if (timeInterval) clearInterval(timeInterval)
+      clearIntervals()
     }
-  }, [historyRefresh])
+  }, [clearIntervals])
 
   const value = useMemo(
     () => ({

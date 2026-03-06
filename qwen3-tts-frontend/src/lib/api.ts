@@ -13,9 +13,22 @@ const apiClient = axios.create({
   },
 })
 
+const isTrustedApiRequest = (url?: string, baseURL?: string): boolean => {
+  if (!url) return false
+  if (url.startsWith('/')) return true
+
+  try {
+    const resolvedUrl = new URL(url, baseURL || window.location.origin)
+    const apiOrigin = baseURL ? new URL(baseURL, window.location.origin).origin : window.location.origin
+    return resolvedUrl.origin === apiOrigin
+  } catch {
+    return false
+  }
+}
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
-  if (token) {
+  if (token && isTrustedApiRequest(config.url, config.baseURL || import.meta.env.VITE_API_URL)) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
@@ -346,11 +359,23 @@ export const jobApi = {
   getAudioUrl: (id: number, audioPath?: string): string => {
     if (audioPath) {
       if (audioPath.startsWith('http')) {
+        const apiBase = import.meta.env.VITE_API_URL
+        if (apiBase) {
+          try {
+            const audioOrigin = new URL(audioPath).origin
+            const apiOrigin = new URL(apiBase, window.location.origin).origin
+            if (audioOrigin !== apiOrigin) {
+              return API_ENDPOINTS.JOBS.AUDIO(id)
+            }
+          } catch {
+            return API_ENDPOINTS.JOBS.AUDIO(id)
+          }
+        }
         if (audioPath.includes('localhost') || audioPath.includes('127.0.0.1')) {
           const url = new URL(audioPath)
           return url.pathname
         }
-        return audioPath
+        return API_ENDPOINTS.JOBS.AUDIO(id)
       } else {
         return audioPath.startsWith('/') ? audioPath : `/${audioPath}`
       }

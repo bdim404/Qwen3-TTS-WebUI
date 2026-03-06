@@ -58,8 +58,7 @@ class Settings(BaseSettings):
 
     def validate(self):
         if self.SECRET_KEY == "your-secret-key-change-this-in-production":
-            import warnings
-            warnings.warn("Using default SECRET_KEY! Change this in production!")
+            raise ValueError("Insecure default SECRET_KEY is not allowed. Please set a strong SECRET_KEY in environment.")
 
         Path(self.CACHE_DIR).mkdir(parents=True, exist_ok=True)
         Path(self.OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

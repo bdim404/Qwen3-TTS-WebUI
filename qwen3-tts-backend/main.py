@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import torch
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -16,6 +16,8 @@ from core.database import init_db
 from core.model_manager import ModelManager
 from core.cleanup import run_scheduled_cleanup
 from api import auth, jobs, tts, users, voice_designs
+from api.auth import get_current_user
+from schemas.user import User
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 logging.basicConfig(
@@ -134,6 +136,14 @@ app.include_router(voice_designs.router)
 
 @app.get("/health")
 async def health_check():
+    return {"status": "ok"}
+
+
+@app.get("/health/details")
+async def health_check_details(current_user: User = Depends(get_current_user)):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Superuser access required")
+
     from core.batch_processor import BatchProcessor
     from core.database import SessionLocal
 

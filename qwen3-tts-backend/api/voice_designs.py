@@ -1,4 +1,5 @@
 import logging
+import json
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -20,6 +21,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/voice-designs", tags=["voice-designs"])
 limiter = Limiter(key_func=get_remote_address)
 
+
+def to_voice_design_response(design) -> VoiceDesignResponse:
+    meta_data = design.meta_data
+    if isinstance(meta_data, str):
+        try:
+            meta_data = json.loads(meta_data)
+        except Exception:
+            meta_data = None
+    return VoiceDesignResponse(
+        id=design.id,
+        user_id=design.user_id,
+        name=design.name,
+        backend_type=design.backend_type,
+        instruct=design.instruct,
+        aliyun_voice_id=design.aliyun_voice_id,
+        meta_data=meta_data,
+        preview_text=design.preview_text,
+        created_at=design.created_at,
+        last_used=design.last_used,
+        use_count=design.use_count
+    )
+
 @router.post("", response_model=VoiceDesignResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("30/minute")
 async def save_voice_design(
@@ -39,7 +62,7 @@ async def save_voice_design(
             meta_data=data.meta_data,
             preview_text=data.preview_text
         )
-        return VoiceDesignResponse.from_orm(design)
+        return to_voice_design_response(design)
     except Exception as e:
         logger.error(f"Failed to save voice design: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save voice design")
@@ -55,7 +78,8 @@ async def list_voice_designs(
     db: Session = Depends(get_db)
 ):
     designs = crud.list_voice_designs(db, current_user.id, backend_type, skip, limit)
-    return VoiceDesignListResponse(designs=[VoiceDesignResponse.from_orm(d) for d in designs], total=len(designs))
+    total = crud.count_voice_designs(db, current_user.id, backend_type)
+    return VoiceDesignListResponse(designs=[to_voice_design_response(d) for d in designs], total=total)
 
 @router.post("/{design_id}/prepare-clone")
 @limiter.limit("10/minute")
@@ -168,4 +192,4 @@ async def prepare_voice_clone_prompt(
 
     except Exception as e:
         logger.error(f"Failed to prepare voice clone prompt: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to prepare voice clone prompt")

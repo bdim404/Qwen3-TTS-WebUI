@@ -20,9 +20,8 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 limiter = Limiter(key_func=get_remote_address)
 
 
-async def get_user_from_token_or_query(
+async def get_user_from_bearer_token(
     request: Request,
-    token: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ) -> User:
     auth_token = None
@@ -30,8 +29,6 @@ async def get_user_from_token_or_query(
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         auth_token = auth_header.split(" ")[1]
-    elif token:
-        auth_token = token
 
     if not auth_token:
         raise HTTPException(
@@ -76,14 +73,13 @@ async def get_job(
     if job.status == JobStatus.COMPLETED and job.output_path:
         output_file = Path(job.output_path)
         if output_file.exists():
-            download_url = f"{settings.BASE_URL}/jobs/{job.id}/download"
+            download_url = f"/jobs/{job.id}/download"
 
     return {
         "id": job.id,
         "job_type": job.job_type,
         "status": job.status,
         "input_params": job.input_params,
-        "output_path": job.output_path,
         "download_url": download_url,
         "error_message": job.error_message,
         "created_at": job.created_at.isoformat() + 'Z' if job.created_at else None,
@@ -120,14 +116,13 @@ async def list_jobs(
         if job.status == JobStatus.COMPLETED and job.output_path:
             output_file = Path(job.output_path)
             if output_file.exists():
-                download_url = f"{settings.BASE_URL}/jobs/{job.id}/download"
+                download_url = f"/jobs/{job.id}/download"
 
         jobs_data.append({
             "id": job.id,
             "job_type": job.job_type,
             "status": job.status,
             "input_params": job.input_params,
-            "output_path": job.output_path,
             "download_url": download_url,
             "error_message": job.error_message,
             "created_at": job.created_at.isoformat() + 'Z' if job.created_at else None,
@@ -158,8 +153,15 @@ async def delete_job(
     if job.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
 
+    output_file = None
     if job.output_path:
-        output_file = Path(job.output_path)
+        output_file = Path(job.output_path).resolve()
+        output_dir = Path(settings.OUTPUT_DIR).resolve()
+        if not output_file.is_relative_to(output_dir):
+            logger.warning(f"Skip deleting file outside output dir: {output_file}")
+            output_file = None
+
+    if output_file:
         if output_file.exists():
             try:
                 output_file.unlink()
@@ -178,7 +180,7 @@ async def delete_job(
 async def download_job_output(
     request: Request,
     job_id: int,
-    current_user: User = Depends(get_user_from_token_or_query),
+    current_user: User = Depends(get_user_from_bearer_token),
     db: Session = Depends(get_db)
 ):
     job = db.query(Job).filter(Job.id == job_id).first()

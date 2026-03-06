@@ -47,15 +47,15 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
   const PRESET_INSTRUCTS = useMemo(() => tConstants('presetInstructs', { returnObjects: true }) as Array<{ label: string; instruct: string; text: string }>, [tConstants])
 
   const formSchema = z.object({
-    text: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.text') })).max(5000, tErrors('validation.maxLength', { field: tErrors('fieldNames.text'), max: 5000 })),
+    text: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.text') })).max(1000, tErrors('validation.maxLength', { field: tErrors('fieldNames.text'), max: 1000 })),
     language: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.language') })),
     speaker: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.speaker') })),
     instruct: z.string().optional(),
-    max_new_tokens: z.number().min(1).max(10000).optional(),
-    temperature: z.number().min(0).max(2).optional(),
+    max_new_tokens: z.number().min(128).max(4096).optional(),
+    temperature: z.number().min(0.1).max(2).optional(),
     top_k: z.number().min(1).max(100).optional(),
     top_p: z.number().min(0).max(1).optional(),
-    repetition_penalty: z.number().min(0).max(2).optional(),
+    repetition_penalty: z.number().min(1).max(2).optional(),
   })
   const [languages, setLanguages] = useState<Language[]>([])
   const [unifiedSpeakers, setUnifiedSpeakers] = useState<UnifiedSpeakerItem[]>([])
@@ -395,8 +395,8 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
               <Input
                 id="dialog-max_new_tokens"
                 type="number"
-                min={1}
-                max={10000}
+                min={128}
+                max={4096}
                 value={tempAdvancedParams.max_new_tokens}
                 onChange={(e) => setTempAdvancedParams({
                   ...tempAdvancedParams,
@@ -414,7 +414,7 @@ const CustomVoiceForm = forwardRef<CustomVoiceFormHandle>((_props, ref) => {
               <Input
                 id="dialog-temperature"
                 type="number"
-                min={0}
+                min={0.1}
                 max={2}
                 step={0.1}
                 value={tempAdvancedParams.temperature}

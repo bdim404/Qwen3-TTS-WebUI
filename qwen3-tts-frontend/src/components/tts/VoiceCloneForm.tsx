@@ -49,17 +49,17 @@ function VoiceCloneForm() {
   const PRESET_REF_TEXTS = useMemo(() => tConstants('presetRefTexts', { returnObjects: true }) as Array<{ label: string; text: string }>, [tConstants])
 
   const formSchema = z.object({
-    text: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.text') })).max(5000, tErrors('validation.maxLength', { field: tErrors('fieldNames.text'), max: 5000 })),
+    text: z.string().min(1, tErrors('validation.required', { field: tErrors('fieldNames.text') })).max(1000, tErrors('validation.maxLength', { field: tErrors('fieldNames.text'), max: 1000 })),
     language: z.string().optional(),
     ref_audio: z.instanceof(File, { message: tErrors('validation.required', { field: tErrors('fieldNames.reference_audio') }) }),
     ref_text: z.string().optional(),
     use_cache: z.boolean().optional(),
     x_vector_only_mode: z.boolean().optional(),
-    max_new_tokens: z.number().min(1).max(10000).optional(),
-    temperature: z.number().min(0).max(2).optional(),
+    max_new_tokens: z.number().min(128).max(4096).optional(),
+    temperature: z.number().min(0.1).max(2).optional(),
     top_k: z.number().min(1).max(100).optional(),
     top_p: z.number().min(0).max(1).optional(),
-    repetition_penalty: z.number().min(0).max(2).optional(),
+    repetition_penalty: z.number().min(1).max(2).optional(),
   })
   const [languages, setLanguages] = useState<Language[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -358,8 +358,8 @@ function VoiceCloneForm() {
                 <Input
                   id="dialog-max_new_tokens"
                   type="number"
-                  min={1}
-                  max={10000}
+                  min={128}
+                  max={4096}
                   value={tempAdvancedParams.max_new_tokens}
                   onChange={(e) => setTempAdvancedParams({
                     ...tempAdvancedParams,

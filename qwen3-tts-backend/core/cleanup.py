@@ -54,9 +54,17 @@ async def cleanup_old_jobs(db_url: str, days: int = 7) -> dict:
         ).all()
 
         deleted_files = 0
+        output_dir = Path(settings.OUTPUT_DIR).resolve()
         for job in old_jobs:
             if job.output_path:
-                output_file = Path(job.output_path)
+                output_file = Path(job.output_path).resolve()
+                if not output_file.is_relative_to(output_dir):
+                    logger.warning(f"Skip deleting file outside output dir during cleanup: {output_file}")
+                    output_file = None
+            else:
+                output_file = None
+
+            if output_file:
                 if output_file.exists():
                     output_file.unlink()
                     deleted_files += 1
@@ -110,12 +118,13 @@ async def cleanup_orphaned_files(db_url: str) -> dict:
                     freed_space_bytes += size
 
         if cache_dir.exists():
-            for cache_file in cache_dir.glob("*.pkl"):
-                if cache_file.name not in cache_files_in_db:
-                    size = cache_file.stat().st_size
-                    cache_file.unlink()
-                    deleted_orphans += 1
-                    freed_space_bytes += size
+            for pattern in ("*.npy", "*.pkl"):
+                for cache_file in cache_dir.glob(pattern):
+                    if cache_file.name not in cache_files_in_db:
+                        size = cache_file.stat().st_size
+                        cache_file.unlink()
+                        deleted_orphans += 1
+                        freed_space_bytes += size
 
         freed_space_mb = freed_space_bytes / (1024 * 1024)
 

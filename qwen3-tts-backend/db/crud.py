@@ -288,7 +288,7 @@ def create_voice_design(
         backend_type=backend_type,
         instruct=instruct,
         aliyun_voice_id=aliyun_voice_id,
-        meta_data=json.dumps(meta_data) if meta_data else None,
+        meta_data=meta_data,
         preview_text=preview_text,
         created_at=datetime.utcnow(),
         last_used=datetime.utcnow()
@@ -320,6 +320,19 @@ def list_voice_designs(
         query = query.filter(VoiceDesign.backend_type == backend_type)
     return query.order_by(VoiceDesign.last_used.desc()).offset(skip).limit(limit).all()
 
+def count_voice_designs(
+    db: Session,
+    user_id: int,
+    backend_type: Optional[str] = None
+) -> int:
+    query = db.query(VoiceDesign).filter(
+        VoiceDesign.user_id == user_id,
+        VoiceDesign.is_active == True
+    )
+    if backend_type:
+        query = query.filter(VoiceDesign.backend_type == backend_type)
+    return query.count()
+
 def update_voice_design_usage(db: Session, design_id: int, user_id: int) -> Optional[VoiceDesign]:
     design = get_voice_design(db, design_id, user_id)
     if design:
@@ -328,4 +341,3 @@ def update_voice_design_usage(db: Session, design_id: int, user_id: int) -> Opti
         db.commit()
         db.refresh(design)
     return design
-
