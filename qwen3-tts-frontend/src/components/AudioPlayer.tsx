@@ -13,7 +13,7 @@ interface AudioPlayerProps {
   text?: string
 }
 
-const AudioPlayer = memo(({ audioUrl, jobId, text }: AudioPlayerProps) => {
+const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   const { t } = useTranslation('common')
   const [blobUrl, setBlobUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
@@ -71,11 +71,6 @@ const AudioPlayer = memo(({ audioUrl, jobId, text }: AudioPlayerProps) => {
   useEffect(() => {
     if (!containerRef.current || !blobUrl) return
 
-    const truncateText = (str: string, maxLength: number = 30) => {
-      if (!str) return ''
-      return str.length > maxLength ? str.substring(0, maxLength) + '...' : str
-    }
-
     const player = new WaveformPlayer(containerRef.current, {
       url: blobUrl,
       waveformStyle: 'mirror',
@@ -87,7 +82,6 @@ const AudioPlayer = memo(({ audioUrl, jobId, text }: AudioPlayerProps) => {
       showPlaybackSpeed: false,
       autoplay: false,
       enableMediaSession: true,
-      title: text ? truncateText(text) : undefined,
     })
 
     playerInstanceRef.current = player
@@ -109,7 +103,7 @@ const AudioPlayer = memo(({ audioUrl, jobId, text }: AudioPlayerProps) => {
         playerInstanceRef.current = null
       }
     }
-  }, [blobUrl, text])
+  }, [blobUrl])
 
   const handleDownload = useCallback(() => {
     const link = document.createElement('a')

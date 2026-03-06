@@ -50,8 +50,16 @@
 }
 
 .audioPlayerWrapper :global(.waveform-title) {
-  text-align: center;
-  font-size: 0.8125rem;
+  display: none;
+}
+
+.audioPlayerWrapper :global(.waveform-body) {
+  display: flex;
+  justify-content: center;
+}
+
+.audioPlayerWrapper :global(.waveform-track) {
+  flex-shrink: 0;
 }
 
 .audioPlayerWrapper :global(.waveform-time) {
