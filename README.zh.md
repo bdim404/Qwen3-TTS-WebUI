@@ -59,11 +59,16 @@ mkdir -p docker/models docker/data
 cp docker/.env.example docker/.env
 # 编辑 docker/.env，设置 SECRET_KEY
 
+cd docker
+
+# 拉取预构建镜像
+docker compose pull
+
 # 启动（仅 CPU）
-docker compose -f docker/docker-compose.yml up -d
+docker compose up -d
 
 # 启动（GPU 加速）
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.gpu.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 ```
 
 访问 `http://localhost`，默认账号：`admin` / `admin123456`
@@ -89,10 +94,13 @@ cd Qwen3-TTS-webUI
 
 详细信息请访问官方仓库：[Qwen3-TTS 模型](https://github.com/QwenLM/Qwen3-TTS)
 
-进入后端目录：
+进入模型目录：
 ```bash
-cd qwen3-tts-backend
-mkdir -p Qwen && cd Qwen
+# Docker 部署
+mkdir -p docker/models && cd docker/models
+
+# 本地部署
+cd qwen3-tts-backend && mkdir -p Qwen && cd Qwen
 ```
 
 **方式一：通过 ModelScope 下载（推荐中国大陆用户）**
@@ -130,14 +138,27 @@ hf download Qwen/Qwen3-TTS-12Hz-0.6B-Base --local-dir ./Qwen3-TTS-12Hz-0.6B-Base
 ```
 
 **最终目录结构：**
+
+Docker 部署（`docker/models/`）：
 ```
 Qwen3-TTS-webUI/
-├── qwen3-tts-backend/
-│   └── Qwen/
-│       ├── Qwen3-TTS-Tokenizer-12Hz/
-│       ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
-│       ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
-│       └── Qwen3-TTS-12Hz-1.7B-Base/
+└── docker/
+    └── models/
+        ├── Qwen3-TTS-Tokenizer-12Hz/
+        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
+        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
+        └── Qwen3-TTS-12Hz-1.7B-Base/
+```
+
+本地部署（`qwen3-tts-backend/Qwen/`）：
+```
+Qwen3-TTS-webUI/
+└── qwen3-tts-backend/
+    └── Qwen/
+        ├── Qwen3-TTS-Tokenizer-12Hz/
+        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
+        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
+        └── Qwen3-TTS-12Hz-1.7B-Base/
 ```
 
 ### 3. 后端配置

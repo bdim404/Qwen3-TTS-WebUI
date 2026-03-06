@@ -59,11 +59,16 @@ mkdir -p docker/models docker/data
 cp docker/.env.example docker/.env
 # Edit docker/.env and set SECRET_KEY
 
+cd docker
+
+# Pull pre-built images
+docker compose pull
+
 # Start (CPU only)
-docker compose -f docker/docker-compose.yml up -d
+docker compose up -d
 
 # Start (with GPU)
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.gpu.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 ```
 
 Access the application at `http://localhost`. Default credentials: `admin` / `admin123456`
@@ -89,10 +94,13 @@ cd Qwen3-TTS-webUI
 
 For more details, visit the official repository: [Qwen3-TTS Models](https://github.com/QwenLM/Qwen3-TTS)
 
-Navigate to the backend directory:
+Navigate to the models directory:
 ```bash
-cd qwen3-tts-backend
-mkdir -p Qwen && cd Qwen
+# Docker deployment
+mkdir -p docker/models && cd docker/models
+
+# Local deployment
+cd qwen3-tts-backend && mkdir -p Qwen && cd Qwen
 ```
 
 **Option 1: Download through ModelScope (Recommended for users in Mainland China)**
@@ -130,14 +138,27 @@ hf download Qwen/Qwen3-TTS-12Hz-0.6B-Base --local-dir ./Qwen3-TTS-12Hz-0.6B-Base
 ```
 
 **Final directory structure:**
+
+Docker deployment (`docker/models/`):
 ```
 Qwen3-TTS-webUI/
-├── qwen3-tts-backend/
-│   └── Qwen/
-│       ├── Qwen3-TTS-Tokenizer-12Hz/
-│       ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
-│       ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
-│       └── Qwen3-TTS-12Hz-1.7B-Base/
+└── docker/
+    └── models/
+        ├── Qwen3-TTS-Tokenizer-12Hz/
+        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
+        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
+        └── Qwen3-TTS-12Hz-1.7B-Base/
+```
+
+Local deployment (`qwen3-tts-backend/Qwen/`):
+```
+Qwen3-TTS-webUI/
+└── qwen3-tts-backend/
+    └── Qwen/
+        ├── Qwen3-TTS-Tokenizer-12Hz/
+        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
+        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
+        └── Qwen3-TTS-12Hz-1.7B-Base/
 ```
 
 ### 3. Backend Setup

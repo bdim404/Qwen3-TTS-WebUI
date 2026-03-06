@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: ..
-      dockerfile: docker/backend/Dockerfile
+    image: bdim404/qwen3-tts-backend:latest
     environment:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in docker/.env}
       MODEL_DEVICE: ${MODEL_DEVICE:-cuda:0}
@@ -18,9 +16,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ..
-      dockerfile: docker/frontend/Dockerfile
+    image: bdim404/qwen3-tts-frontend:latest
     ports:
       - "80:80"
     depends_on:
