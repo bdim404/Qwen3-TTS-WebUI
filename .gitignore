@@ -32,7 +32,7 @@ qwen3-tts-frontend/.env.local
 CLAUDE.md
 样本.mp3
 aliyun.md
-nginx.conf
+/nginx.conf
 deploy.md
 qwen3-tts-backend/scripts
 qwen3-tts-backend/examples
