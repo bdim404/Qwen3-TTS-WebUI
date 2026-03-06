@@ -1,5 +1,7 @@
 # Qwen3-TTS WebUI
 
+> **⚠️ Notice:** This project is largely AI-generated and is currently in an unstable state. Stable releases will be published in the [Releases](../../releases) section.
+
 **Unofficial** text-to-speech web application based on Qwen3-TTS, supporting custom voice, voice design, and voice cloning with an intuitive interface.
 
 > This is an unofficial project. For the official Qwen3-TTS repository, please visit [QwenLM/Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS).

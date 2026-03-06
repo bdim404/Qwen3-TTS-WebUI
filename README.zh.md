@@ -1,5 +1,7 @@
 # Qwen3-TTS WebUI
 
+> **⚠️ 注意：** 本项目由大量 AI 生成，目前处于不稳定状态。稳定版将在 [Releases](../../releases) 中发布。
+
 **非官方** 基于 Qwen3-TTS 的文本转语音 Web 应用，支持自定义语音、语音设计和语音克隆，提供直观的 Web 界面。
 
 > 这是一个非官方项目。如需查看官方 Qwen3-TTS 仓库，请访问 [QwenLM/Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)。
