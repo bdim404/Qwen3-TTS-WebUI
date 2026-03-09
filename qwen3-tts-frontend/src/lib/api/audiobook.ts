@@ -101,9 +101,12 @@ export const audiobookApi = {
   },
 
   getDownloadUrl: (id: number, chapter?: number): string => {
-    const base = import.meta.env.VITE_API_URL || ''
     const chapterParam = chapter !== undefined ? `?chapter=${chapter}` : ''
-    return `${base}/audiobook/projects/${id}/download${chapterParam}`
+    return `/audiobook/projects/${id}/download${chapterParam}`
+  },
+
+  getSegmentAudioUrl: (projectId: number, segmentId: number): string => {
+    return `/audiobook/projects/${projectId}/segments/${segmentId}/audio`
   },
 
   deleteProject: async (id: number): Promise<void> => {

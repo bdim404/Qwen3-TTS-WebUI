@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react'
+import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp, Play, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Navbar } from '@/components/Navbar'
+import { AudioPlayer } from '@/components/AudioPlayer'
 import { audiobookApi, type AudiobookProject, type AudiobookProjectDetail, type AudiobookSegment } from '@/lib/api/audiobook'
-import { formatApiError } from '@/lib/api'
+import apiClient, { formatApiError } from '@/lib/api'
 
 const STATUS_LABELS: Record<string, string> = {
   pending: '待分析',
@@ -24,8 +25,22 @@ const STATUS_COLORS: Record<string, string> = {
   analyzing: 'default',
   ready: 'default',
   generating: 'default',
-  done: 'default',
+  done: 'outline',
   error: 'destructive',
+}
+
+const STEP_HINTS: Record<string, string> = {
+  pending: '第 1 步：点击「分析」，LLM 将自动提取角色并分配音色',
+  analyzing: '第 1 步：LLM 正在分析文本，提取角色列表，请稍候...',
+  ready: '第 2 步：已提取角色列表，确认角色音色后点击「生成音频」开始合成',
+  generating: '第 3 步：正在逐段合成音频，请耐心等待...',
+}
+
+const SEGMENT_STATUS_LABELS: Record<string, string> = {
+  pending: '待生成',
+  generating: '生成中',
+  done: '完成',
+  error: '出错',
 }
 
 function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
@@ -127,6 +142,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [segments, setSegments] = useState<AudiobookSegment[]>([])
   const [expanded, setExpanded] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
+  const [playingSegmentId, setPlayingSegmentId] = useState<number | null>(null)
+  const autoExpandedRef = useRef(false)
 
   const fetchDetail = useCallback(async () => {
     try {
@@ -148,6 +165,13 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
       fetchSegments()
     }
   }, [expanded, fetchDetail, fetchSegments])
+
+  useEffect(() => {
+    if (project.status === 'ready' && !autoExpandedRef.current) {
+      setExpanded(true)
+      autoExpandedRef.current = true
+    }
+  }, [project.status])
 
   useEffect(() => {
     if (['analyzing', 'generating'].includes(project.status)) {
@@ -185,6 +209,26 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
+  const handleDownload = async () => {
+    setLoadingAction(true)
+    try {
+      const response = await apiClient.get(
+        `/audiobook/projects/${project.id}/download`,
+        { responseType: 'blob' }
+      )
+      const url = URL.createObjectURL(response.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${project.title}.mp3`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
   const handleDelete = async () => {
     if (!confirm(`确认删除项目「${project.title}」及所有音频？`)) return
     try {
@@ -212,19 +256,21 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         </div>
         <div className="flex gap-1 shrink-0">
           {project.status === 'pending' && (
-            <Button size="sm" variant="outline" onClick={handleAnalyze} disabled={loadingAction}>分析</Button>
-          )}
-          {project.status === 'ready' && (
-            <Button size="sm" onClick={handleGenerate} disabled={loadingAction}>生成音频</Button>
-          )}
-          {project.status === 'done' && (
-            <Button size="sm" variant="outline" asChild>
-              <a href={audiobookApi.getDownloadUrl(project.id)} download>
-                <Download className="h-3 w-3 mr-1" />下载
-              </a>
+            <Button size="sm" onClick={handleAnalyze} disabled={loadingAction}>
+              {loadingAction ? '...' : '分析'}
             </Button>
           )}
-          <Button size="icon" variant="ghost" onClick={() => { setExpanded(!expanded) }}>
+          {project.status === 'ready' && (
+            <Button size="sm" onClick={handleGenerate} disabled={loadingAction}>
+              {loadingAction ? '...' : '生成音频'}
+            </Button>
+          )}
+          {project.status === 'done' && (
+            <Button size="sm" variant="outline" onClick={handleDownload} disabled={loadingAction}>
+              <Download className="h-3 w-3 mr-1" />下载全书
+            </Button>
+          )}
+          <Button size="icon" variant="ghost" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
           <Button size="icon" variant="ghost" onClick={handleDelete}>
@@ -232,6 +278,12 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
           </Button>
         </div>
       </div>
+
+      {STEP_HINTS[project.status] && (
+        <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-2 border-l-2 border-primary/40">
+          {STEP_HINTS[project.status]}
+        </div>
+      )}
 
       {project.error_message && (
         <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{project.error_message}</div>
@@ -251,15 +303,22 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
               <div className="text-xs font-medium text-muted-foreground mb-2">角色列表</div>
               <div className="space-y-1">
                 {detail.characters.map(char => (
-                  <div key={char.id} className="flex items-center justify-between text-sm border rounded px-2 py-1">
-                    <span className="font-medium">{char.name}</span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">{char.instruct}</span>
-                    {char.voice_design_id && (
-                      <Badge variant="outline" className="text-xs">音色 #{char.voice_design_id}</Badge>
+                  <div key={char.id} className="flex items-center justify-between text-sm border rounded px-2 py-1.5">
+                    <span className="font-medium shrink-0">{char.name}</span>
+                    <span className="text-xs text-muted-foreground truncate mx-2 flex-1">{char.instruct}</span>
+                    {char.voice_design_id ? (
+                      <Badge variant="outline" className="text-xs shrink-0">音色 #{char.voice_design_id}</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs shrink-0">未分配</Badge>
                     )}
                   </div>
                 ))}
               </div>
+              {project.status === 'ready' && (
+                <Button className="w-full mt-3" onClick={handleGenerate} disabled={loadingAction}>
+                  {loadingAction ? '启动中...' : '确认角色，开始生成音频'}
+                </Button>
+              )}
             </div>
           )}
 
@@ -268,14 +327,41 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
               <div className="text-xs font-medium text-muted-foreground mb-2">
                 片段列表 ({segments.length} 条)
               </div>
-              <div className="max-h-64 overflow-y-auto space-y-1">
+              <div className="max-h-96 overflow-y-auto space-y-1 pr-1">
                 {segments.slice(0, 50).map(seg => (
-                  <div key={seg.id} className="flex items-start gap-2 text-xs border rounded px-2 py-1">
-                    <Badge variant="outline" className="shrink-0 text-xs">{seg.character_name || '?'}</Badge>
-                    <span className="text-muted-foreground truncate">{seg.text}</span>
-                    <Badge variant={seg.status === 'done' ? 'default' : 'secondary'} className="shrink-0 text-xs">
-                      {seg.status}
-                    </Badge>
+                  <div key={seg.id}>
+                    <div className="flex items-start gap-2 text-xs border rounded px-2 py-1.5">
+                      <Badge variant="outline" className="shrink-0 text-xs mt-0.5">{seg.character_name || '?'}</Badge>
+                      <span className="text-muted-foreground flex-1 min-w-0 break-words leading-relaxed">{seg.text}</span>
+                      {seg.status === 'done' ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5 shrink-0 mt-0.5"
+                          onClick={() => setPlayingSegmentId(playingSegmentId === seg.id ? null : seg.id)}
+                        >
+                          {playingSegmentId === seg.id
+                            ? <Square className="h-2.5 w-2.5 fill-current" />
+                            : <Play className="h-2.5 w-2.5" />
+                          }
+                        </Button>
+                      ) : (
+                        <Badge
+                          variant={seg.status === 'error' ? 'destructive' : 'secondary'}
+                          className="shrink-0 text-xs mt-0.5"
+                        >
+                          {SEGMENT_STATUS_LABELS[seg.status] || seg.status}
+                        </Badge>
+                      )}
+                    </div>
+                    {playingSegmentId === seg.id && (
+                      <div className="mt-1 ml-1">
+                        <AudioPlayer
+                          audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)}
+                          jobId={seg.id}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
                 {segments.length > 50 && (

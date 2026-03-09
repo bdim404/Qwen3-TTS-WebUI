@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from api.auth import get_current_user
 from core.database import get_db
 from db import crud
-from db.models import User
+from db.models import User, AudiobookSegment
 from schemas.audiobook import (
     AudiobookProjectCreate,
     AudiobookProjectResponse,
@@ -259,6 +259,30 @@ async def get_segments(
             status=seg.status,
         ))
     return result
+
+
+@router.get("/projects/{project_id}/segments/{segment_id}/audio")
+async def get_segment_audio(
+    project_id: int,
+    segment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    seg = db.query(AudiobookSegment).filter(
+        AudiobookSegment.id == segment_id,
+        AudiobookSegment.project_id == project_id,
+    ).first()
+    if not seg:
+        raise HTTPException(status_code=404, detail="Segment not found")
+
+    if not seg.audio_path or not Path(seg.audio_path).exists():
+        raise HTTPException(status_code=404, detail="Audio not available")
+
+    return FileResponse(seg.audio_path, media_type="audio/wav")
 
 
 @router.get("/projects/{project_id}/download")
