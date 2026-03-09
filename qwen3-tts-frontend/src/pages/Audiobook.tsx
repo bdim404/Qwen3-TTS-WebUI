@@ -268,24 +268,34 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
       setExpanded(true)
       autoExpandedRef.current = true
     }
-  }, [project.status])
+    // When backend enters an active state, immediately sync segments
+    if (['analyzing', 'generating'].includes(project.status)) {
+      fetchSegments()
+    }
+  }, [project.status, fetchSegments])
 
   useEffect(() => {
-    if (['analyzing', 'generating'].includes(project.status)) {
-      const interval = setInterval(() => {
-        onRefresh()
-        if (expanded) { fetchDetail(); fetchSegments() }
-      }, 3000)
-      return () => clearInterval(interval)
-    }
-  }, [project.status, expanded, onRefresh, fetchDetail, fetchSegments])
+    if (!['analyzing', 'generating'].includes(project.status)) return
+    // Always poll segments regardless of expanded state so cards update in real time
+    const interval = setInterval(() => {
+      onRefresh()
+      fetchSegments()
+      if (expanded) fetchDetail()
+    }, 3000)
+    return () => clearInterval(interval)
+    // expanded intentionally excluded: interval must not reset on expand/collapse
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.status, onRefresh, fetchDetail, fetchSegments])
 
   const handleAnalyze = async () => {
     setLoadingAction(true)
     try {
       await audiobookApi.analyze(project.id)
       toast.success('分析已开始')
+      // Backend sets status in a background task; poll a few times to catch the transition
       onRefresh()
+      setTimeout(onRefresh, 800)
+      setTimeout(onRefresh, 2000)
     } catch (e: any) {
       toast.error(formatApiError(e))
     } finally {
@@ -298,7 +308,12 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     try {
       await audiobookApi.generate(project.id)
       toast.success('生成已开始')
+      // Backend sets status in a background task; poll quickly to catch the transition
+      // and start fetching segments as soon as the first ones finish
       onRefresh()
+      setTimeout(() => { onRefresh(); fetchSegments() }, 800)
+      setTimeout(() => { onRefresh(); fetchSegments() }, 2000)
+      setTimeout(() => { onRefresh(); fetchSegments() }, 4000)
     } catch (e: any) {
       toast.error(formatApiError(e))
     } finally {
