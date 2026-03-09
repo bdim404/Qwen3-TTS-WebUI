@@ -28,7 +28,8 @@ class LLMService:
             "temperature": 0.3,
         }
 
-        async with httpx.AsyncClient(timeout=120) as client:
+        timeout = httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=5.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(url, json=payload, headers=headers)
             if resp.status_code != 200:
                 logger.error(f"LLM API error {resp.status_code}: {resp.text}")

@@ -23,6 +23,7 @@ export interface AudiobookCharacter {
 
 export interface AudiobookProjectDetail extends AudiobookProject {
   characters: AudiobookCharacter[]
+  chapter_count: number
 }
 
 export interface AudiobookSegment {
@@ -79,16 +80,26 @@ export const audiobookApi = {
     await apiClient.post(`/audiobook/projects/${id}/analyze`)
   },
 
-  updateCharacterVoice: async (projectId: number, charId: number, voiceDesignId: number): Promise<AudiobookCharacter> => {
+  updateCharacter: async (
+    projectId: number,
+    charId: number,
+    data: { name?: string; description?: string; instruct?: string; voice_design_id?: number }
+  ): Promise<AudiobookCharacter> => {
     const response = await apiClient.put<AudiobookCharacter>(
       `/audiobook/projects/${projectId}/characters/${charId}`,
-      { voice_design_id: voiceDesignId }
+      data
     )
     return response.data
   },
 
-  generate: async (id: number): Promise<void> => {
-    await apiClient.post(`/audiobook/projects/${id}/generate`)
+  confirmCharacters: async (id: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${id}/confirm`)
+  },
+
+  generate: async (id: number, chapterIndex?: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${id}/generate`, {
+      chapter_index: chapterIndex ?? null,
+    })
   },
 
   getSegments: async (id: number, chapter?: number): Promise<AudiobookSegment[]> => {

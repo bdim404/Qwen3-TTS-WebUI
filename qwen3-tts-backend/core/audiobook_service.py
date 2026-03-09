@@ -23,7 +23,7 @@ def _get_llm_service(user: User) -> LLMService:
     return LLMService(base_url=user.llm_base_url, api_key=api_key, model=user.llm_model)
 
 
-def _extract_epub_text(file_path: str) -> str:
+def _extract_epub_chapters(file_path: str) -> list[str]:
     try:
         import ebooklib
         from ebooklib import epub
@@ -51,15 +51,50 @@ def _extract_epub_text(file_path: str) -> str:
 
         book = epub.read_epub(file_path)
         chapters = []
+
+        spine_ids = {item_id for item_id, _ in book.spine}
         for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+            if item.id not in spine_ids:
+                continue
+            fname = (item.file_name or "").lower()
+            if any(kw in fname for kw in ("nav", "toc", "cover", "title", "copyright")):
+                continue
             extractor = TextExtractor()
             extractor.feed(item.get_content().decode("utf-8", errors="ignore"))
-            chapter_text = "\n".join(extractor.parts)
-            if chapter_text.strip():
-                chapters.append(chapter_text)
-        return "\n\n".join(chapters)
+            text = "\n".join(extractor.parts).strip()
+            if len(text) > 200:
+                chapters.append(text)
+
+        if not chapters:
+            for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+                extractor = TextExtractor()
+                extractor.feed(item.get_content().decode("utf-8", errors="ignore"))
+                text = "\n".join(extractor.parts).strip()
+                if len(text) > 200:
+                    chapters.append(text)
+
+        return chapters
     except ImportError:
         raise RuntimeError("ebooklib not installed. Run: pip install EbookLib")
+
+
+def _chunk_chapter(text: str, max_chars: int = 4000) -> list[str]:
+    if len(text) <= max_chars:
+        return [text]
+    chunks = []
+    while text:
+        if len(text) <= max_chars:
+            chunks.append(text)
+            break
+        break_at = max(
+            text.rfind("。", 0, max_chars),
+            text.rfind("\n", 0, max_chars),
+        )
+        if break_at <= 0:
+            break_at = max_chars
+        chunks.append(text[:break_at + 1])
+        text = text[break_at + 1:]
+    return chunks
 
 
 def _split_into_chapters(text: str) -> list[str]:
@@ -86,7 +121,10 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
         llm = _get_llm_service(user)
 
         if project.source_type == "epub" and project.source_path:
-            text = _extract_epub_text(project.source_path)
+            epub_chapters = _extract_epub_chapters(project.source_path)
+            if not epub_chapters:
+                raise ValueError("No text content extracted from epub.")
+            text = "\n\n".join(epub_chapters)
             project.source_text = text
             db.commit()
         else:
@@ -108,7 +146,6 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
         crud.delete_audiobook_segments(db, project_id)
         crud.delete_audiobook_characters(db, project_id)
 
-        char_map: dict[str, AudiobookCharacter] = {}
         backend_type = user.user_preferences.get("default_backend", "aliyun") if user.user_preferences else "aliyun"
 
         for char_data in characters_data:
@@ -125,7 +162,7 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
                 preview_text=description[:100] if description else None,
             )
 
-            char = crud.create_audiobook_character(
+            crud.create_audiobook_character(
                 db=db,
                 project_id=project_id,
                 name=name,
@@ -133,37 +170,91 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
                 instruct=instruct,
                 voice_design_id=voice_design.id,
             )
-            char_map[name] = char
 
-        chapters = _split_into_chapters(text)
-        character_names = [c.get("name") for c in characters_data]
-
-        for chapter_idx, chapter_text in enumerate(chapters):
-            if not chapter_text.strip():
-                continue
-            segments_data = await llm.parse_chapter_segments(chapter_text, character_names)
-            for seg_idx, seg in enumerate(segments_data):
-                char_name = seg.get("character", "narrator")
-                seg_text = seg.get("text", "").strip()
-                if not seg_text:
-                    continue
-                char = char_map.get(char_name) or char_map.get("narrator")
-                if char is None:
-                    continue
-                crud.create_audiobook_segment(
-                    db=db,
-                    project_id=project_id,
-                    character_id=char.id,
-                    text=seg_text,
-                    chapter_index=chapter_idx,
-                    segment_index=seg_idx,
-                )
-
-        crud.update_audiobook_project_status(db, project_id, "ready")
-        logger.info(f"Project {project_id} analysis complete: {len(char_map)} characters, {len(chapters)} chapters")
+        crud.update_audiobook_project_status(db, project_id, "characters_ready")
+        logger.info(f"Project {project_id} character extraction complete: {len(characters_data)} characters")
 
     except Exception as e:
         logger.error(f"Analysis failed for project {project_id}: {e}", exc_info=True)
+        crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
+
+
+async def parse_chapters(project_id: int, user: User, db: Session) -> None:
+    project = db.query(AudiobookProject).filter(AudiobookProject.id == project_id).first()
+    if not project:
+        return
+
+    try:
+        crud.update_audiobook_project_status(db, project_id, "parsing")
+
+        llm = _get_llm_service(user)
+
+        characters = crud.list_audiobook_characters(db, project_id)
+        if not characters:
+            raise ValueError("No characters found. Please analyze the project first.")
+
+        char_map: dict[str, AudiobookCharacter] = {c.name: c for c in characters}
+        character_names = list(char_map.keys())
+
+        text = project.source_text or ""
+        if not text.strip():
+            raise ValueError("No text content found in project.")
+
+        if project.source_type == "epub" and project.source_path:
+            chapters = _extract_epub_chapters(project.source_path)
+        else:
+            chapters = _split_into_chapters(text)
+
+        crud.delete_audiobook_segments(db, project_id)
+
+        seg_counters: dict[int, int] = {}
+        for chapter_idx, chapter_text in enumerate(chapters):
+            if not chapter_text.strip():
+                continue
+            chunks = _chunk_chapter(chapter_text, max_chars=4000)
+            logger.info(f"Chapter {chapter_idx}: {len(chapter_text)} chars → {len(chunks)} chunk(s)")
+            for chunk in chunks:
+                try:
+                    segments_data = await llm.parse_chapter_segments(chunk, character_names)
+                except Exception as e:
+                    logger.warning(f"Chapter {chapter_idx} chunk LLM parse failed, fallback to narrator: {e}")
+                    narrator = char_map.get("narrator")
+                    if narrator:
+                        idx = seg_counters.get(chapter_idx, 0)
+                        crud.create_audiobook_segment(
+                            db=db,
+                            project_id=project_id,
+                            character_id=narrator.id,
+                            text=chunk.strip(),
+                            chapter_index=chapter_idx,
+                            segment_index=idx,
+                        )
+                        seg_counters[chapter_idx] = idx + 1
+                    continue
+                for seg in segments_data:
+                    char_name = seg.get("character", "narrator")
+                    seg_text = seg.get("text", "").strip()
+                    if not seg_text:
+                        continue
+                    char = char_map.get(char_name) or char_map.get("narrator")
+                    if char is None:
+                        continue
+                    idx = seg_counters.get(chapter_idx, 0)
+                    crud.create_audiobook_segment(
+                        db=db,
+                        project_id=project_id,
+                        character_id=char.id,
+                        text=seg_text,
+                        chapter_index=chapter_idx,
+                        segment_index=idx,
+                    )
+                    seg_counters[chapter_idx] = idx + 1
+
+        crud.update_audiobook_project_status(db, project_id, "ready")
+        logger.info(f"Project {project_id} chapter parsing complete: {len(chapters)} chapters")
+
+    except Exception as e:
+        logger.error(f"Chapter parsing failed for project {project_id}: {e}", exc_info=True)
         crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
 
 
@@ -235,18 +326,26 @@ async def _bootstrap_character_voices(segments, user, backend, backend_type: str
             logger.error(f"Failed to bootstrap voice for design_id={design.id}: {e}", exc_info=True)
 
 
-async def generate_project(project_id: int, user: User, db: Session) -> None:
+async def generate_project(project_id: int, user: User, db: Session, chapter_index: Optional[int] = None) -> None:
     project = db.query(AudiobookProject).filter(AudiobookProject.id == project_id).first()
     if not project:
         return
 
     try:
-        crud.update_audiobook_project_status(db, project_id, "generating")
+        if chapter_index is None:
+            crud.update_audiobook_project_status(db, project_id, "generating")
 
-        segments = crud.list_audiobook_segments(db, project_id)
-        if not segments:
-            crud.update_audiobook_project_status(db, project_id, "done")
+        segments = crud.list_audiobook_segments(db, project_id, chapter_index=chapter_index)
+        pending_segments = [s for s in segments if s.status in ("pending", "error")]
+        if not pending_segments:
+            if chapter_index is None:
+                all_segs = crud.list_audiobook_segments(db, project_id)
+                if all_segs and all(s.status == "done" for s in all_segs):
+                    crud.update_audiobook_project_status(db, project_id, "done")
+                else:
+                    crud.update_audiobook_project_status(db, project_id, "ready")
             return
+        segments = pending_segments
 
         output_base = Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "segments"
         output_base.mkdir(parents=True, exist_ok=True)
@@ -345,12 +444,18 @@ async def generate_project(project_id: int, user: User, db: Session) -> None:
                 logger.error(f"Segment {seg.id} generation failed: {e}", exc_info=True)
                 crud.update_audiobook_segment_status(db, seg.id, "error")
 
-        crud.update_audiobook_project_status(db, project_id, "done")
-        logger.info(f"Project {project_id} generation complete")
+        all_segs = crud.list_audiobook_segments(db, project_id)
+        all_done = all(s.status == "done" for s in all_segs) if all_segs else False
+        if all_done:
+            crud.update_audiobook_project_status(db, project_id, "done")
+        elif chapter_index is None:
+            crud.update_audiobook_project_status(db, project_id, "ready")
+        logger.info(f"Project {project_id} generation complete (chapter={chapter_index})")
 
     except Exception as e:
         logger.error(f"Generation failed for project {project_id}: {e}", exc_info=True)
-        crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
+        if chapter_index is None:
+            crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
 
 
 def merge_audio_files(audio_paths: list[str], output_path: str) -> None:

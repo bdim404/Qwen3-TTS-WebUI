@@ -1,4 +1,4 @@
-import { useState, useRef, lazy, Suspense, useEffect } from 'react'
+import { useState, useRef, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navbar } from '@/components/Navbar'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import type { VoiceDesignFormHandle } from '@/components/tts/VoiceDesignForm'
 import { HistorySidebar } from '@/components/HistorySidebar'
 import { OnboardingDialog } from '@/components/OnboardingDialog'
 import FormSkeleton from '@/components/FormSkeleton'
+import LoadingScreen from '@/components/LoadingScreen'
 import { useUserPreferences } from '@/contexts/UserPreferencesContext'
 
 const CustomVoiceForm = lazy(() => import('@/components/tts/CustomVoiceForm'))
@@ -19,24 +20,23 @@ function Home() {
   const { t } = useTranslation('nav')
   const [currentTab, setCurrentTab] = useState('custom-voice')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
   const { preferences } = useUserPreferences()
 
   const customVoiceFormRef = useRef<CustomVoiceFormHandle>(null)
   const voiceDesignFormRef = useRef<VoiceDesignFormHandle>(null)
 
-  useEffect(() => {
-    if (preferences && !preferences.onboarding_completed) {
-      setShowOnboarding(true)
-    }
-  }, [preferences])
+  if (!preferences) {
+    return <LoadingScreen />
+  }
+
+  const showOnboarding = !preferences.onboarding_completed
 
 
   return (
     <div className="h-screen overflow-hidden flex bg-background">
       <OnboardingDialog
         open={showOnboarding}
-        onComplete={() => setShowOnboarding(false)}
+        onComplete={() => {}}
       />
 
       <HistorySidebar

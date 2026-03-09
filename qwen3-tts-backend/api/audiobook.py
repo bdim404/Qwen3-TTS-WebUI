@@ -15,8 +15,9 @@ from schemas.audiobook import (
     AudiobookProjectResponse,
     AudiobookProjectDetail,
     AudiobookCharacterResponse,
-    AudiobookCharacterUpdate,
+    AudiobookCharacterEdit,
     AudiobookSegmentResponse,
+    AudiobookGenerateRequest,
 )
 from core.config import settings
 
@@ -38,7 +39,7 @@ def _project_to_response(project) -> AudiobookProjectResponse:
     )
 
 
-def _project_to_detail(project) -> AudiobookProjectDetail:
+def _project_to_detail(project, db: Session) -> AudiobookProjectDetail:
     characters = [
         AudiobookCharacterResponse(
             id=c.id,
@@ -50,6 +51,11 @@ def _project_to_detail(project) -> AudiobookProjectDetail:
         )
         for c in (project.characters or [])
     ]
+    from db.models import AudiobookSegment
+    chapter_indices = db.query(AudiobookSegment.chapter_index).filter(
+        AudiobookSegment.project_id == project.id
+    ).distinct().all()
+    chapter_count = len(chapter_indices)
     return AudiobookProjectDetail(
         id=project.id,
         user_id=project.user_id,
@@ -61,6 +67,7 @@ def _project_to_detail(project) -> AudiobookProjectDetail:
         created_at=project.created_at,
         updated_at=project.updated_at,
         characters=characters,
+        chapter_count=chapter_count,
     )
 
 
@@ -139,7 +146,7 @@ async def get_project(
     project = crud.get_audiobook_project(db, project_id, current_user.id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    return _project_to_detail(project)
+    return _project_to_detail(project, db)
 
 
 @router.post("/projects/{project_id}/analyze")
@@ -152,8 +159,8 @@ async def analyze_project(
     project = crud.get_audiobook_project(db, project_id, current_user.id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.status in ("analyzing", "generating"):
-        raise HTTPException(status_code=400, detail=f"Project is already {project.status}")
+    if project.status in ("analyzing", "generating", "parsing"):
+        raise HTTPException(status_code=400, detail=f"Project is currently {project.status}, please wait")
 
     if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
         raise HTTPException(status_code=400, detail="LLM config not set. Please configure LLM API key first.")
@@ -173,11 +180,42 @@ async def analyze_project(
     return {"message": "Analysis started", "project_id": project_id}
 
 
+@router.post("/projects/{project_id}/confirm")
+async def confirm_characters(
+    project_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if project.status != "characters_ready":
+        raise HTTPException(status_code=400, detail="Project must be in 'characters_ready' state to confirm characters")
+
+    if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
+        raise HTTPException(status_code=400, detail="LLM config not set. Please configure LLM API key first.")
+
+    from core.audiobook_service import parse_chapters as _parse
+    from core.database import SessionLocal
+
+    async def run_parsing():
+        async_db = SessionLocal()
+        try:
+            db_user = crud.get_user_by_id(async_db, current_user.id)
+            await _parse(project_id, db_user, async_db)
+        finally:
+            async_db.close()
+
+    background_tasks.add_task(run_parsing)
+    return {"message": "Chapter parsing started", "project_id": project_id}
+
+
 @router.put("/projects/{project_id}/characters/{char_id}", response_model=AudiobookCharacterResponse)
-async def update_character_voice(
+async def update_character(
     project_id: int,
     char_id: int,
-    data: AudiobookCharacterUpdate,
+    data: AudiobookCharacterEdit,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -189,11 +227,25 @@ async def update_character_voice(
     if not char or char.project_id != project_id:
         raise HTTPException(status_code=404, detail="Character not found")
 
-    voice_design = crud.get_voice_design(db, data.voice_design_id, current_user.id)
-    if not voice_design:
-        raise HTTPException(status_code=404, detail="Voice design not found")
+    if data.voice_design_id is not None:
+        voice_design = crud.get_voice_design(db, data.voice_design_id, current_user.id)
+        if not voice_design:
+            raise HTTPException(status_code=404, detail="Voice design not found")
 
-    char = crud.update_audiobook_character_voice(db, char_id, data.voice_design_id)
+    char = crud.update_audiobook_character(
+        db, char_id,
+        name=data.name,
+        description=data.description,
+        instruct=data.instruct,
+        voice_design_id=data.voice_design_id,
+    )
+
+    if data.instruct is not None and char.voice_design_id:
+        voice_design = crud.get_voice_design(db, char.voice_design_id, current_user.id)
+        if voice_design:
+            voice_design.instruct = data.instruct
+            db.commit()
+
     return AudiobookCharacterResponse(
         id=char.id,
         project_id=char.project_id,
@@ -208,28 +260,34 @@ async def update_character_voice(
 async def generate_project(
     project_id: int,
     background_tasks: BackgroundTasks,
+    data: AudiobookGenerateRequest = AudiobookGenerateRequest(),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     project = crud.get_audiobook_project(db, project_id, current_user.id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if project.status in ("analyzing", "generating", "parsing"):
+        raise HTTPException(status_code=400, detail=f"Project is currently {project.status}, please wait")
     if project.status not in ("ready", "done", "error"):
         raise HTTPException(status_code=400, detail=f"Project must be in 'ready' state, current: {project.status}")
 
     from core.audiobook_service import generate_project as _generate
     from core.database import SessionLocal
 
+    chapter_index = data.chapter_index
+
     async def run_generation():
         async_db = SessionLocal()
         try:
             db_user = crud.get_user_by_id(async_db, current_user.id)
-            await _generate(project_id, db_user, async_db)
+            await _generate(project_id, db_user, async_db, chapter_index=chapter_index)
         finally:
             async_db.close()
 
     background_tasks.add_task(run_generation)
-    return {"message": "Generation started", "project_id": project_id}
+    msg = f"Generation started for chapter {chapter_index}" if chapter_index is not None else "Generation started"
+    return {"message": msg, "project_id": project_id, "chapter_index": chapter_index}
 
 
 @router.get("/projects/{project_id}/segments", response_model=list[AudiobookSegmentResponse])

@@ -36,10 +36,22 @@ class AudiobookCharacterResponse(BaseModel):
 
 class AudiobookProjectDetail(AudiobookProjectResponse):
     characters: List[AudiobookCharacterResponse] = []
+    chapter_count: int = 0
+
+
+class AudiobookGenerateRequest(BaseModel):
+    chapter_index: Optional[int] = None
 
 
 class AudiobookCharacterUpdate(BaseModel):
     voice_design_id: int
+
+
+class AudiobookCharacterEdit(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    instruct: Optional[str] = None
+    voice_design_id: Optional[int] = None
 
 
 class AudiobookSegmentResponse(BaseModel):

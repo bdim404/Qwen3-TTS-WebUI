@@ -494,6 +494,30 @@ def update_audiobook_character_voice(
     return char
 
 
+def update_audiobook_character(
+    db: Session,
+    char_id: int,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    instruct: Optional[str] = None,
+    voice_design_id: Optional[int] = None,
+) -> Optional[AudiobookCharacter]:
+    char = db.query(AudiobookCharacter).filter(AudiobookCharacter.id == char_id).first()
+    if not char:
+        return None
+    if name is not None:
+        char.name = name
+    if description is not None:
+        char.description = description
+    if instruct is not None:
+        char.instruct = instruct
+    if voice_design_id is not None:
+        char.voice_design_id = voice_design_id
+    db.commit()
+    db.refresh(char)
+    return char
+
+
 def create_audiobook_segment(
     db: Session,
     project_id: int,

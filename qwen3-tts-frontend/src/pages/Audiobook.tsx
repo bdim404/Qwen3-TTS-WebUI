@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp, Play, Square } from 'lucide-react'
+import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp, Play, Square, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -8,12 +8,14 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Navbar } from '@/components/Navbar'
 import { AudioPlayer } from '@/components/AudioPlayer'
-import { audiobookApi, type AudiobookProject, type AudiobookProjectDetail, type AudiobookSegment } from '@/lib/api/audiobook'
+import { audiobookApi, type AudiobookProject, type AudiobookProjectDetail, type AudiobookCharacter, type AudiobookSegment } from '@/lib/api/audiobook'
 import apiClient, { formatApiError } from '@/lib/api'
 
 const STATUS_LABELS: Record<string, string> = {
   pending: '待分析',
   analyzing: '分析中',
+  characters_ready: '角色待确认',
+  parsing: '解析章节',
   ready: '待生成',
   generating: '生成中',
   done: '已完成',
@@ -23,6 +25,8 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   pending: 'secondary',
   analyzing: 'default',
+  characters_ready: 'default',
+  parsing: 'default',
   ready: 'default',
   generating: 'default',
   done: 'outline',
@@ -30,16 +34,12 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const STEP_HINTS: Record<string, string> = {
-  pending: '第 1 步：点击「分析」，LLM 将自动提取角色并分配音色',
-  analyzing: '第 1 步：LLM 正在分析文本，提取角色列表，请稍候...',
-  ready: '第 2 步：已提取角色列表，确认角色音色后点击「生成音频」开始合成',
-  generating: '第 3 步：正在逐段合成音频，请耐心等待...',
-}
-
-const SEGMENT_STATUS_LABELS: Record<string, string> = {
-  pending: '待生成',
-  generating: '生成中',
-  error: '出错',
+  pending: '第 1 步：点击「分析」，LLM 将自动提取角色列表',
+  analyzing: '第 1 步：LLM 正在提取角色，请稍候...',
+  characters_ready: '第 2 步：确认角色信息，可编辑后点击「确认角色 · 解析章节」',
+  parsing: '第 3 步：LLM 正在解析章节脚本，请稍候...',
+  ready: '第 4 步：按章节逐章生成音频，或一次性生成全书',
+  generating: '第 5 步：正在合成音频，已完成片段可立即播放',
 }
 
 function SequentialPlayer({
@@ -133,7 +133,7 @@ function SequentialPlayer({
         </>
       ) : (
         <Button size="sm" variant="outline" onClick={() => playSegment(0)}>
-          <Play className="h-3 w-3 mr-1" />顺序播放全部（{doneSegments.length} 段）
+          <Play className="h-3 w-3 mr-1" />顺序播放（{doneSegments.length} 段）
         </Button>
       )}
     </div>
@@ -239,62 +239,63 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [segments, setSegments] = useState<AudiobookSegment[]>([])
   const [expanded, setExpanded] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
-  const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
   const [isPolling, setIsPolling] = useState(false)
-  const autoExpandedRef = useRef(false)
+  const [editingCharId, setEditingCharId] = useState<number | null>(null)
+  const [editFields, setEditFields] = useState({ name: '', description: '', instruct: '' })
+  const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
+  const prevStatusRef = useRef(project.status)
+  const autoExpandedRef = useRef(new Set<string>())
 
   const fetchDetail = useCallback(async () => {
-    try {
-      const d = await audiobookApi.getProject(project.id)
-      setDetail(d)
-    } catch {}
+    try { setDetail(await audiobookApi.getProject(project.id)) } catch {}
   }, [project.id])
 
   const fetchSegments = useCallback(async () => {
-    try {
-      const s = await audiobookApi.getSegments(project.id)
-      setSegments(s)
-    } catch {}
+    try { setSegments(await audiobookApi.getSegments(project.id)) } catch {}
   }, [project.id])
 
-  // Load data when card is expanded
   useEffect(() => {
-    if (expanded) {
-      fetchDetail()
-      fetchSegments()
-    }
+    if (expanded) { fetchDetail(); fetchSegments() }
   }, [expanded, fetchDetail, fetchSegments])
 
-  // Auto-expand and immediate data sync on status transitions
   useEffect(() => {
-    if (project.status === 'ready' && !autoExpandedRef.current) {
+    const s = project.status
+    if (['characters_ready', 'ready', 'generating'].includes(s) && !autoExpandedRef.current.has(s)) {
+      autoExpandedRef.current.add(s)
       setExpanded(true)
-      autoExpandedRef.current = true
       fetchDetail()
-    }
-    if (['analyzing', 'generating'].includes(project.status)) {
       fetchSegments()
     }
-    // Stop polling once a stable state is reached
-    if (['done', 'error', 'ready', 'pending'].includes(project.status)) {
-      setIsPolling(false)
-    }
-  }, [project.status, fetchSegments, fetchDetail])
+    if (['done', 'error'].includes(s)) setIsPolling(false)
+  }, [project.status, fetchDetail, fetchSegments])
 
-  // Polling: runs as soon as user triggers an action (isPolling=true) OR when
-  // the backend status confirms an active state — whichever comes first.
-  // This avoids the race condition where status hasn't updated yet.
   useEffect(() => {
-    const shouldPoll = isPolling || ['analyzing', 'generating'].includes(project.status)
+    if (prevStatusRef.current === 'generating' && project.status === 'done') {
+      toast.success(`「${project.title}」音频全部生成完成！`)
+    }
+    prevStatusRef.current = project.status
+  }, [project.status, project.title])
+
+  useEffect(() => {
+    if (!isPolling) return
+    if (['analyzing', 'parsing', 'generating'].includes(project.status)) return
+    if (!segments.some(s => s.status === 'generating')) setIsPolling(false)
+  }, [isPolling, project.status, segments])
+
+  useEffect(() => {
+    const shouldPoll = isPolling || ['analyzing', 'parsing', 'generating'].includes(project.status)
     if (!shouldPoll) return
-    const interval = setInterval(() => {
-      onRefresh()
-      fetchSegments()
-    }, 1500)
-    return () => clearInterval(interval)
+    const id = setInterval(() => { onRefresh(); fetchSegments() }, 1500)
+    return () => clearInterval(id)
   }, [isPolling, project.status, onRefresh, fetchSegments])
 
   const handleAnalyze = async () => {
+    const s = project.status
+    if (['characters_ready', 'ready', 'done'].includes(s)) {
+      if (!confirm('重新分析将清除所有角色和章节数据，确定继续？')) return
+    }
+    autoExpandedRef.current.clear()
+    setEditingCharId(null)
     setLoadingAction(true)
     setIsPolling(true)
     try {
@@ -309,12 +310,12 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
-  const handleGenerate = async () => {
+  const handleConfirm = async () => {
     setLoadingAction(true)
     setIsPolling(true)
     try {
-      await audiobookApi.generate(project.id)
-      toast.success('生成已开始')
+      await audiobookApi.confirmCharacters(project.id)
+      toast.success('章节解析已开始')
       onRefresh()
     } catch (e: any) {
       setIsPolling(false)
@@ -324,17 +325,35 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
-  const handleDownload = async () => {
+  const handleGenerate = async (chapterIndex?: number) => {
+    setLoadingAction(true)
+    setIsPolling(true)
+    try {
+      await audiobookApi.generate(project.id, chapterIndex)
+      toast.success(chapterIndex !== undefined ? `第 ${chapterIndex + 1} 章生成已开始` : '全书生成已开始')
+      onRefresh()
+      fetchSegments()
+    } catch (e: any) {
+      setIsPolling(false)
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
+  const handleDownload = async (chapterIndex?: number) => {
     setLoadingAction(true)
     try {
-      const response = await apiClient.get(
-        `/audiobook/projects/${project.id}/download`,
-        { responseType: 'blob' }
-      )
+      const response = await apiClient.get(`/audiobook/projects/${project.id}/download`, {
+        responseType: 'blob',
+        params: chapterIndex !== undefined ? { chapter: chapterIndex } : {},
+      })
       const url = URL.createObjectURL(response.data)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${project.title}.mp3`
+      a.download = chapterIndex !== undefined
+        ? `${project.title}_ch${chapterIndex + 1}.mp3`
+        : `${project.title}.mp3`
       a.click()
       URL.revokeObjectURL(url)
     } catch (e: any) {
@@ -355,9 +374,39 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
+  const startEditChar = (char: AudiobookCharacter) => {
+    setEditingCharId(char.id)
+    setEditFields({ name: char.name, description: char.description || '', instruct: char.instruct || '' })
+  }
+
+  const saveEditChar = async (char: AudiobookCharacter) => {
+    try {
+      await audiobookApi.updateCharacter(project.id, char.id, {
+        name: editFields.name || char.name,
+        description: editFields.description,
+        instruct: editFields.instruct,
+      })
+      setEditingCharId(null)
+      await fetchDetail()
+      toast.success('角色已保存')
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    }
+  }
+
+  const status = project.status
+  const isActive = ['analyzing', 'parsing', 'generating'].includes(status)
   const doneCount = segments.filter(s => s.status === 'done').length
   const totalCount = segments.length
   const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+
+  const chapterMap = new Map<number, AudiobookSegment[]>()
+  segments.forEach(s => {
+    const arr = chapterMap.get(s.chapter_index) ?? []
+    arr.push(s)
+    chapterMap.set(s.chapter_index, arr)
+  })
+  const chapters = Array.from(chapterMap.entries()).sort(([a], [b]) => a - b)
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -365,23 +414,28 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="flex items-center gap-2 min-w-0">
           <Book className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="font-medium truncate">{project.title}</span>
-          <Badge variant={(STATUS_COLORS[project.status] || 'secondary') as any} className="shrink-0">
-            {STATUS_LABELS[project.status] || project.status}
+          <Badge variant={(STATUS_COLORS[status] || 'secondary') as any} className="shrink-0">
+            {STATUS_LABELS[status] || status}
           </Badge>
         </div>
         <div className="flex gap-1 shrink-0">
-          {project.status === 'pending' && (
-            <Button size="sm" onClick={handleAnalyze} disabled={loadingAction}>
-              {loadingAction ? '...' : '分析'}
+          {!isActive && (
+            <Button
+              size="sm"
+              variant={status === 'pending' ? 'default' : 'outline'}
+              onClick={handleAnalyze}
+              disabled={loadingAction}
+            >
+              {status === 'pending' ? '分析' : '重新分析'}
             </Button>
           )}
-          {project.status === 'ready' && (
-            <Button size="sm" onClick={handleGenerate} disabled={loadingAction}>
-              {loadingAction ? '...' : '生成音频'}
+          {status === 'ready' && (
+            <Button size="sm" onClick={() => handleGenerate()} disabled={loadingAction}>
+              生成全书
             </Button>
           )}
-          {project.status === 'done' && (
-            <Button size="sm" variant="outline" onClick={handleDownload} disabled={loadingAction}>
+          {status === 'done' && (
+            <Button size="sm" variant="outline" onClick={() => handleDownload()} disabled={loadingAction}>
               <Download className="h-3 w-3 mr-1" />下载全书
             </Button>
           )}
@@ -394,9 +448,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         </div>
       </div>
 
-      {STEP_HINTS[project.status] && (
+      {STEP_HINTS[status] && (
         <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-2 border-l-2 border-primary/40">
-          {STEP_HINTS[project.status]}
+          {STEP_HINTS[status]}
         </div>
       )}
 
@@ -404,50 +458,142 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{project.error_message}</div>
       )}
 
-      {['generating', 'done'].includes(project.status) && totalCount > 0 && (
+      {totalCount > 0 && doneCount > 0 && (
         <div className="space-y-1">
-          <div className="text-xs text-muted-foreground">{doneCount}/{totalCount} 片段完成</div>
+          <div className="text-xs text-muted-foreground">{doneCount} / {totalCount} 片段完成</div>
           <Progress value={progress} />
         </div>
       )}
 
-      {expanded && detail && (
-        <div className="space-y-3 pt-2 border-t">
-          {detail.characters.length > 0 && (
+      {expanded && (
+        <div className="space-y-4 pt-2 border-t">
+          {detail && detail.characters.length > 0 && (
             <div>
-              <div className="text-xs font-medium text-muted-foreground mb-2">角色列表</div>
-              <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground mb-2">
+                角色列表（{detail.characters.length} 个）
+              </div>
+              <div className="space-y-1.5">
                 {detail.characters.map(char => (
-                  <div key={char.id} className="flex items-center justify-between text-sm border rounded px-2 py-1.5">
-                    <span className="font-medium shrink-0">{char.name}</span>
-                    <span className="text-xs text-muted-foreground truncate mx-2 flex-1">{char.instruct}</span>
-                    {char.voice_design_id ? (
-                      <Badge variant="outline" className="text-xs shrink-0">音色 #{char.voice_design_id}</Badge>
+                  <div key={char.id} className="border rounded px-3 py-2">
+                    {editingCharId === char.id ? (
+                      <div className="space-y-2">
+                        <Input
+                          className="h-7 text-sm"
+                          value={editFields.name}
+                          onChange={e => setEditFields(f => ({ ...f, name: e.target.value }))}
+                          placeholder="角色名"
+                        />
+                        <Input
+                          className="h-7 text-sm"
+                          value={editFields.instruct}
+                          onChange={e => setEditFields(f => ({ ...f, instruct: e.target.value }))}
+                          placeholder="音色描述（用于 TTS）"
+                        />
+                        <Input
+                          className="h-7 text-sm"
+                          value={editFields.description}
+                          onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
+                          placeholder="角色描述"
+                        />
+                        <div className="flex gap-1">
+                          <Button size="sm" className="h-6 text-xs px-2" onClick={() => saveEditChar(char)}>
+                            <Check className="h-3 w-3 mr-1" />保存
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setEditingCharId(null)}>
+                            <X className="h-3 w-3 mr-1" />取消
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
-                      <Badge variant="secondary" className="text-xs shrink-0">未分配</Badge>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium shrink-0 w-20 truncate">{char.name}</span>
+                        <span className="text-xs text-muted-foreground truncate mx-2 flex-1">{char.instruct}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {char.voice_design_id
+                            ? <Badge variant="outline" className="text-xs">音色 #{char.voice_design_id}</Badge>
+                            : <Badge variant="secondary" className="text-xs">未分配</Badge>
+                          }
+                          {status === 'characters_ready' && (
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => startEditChar(char)}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
-              {project.status === 'ready' && (
-                <Button className="w-full mt-3" onClick={handleGenerate} disabled={loadingAction}>
-                  {loadingAction ? '启动中...' : '确认角色，开始生成音频'}
+              {status === 'characters_ready' && (
+                <Button
+                  className="w-full mt-3"
+                  onClick={handleConfirm}
+                  disabled={loadingAction || editingCharId !== null}
+                >
+                  {loadingAction ? '解析中...' : '确认角色 · 解析章节'}
                 </Button>
               )}
             </div>
           )}
 
-          {segments.length > 0 && (
+          {status === 'ready' && chapters.length > 0 && (
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-2">
+                按章节生成（共 {chapters.length} 章）
+              </div>
+              <div className="space-y-1">
+                {chapters.map(([chIdx, chSegs]) => {
+                  const chDone = chSegs.filter(s => s.status === 'done').length
+                  const chTotal = chSegs.length
+                  const chGenerating = chSegs.some(s => s.status === 'generating')
+                  const chAllDone = chDone === chTotal && chTotal > 0
+                  return (
+                    <div key={chIdx} className="flex items-center justify-between border rounded px-2 py-1.5 text-sm">
+                      <span className="text-xs text-muted-foreground shrink-0">第 {chIdx + 1} 章</span>
+                      <span className="text-xs text-muted-foreground mx-2 flex-1">{chDone}/{chTotal} 段</span>
+                      <div className="flex gap-1 shrink-0">
+                        {chGenerating ? (
+                          <Badge variant="secondary" className="text-xs">生成中...</Badge>
+                        ) : chAllDone ? (
+                          <>
+                            <Badge variant="outline" className="text-xs">已完成</Badge>
+                            <Button
+                              size="sm" variant="ghost" className="h-5 w-5 p-0"
+                              onClick={() => handleDownload(chIdx)}
+                              title="下载此章"
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            size="sm" variant="outline" className="h-6 text-xs px-2"
+                            disabled={loadingAction}
+                            onClick={() => handleGenerate(chIdx)}
+                          >
+                            生成此章
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {doneCount > 0 && (
+                <div className="mt-2">
+                  <SequentialPlayer segments={segments} projectId={project.id} onPlayingChange={setSequentialPlayingId} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {['generating', 'done'].includes(status) && segments.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="text-xs font-medium text-muted-foreground">
                   片段列表（{segments.length} 条）
                 </div>
-                <SequentialPlayer
-                  segments={segments}
-                  projectId={project.id}
-                  onPlayingChange={setSequentialPlayingId}
-                />
+                <SequentialPlayer segments={segments} projectId={project.id} onPlayingChange={setSequentialPlayingId} />
               </div>
               <div className="space-y-2">
                 {segments.slice(0, 50).map(seg => (
@@ -463,7 +609,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                           variant={seg.status === 'error' ? 'destructive' : 'secondary'}
                           className="shrink-0 text-xs mt-0.5"
                         >
-                          {SEGMENT_STATUS_LABELS[seg.status] || seg.status}
+                          {seg.status === 'generating' ? '生成中' : seg.status === 'error' ? '出错' : '待生成'}
                         </Badge>
                       )}
                     </div>
@@ -476,7 +622,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   </div>
                 ))}
                 {segments.length > 50 && (
-                  <div className="text-xs text-muted-foreground text-center py-1">... 还有 {segments.length - 50} 条</div>
+                  <div className="text-xs text-muted-foreground text-center py-1">
+                    仅显示前 50 条，共 {segments.length} 条
+                  </div>
                 )}
               </div>
             </div>
