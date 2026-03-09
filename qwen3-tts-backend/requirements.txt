@@ -11,6 +11,10 @@ sqlalchemy==2.0.35
 aiosqlite==0.20.0
 soundfile==0.12.1
 scipy>=1.11.0
+torch>=2.0.0
+numpy>=1.24.0
+pydub>=0.25.0
+requests>=2.31.0
 apscheduler>=3.10.0
 slowapi==0.1.9
 locust==2.20.0
