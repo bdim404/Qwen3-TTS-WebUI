@@ -52,15 +52,9 @@ class LocalTTSBackend(TTSBackend):
         )
 
         import numpy as np
-        if isinstance(result, tuple):
-            audio_data = result[0]
-        else:
-            audio_data = result
-
-        if isinstance(audio_data, list):
-            audio_data = np.array(audio_data)
-
-        return self._numpy_to_bytes(audio_data), 24000
+        wavs, sample_rate = result if isinstance(result, tuple) else (result, 24000)
+        audio_data = wavs[0] if isinstance(wavs, list) else wavs
+        return self._numpy_to_bytes(audio_data), sample_rate
 
     async def generate_voice_design(self, params: dict) -> Tuple[bytes, int]:
         await self.model_manager.load_model("voice-design")
@@ -78,10 +72,9 @@ class LocalTTSBackend(TTSBackend):
         )
 
         import numpy as np
-        audio_data = result[0] if isinstance(result, tuple) else result
-        if isinstance(audio_data, list):
-            audio_data = np.array(audio_data)
-        return self._numpy_to_bytes(audio_data), 24000
+        wavs, sample_rate = result if isinstance(result, tuple) else (result, 24000)
+        audio_data = wavs[0] if isinstance(wavs, list) else wavs
+        return self._numpy_to_bytes(audio_data), sample_rate
 
     async def generate_voice_clone(self, params: dict, ref_audio_bytes: bytes = None, x_vector=None) -> Tuple[bytes, int]:
         from utils.audio import process_ref_audio
