@@ -1,0 +1,352 @@
+import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
+import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Navbar } from '@/components/Navbar'
+import { audiobookApi, type AudiobookProject, type AudiobookProjectDetail, type AudiobookSegment } from '@/lib/api/audiobook'
+import { formatApiError } from '@/lib/api'
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: '待分析',
+  analyzing: '分析中',
+  ready: '待生成',
+  generating: '生成中',
+  done: '已完成',
+  error: '出错',
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: 'secondary',
+  analyzing: 'default',
+  ready: 'default',
+  generating: 'default',
+  done: 'default',
+  error: 'destructive',
+}
+
+function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
+  const [baseUrl, setBaseUrl] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [model, setModel] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [existing, setExisting] = useState<{ base_url?: string; model?: string; has_key: boolean } | null>(null)
+
+  useEffect(() => {
+    audiobookApi.getLLMConfig().then(setExisting).catch(() => {})
+  }, [])
+
+  const handleSave = async () => {
+    if (!baseUrl || !apiKey || !model) {
+      toast.error('请填写完整的 LLM 配置')
+      return
+    }
+    setLoading(true)
+    try {
+      await audiobookApi.setLLMConfig({ base_url: baseUrl, api_key: apiKey, model })
+      toast.success('LLM 配置已保存')
+      setApiKey('')
+      const updated = await audiobookApi.getLLMConfig()
+      setExisting(updated)
+      onSaved?.()
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="font-medium text-sm">LLM 配置</div>
+      {existing && (
+        <div className="text-xs text-muted-foreground">
+          当前: {existing.base_url || '未设置'} / {existing.model || '未设置'} / {existing.has_key ? '已配置密钥' : '未配置密钥'}
+        </div>
+      )}
+      <Input placeholder="Base URL (e.g. https://api.openai.com/v1)" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} />
+      <Input placeholder="API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} />
+      <Input placeholder="Model (e.g. gpt-4o)" value={model} onChange={e => setModel(e.target.value)} />
+      <Button size="sm" onClick={handleSave} disabled={loading}>{loading ? '保存中...' : '保存配置'}</Button>
+    </div>
+  )
+}
+
+function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
+  const [title, setTitle] = useState('')
+  const [sourceType, setSourceType] = useState<'text' | 'epub'>('text')
+  const [text, setText] = useState('')
+  const [epubFile, setEpubFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const handleCreate = async () => {
+    if (!title) { toast.error('请输入书名'); return }
+    if (sourceType === 'text' && !text) { toast.error('请输入文本内容'); return }
+    if (sourceType === 'epub' && !epubFile) { toast.error('请选择 epub 文件'); return }
+    setLoading(true)
+    try {
+      if (sourceType === 'text') {
+        await audiobookApi.createProject({ title, source_type: 'text', source_text: text })
+      } else {
+        await audiobookApi.uploadEpub(title, epubFile!)
+      }
+      toast.success('项目已创建')
+      setTitle(''); setText(''); setEpubFile(null)
+      onCreated()
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="font-medium text-sm">新建有声书项目</div>
+      <Input placeholder="书名" value={title} onChange={e => setTitle(e.target.value)} />
+      <div className="flex gap-2">
+        <Button size="sm" variant={sourceType === 'text' ? 'default' : 'outline'} onClick={() => setSourceType('text')}>粘贴文本</Button>
+        <Button size="sm" variant={sourceType === 'epub' ? 'default' : 'outline'} onClick={() => setSourceType('epub')}>上传 epub</Button>
+      </div>
+      {sourceType === 'text' && (
+        <Textarea placeholder="粘贴小说文本..." rows={6} value={text} onChange={e => setText(e.target.value)} />
+      )}
+      {sourceType === 'epub' && (
+        <Input type="file" accept=".epub" onChange={e => setEpubFile(e.target.files?.[0] || null)} />
+      )}
+      <Button size="sm" onClick={handleCreate} disabled={loading}>{loading ? '创建中...' : '创建项目'}</Button>
+    </div>
+  )
+}
+
+function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefresh: () => void }) {
+  const [detail, setDetail] = useState<AudiobookProjectDetail | null>(null)
+  const [segments, setSegments] = useState<AudiobookSegment[]>([])
+  const [expanded, setExpanded] = useState(false)
+  const [loadingAction, setLoadingAction] = useState(false)
+
+  const fetchDetail = useCallback(async () => {
+    try {
+      const d = await audiobookApi.getProject(project.id)
+      setDetail(d)
+    } catch {}
+  }, [project.id])
+
+  const fetchSegments = useCallback(async () => {
+    try {
+      const s = await audiobookApi.getSegments(project.id)
+      setSegments(s)
+    } catch {}
+  }, [project.id])
+
+  useEffect(() => {
+    if (expanded) {
+      fetchDetail()
+      fetchSegments()
+    }
+  }, [expanded, fetchDetail, fetchSegments])
+
+  useEffect(() => {
+    if (['analyzing', 'generating'].includes(project.status)) {
+      const interval = setInterval(() => {
+        onRefresh()
+        if (expanded) { fetchDetail(); fetchSegments() }
+      }, 3000)
+      return () => clearInterval(interval)
+    }
+  }, [project.status, expanded, onRefresh, fetchDetail, fetchSegments])
+
+  const handleAnalyze = async () => {
+    setLoadingAction(true)
+    try {
+      await audiobookApi.analyze(project.id)
+      toast.success('分析已开始')
+      onRefresh()
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
+  const handleGenerate = async () => {
+    setLoadingAction(true)
+    try {
+      await audiobookApi.generate(project.id)
+      toast.success('生成已开始')
+      onRefresh()
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm(`确认删除项目「${project.title}」及所有音频？`)) return
+    try {
+      await audiobookApi.deleteProject(project.id)
+      toast.success('项目已删除')
+      onRefresh()
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    }
+  }
+
+  const doneCount = segments.filter(s => s.status === 'done').length
+  const totalCount = segments.length
+  const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Book className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="font-medium truncate">{project.title}</span>
+          <Badge variant={(STATUS_COLORS[project.status] || 'secondary') as any} className="shrink-0">
+            {STATUS_LABELS[project.status] || project.status}
+          </Badge>
+        </div>
+        <div className="flex gap-1 shrink-0">
+          {project.status === 'pending' && (
+            <Button size="sm" variant="outline" onClick={handleAnalyze} disabled={loadingAction}>分析</Button>
+          )}
+          {project.status === 'ready' && (
+            <Button size="sm" onClick={handleGenerate} disabled={loadingAction}>生成音频</Button>
+          )}
+          {project.status === 'done' && (
+            <Button size="sm" variant="outline" asChild>
+              <a href={audiobookApi.getDownloadUrl(project.id)} download>
+                <Download className="h-3 w-3 mr-1" />下载
+              </a>
+            </Button>
+          )}
+          <Button size="icon" variant="ghost" onClick={() => { setExpanded(!expanded) }}>
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+          <Button size="icon" variant="ghost" onClick={handleDelete}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+
+      {project.error_message && (
+        <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{project.error_message}</div>
+      )}
+
+      {['generating', 'done'].includes(project.status) && totalCount > 0 && (
+        <div className="space-y-1">
+          <div className="text-xs text-muted-foreground">{doneCount}/{totalCount} 片段完成</div>
+          <Progress value={progress} />
+        </div>
+      )}
+
+      {expanded && detail && (
+        <div className="space-y-3 pt-2 border-t">
+          {detail.characters.length > 0 && (
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-2">角色列表</div>
+              <div className="space-y-1">
+                {detail.characters.map(char => (
+                  <div key={char.id} className="flex items-center justify-between text-sm border rounded px-2 py-1">
+                    <span className="font-medium">{char.name}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">{char.instruct}</span>
+                    {char.voice_design_id && (
+                      <Badge variant="outline" className="text-xs">音色 #{char.voice_design_id}</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {segments.length > 0 && (
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-2">
+                片段列表 ({segments.length} 条)
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {segments.slice(0, 50).map(seg => (
+                  <div key={seg.id} className="flex items-start gap-2 text-xs border rounded px-2 py-1">
+                    <Badge variant="outline" className="shrink-0 text-xs">{seg.character_name || '?'}</Badge>
+                    <span className="text-muted-foreground truncate">{seg.text}</span>
+                    <Badge variant={seg.status === 'done' ? 'default' : 'secondary'} className="shrink-0 text-xs">
+                      {seg.status}
+                    </Badge>
+                  </div>
+                ))}
+                {segments.length > 50 && (
+                  <div className="text-xs text-muted-foreground text-center py-1">... 还有 {segments.length - 50} 条</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function Audiobook() {
+  const [projects, setProjects] = useState<AudiobookProject[]>([])
+  const [showCreate, setShowCreate] = useState(false)
+  const [showLLM, setShowLLM] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      const list = await audiobookApi.listProjects()
+      setProjects(list)
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1 container max-w-3xl mx-auto px-4 py-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">有声书生成</h1>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setShowLLM(!showLLM)}>LLM 配置</Button>
+            <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
+              <Plus className="h-4 w-4 mr-1" />新建项目
+            </Button>
+            <Button size="icon" variant="ghost" onClick={fetchProjects}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {showLLM && <LLMConfigPanel onSaved={() => setShowLLM(false)} />}
+        {showCreate && <CreateProjectPanel onCreated={() => { setShowCreate(false); fetchProjects() }} />}
+
+        {loading ? (
+          <div className="text-center text-muted-foreground py-12">加载中...</div>
+        ) : projects.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <Book className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p>暂无有声书项目</p>
+            <p className="text-sm mt-1">点击「新建项目」开始创建</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {projects.map(p => (
+              <ProjectCard key={p.id} project={p} onRefresh={fetchProjects} />
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}

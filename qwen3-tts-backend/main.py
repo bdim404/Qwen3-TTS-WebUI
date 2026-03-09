@@ -15,7 +15,7 @@ from core.config import settings
 from core.database import init_db
 from core.model_manager import ModelManager
 from core.cleanup import run_scheduled_cleanup
-from api import auth, jobs, tts, users, voice_designs
+from api import auth, jobs, tts, users, voice_designs, audiobook
 from api.auth import get_current_user
 from schemas.user import User
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -133,6 +133,7 @@ app.include_router(jobs.router)
 app.include_router(tts.router)
 app.include_router(users.router)
 app.include_router(voice_designs.router)
+app.include_router(audiobook.router)
 
 @app.get("/health")
 async def health_check():

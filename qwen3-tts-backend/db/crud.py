@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from db.models import User, Job, VoiceCache, SystemSettings, VoiceDesign
+from db.models import User, Job, VoiceCache, SystemSettings, VoiceDesign, AudiobookProject, AudiobookCharacter, AudiobookSegment
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
@@ -355,3 +355,200 @@ def update_voice_design_usage(db: Session, design_id: int, user_id: int) -> Opti
         db.commit()
         db.refresh(design)
     return design
+
+
+def update_user_llm_config(
+    db: Session,
+    user_id: int,
+    llm_api_key: Optional[str] = None,
+    llm_base_url: Optional[str] = None,
+    llm_model: Optional[str] = None,
+    clear: bool = False
+) -> Optional[User]:
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return None
+    if clear:
+        user.llm_api_key = None
+        user.llm_base_url = None
+        user.llm_model = None
+    else:
+        if llm_api_key is not None:
+            user.llm_api_key = llm_api_key
+        if llm_base_url is not None:
+            user.llm_base_url = llm_base_url
+        if llm_model is not None:
+            user.llm_model = llm_model
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def create_audiobook_project(
+    db: Session,
+    user_id: int,
+    title: str,
+    source_type: str,
+    source_text: Optional[str] = None,
+    source_path: Optional[str] = None,
+    llm_model: Optional[str] = None,
+) -> AudiobookProject:
+    project = AudiobookProject(
+        user_id=user_id,
+        title=title,
+        source_type=source_type,
+        source_text=source_text,
+        source_path=source_path,
+        llm_model=llm_model,
+        status="pending",
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def get_audiobook_project(db: Session, project_id: int, user_id: int) -> Optional[AudiobookProject]:
+    return db.query(AudiobookProject).filter(
+        AudiobookProject.id == project_id,
+        AudiobookProject.user_id == user_id
+    ).first()
+
+
+def list_audiobook_projects(db: Session, user_id: int, skip: int = 0, limit: int = 50) -> List[AudiobookProject]:
+    return db.query(AudiobookProject).filter(
+        AudiobookProject.user_id == user_id
+    ).order_by(AudiobookProject.created_at.desc()).offset(skip).limit(limit).all()
+
+
+def update_audiobook_project_status(
+    db: Session,
+    project_id: int,
+    status: str,
+    error_message: Optional[str] = None
+) -> Optional[AudiobookProject]:
+    project = db.query(AudiobookProject).filter(AudiobookProject.id == project_id).first()
+    if not project:
+        return None
+    project.status = status
+    if error_message is not None:
+        project.error_message = error_message
+    project.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def delete_audiobook_project(db: Session, project_id: int, user_id: int) -> bool:
+    project = get_audiobook_project(db, project_id, user_id)
+    if not project:
+        return False
+    db.delete(project)
+    db.commit()
+    return True
+
+
+def create_audiobook_character(
+    db: Session,
+    project_id: int,
+    name: str,
+    description: Optional[str] = None,
+    instruct: Optional[str] = None,
+    voice_design_id: Optional[int] = None,
+) -> AudiobookCharacter:
+    char = AudiobookCharacter(
+        project_id=project_id,
+        name=name,
+        description=description,
+        instruct=instruct,
+        voice_design_id=voice_design_id,
+    )
+    db.add(char)
+    db.commit()
+    db.refresh(char)
+    return char
+
+
+def get_audiobook_character(db: Session, char_id: int) -> Optional[AudiobookCharacter]:
+    return db.query(AudiobookCharacter).filter(AudiobookCharacter.id == char_id).first()
+
+
+def list_audiobook_characters(db: Session, project_id: int) -> List[AudiobookCharacter]:
+    return db.query(AudiobookCharacter).filter(
+        AudiobookCharacter.project_id == project_id
+    ).all()
+
+
+def update_audiobook_character_voice(
+    db: Session,
+    char_id: int,
+    voice_design_id: int
+) -> Optional[AudiobookCharacter]:
+    char = db.query(AudiobookCharacter).filter(AudiobookCharacter.id == char_id).first()
+    if not char:
+        return None
+    char.voice_design_id = voice_design_id
+    db.commit()
+    db.refresh(char)
+    return char
+
+
+def create_audiobook_segment(
+    db: Session,
+    project_id: int,
+    character_id: int,
+    text: str,
+    chapter_index: int = 0,
+    segment_index: int = 0,
+) -> AudiobookSegment:
+    seg = AudiobookSegment(
+        project_id=project_id,
+        character_id=character_id,
+        text=text,
+        chapter_index=chapter_index,
+        segment_index=segment_index,
+        status="pending",
+    )
+    db.add(seg)
+    db.commit()
+    db.refresh(seg)
+    return seg
+
+
+def list_audiobook_segments(
+    db: Session,
+    project_id: int,
+    chapter_index: Optional[int] = None
+) -> List[AudiobookSegment]:
+    query = db.query(AudiobookSegment).filter(AudiobookSegment.project_id == project_id)
+    if chapter_index is not None:
+        query = query.filter(AudiobookSegment.chapter_index == chapter_index)
+    return query.order_by(AudiobookSegment.chapter_index, AudiobookSegment.segment_index).all()
+
+
+def update_audiobook_segment_status(
+    db: Session,
+    segment_id: int,
+    status: str,
+    audio_path: Optional[str] = None
+) -> Optional[AudiobookSegment]:
+    seg = db.query(AudiobookSegment).filter(AudiobookSegment.id == segment_id).first()
+    if not seg:
+        return None
+    seg.status = status
+    if audio_path is not None:
+        seg.audio_path = audio_path
+    db.commit()
+    db.refresh(seg)
+    return seg
+
+
+def delete_audiobook_segments(db: Session, project_id: int) -> None:
+    db.query(AudiobookSegment).filter(AudiobookSegment.project_id == project_id).delete()
+    db.commit()
+
+
+def delete_audiobook_characters(db: Session, project_id: int) -> None:
+    db.query(AudiobookCharacter).filter(AudiobookCharacter.project_id == project_id).delete()
+    db.commit()
