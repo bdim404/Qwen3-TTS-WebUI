@@ -39,16 +39,34 @@ class LLMService:
     async def chat_json(self, system_prompt: str, user_message: str) -> Any:
         raw = await self.chat(system_prompt, user_message)
         raw = raw.strip()
+        if not raw:
+            raise ValueError("LLM returned empty response")
         if raw.startswith("```"):
             lines = raw.split("\n")
-            raw = "\n".join(lines[1:-1]) if len(lines) > 2 else raw
-        return json.loads(raw)
+            inner = lines[1:]
+            if inner and inner[-1].strip().startswith("```"):
+                inner = inner[:-1]
+            raw = "\n".join(inner).strip()
+        if not raw:
+            raise ValueError("LLM returned empty JSON after stripping markdown")
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parse failed. Raw response (first 500 chars): {raw[:500]}")
+            raise
 
     async def extract_characters(self, text: str) -> list[Dict]:
         system_prompt = (
-            "你是一个专业的小说分析助手。请分析给定的小说文本，提取所有出现的角色（包括旁白narrator）。"
+            "你是一个专业的小说分析助手兼声音导演。请分析给定的小说文本，提取所有出现的角色（包括旁白narrator）。\n"
+            "对每个角色，instruct字段必须是详细的声音导演说明，需覆盖以下六个维度，每个维度单独一句，用换行分隔：\n"
+            "1. 音色信息：嗓音质感、音域、音量、气息特征（如：青年男性中低音，音色干净略带沙哑，音量偏小但稳定，情绪激动时呼吸明显）\n"
+            "2. 身份背景：角色身份、职业、出身、所处时代背景对声音的影响\n"
+            "3. 年龄设定：具体年龄段及其在声音上的体现\n"
+            "4. 外貌特征：体型、面容、精神状态等可影响声音感知的特征\n"
+            "5. 性格特质：核心性格、情绪模式、表达习惯\n"
+            "6. 叙事风格：语速节奏、停顿习惯、语气色彩、整体叙述感\n\n"
             "只输出JSON，格式如下，不要有其他文字：\n"
-            '{"characters": [{"name": "narrator", "description": "第三人称叙述者", "instruct": "中年男声，语速平稳"}, ...]}'
+            '{"characters": [{"name": "narrator", "description": "第三人称叙述者", "instruct": "音色信息：...\\n身份背景：...\\n年龄设定：...\\n外貌特征：...\\n性格特质：...\\n叙事风格：..."}, ...]}'
         )
         user_message = f"请分析以下小说文本并提取角色：\n\n{text[:30000]}"
         result = await self.chat_json(system_prompt, user_message)
