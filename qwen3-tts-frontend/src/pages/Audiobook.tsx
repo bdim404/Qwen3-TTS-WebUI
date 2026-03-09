@@ -240,6 +240,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [expanded, setExpanded] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
   const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
+  const [isPolling, setIsPolling] = useState(false)
   const autoExpandedRef = useRef(false)
 
   const fetchDetail = useCallback(async () => {
@@ -256,6 +257,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     } catch {}
   }, [project.id])
 
+  // Load data when card is expanded
   useEffect(() => {
     if (expanded) {
       fetchDetail()
@@ -263,40 +265,44 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }, [expanded, fetchDetail, fetchSegments])
 
+  // Auto-expand and immediate data sync on status transitions
   useEffect(() => {
     if (project.status === 'ready' && !autoExpandedRef.current) {
       setExpanded(true)
       autoExpandedRef.current = true
+      fetchDetail()
     }
-    // When backend enters an active state, immediately sync segments
     if (['analyzing', 'generating'].includes(project.status)) {
       fetchSegments()
     }
-  }, [project.status, fetchSegments])
+    // Stop polling once a stable state is reached
+    if (['done', 'error', 'ready', 'pending'].includes(project.status)) {
+      setIsPolling(false)
+    }
+  }, [project.status, fetchSegments, fetchDetail])
 
+  // Polling: runs as soon as user triggers an action (isPolling=true) OR when
+  // the backend status confirms an active state — whichever comes first.
+  // This avoids the race condition where status hasn't updated yet.
   useEffect(() => {
-    if (!['analyzing', 'generating'].includes(project.status)) return
-    // Always poll segments regardless of expanded state so cards update in real time
+    const shouldPoll = isPolling || ['analyzing', 'generating'].includes(project.status)
+    if (!shouldPoll) return
     const interval = setInterval(() => {
       onRefresh()
       fetchSegments()
-      if (expanded) fetchDetail()
-    }, 3000)
+    }, 1500)
     return () => clearInterval(interval)
-    // expanded intentionally excluded: interval must not reset on expand/collapse
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project.status, onRefresh, fetchDetail, fetchSegments])
+  }, [isPolling, project.status, onRefresh, fetchSegments])
 
   const handleAnalyze = async () => {
     setLoadingAction(true)
+    setIsPolling(true)
     try {
       await audiobookApi.analyze(project.id)
       toast.success('分析已开始')
-      // Backend sets status in a background task; poll a few times to catch the transition
       onRefresh()
-      setTimeout(onRefresh, 800)
-      setTimeout(onRefresh, 2000)
     } catch (e: any) {
+      setIsPolling(false)
       toast.error(formatApiError(e))
     } finally {
       setLoadingAction(false)
@@ -305,16 +311,13 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
   const handleGenerate = async () => {
     setLoadingAction(true)
+    setIsPolling(true)
     try {
       await audiobookApi.generate(project.id)
       toast.success('生成已开始')
-      // Backend sets status in a background task; poll quickly to catch the transition
-      // and start fetching segments as soon as the first ones finish
       onRefresh()
-      setTimeout(() => { onRefresh(); fetchSegments() }, 800)
-      setTimeout(() => { onRefresh(); fetchSegments() }, 2000)
-      setTimeout(() => { onRefresh(); fetchSegments() }, 4000)
     } catch (e: any) {
+      setIsPolling(false)
       toast.error(formatApiError(e))
     } finally {
       setLoadingAction(false)

@@ -167,6 +167,74 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
         crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
 
 
+async def _bootstrap_character_voices(segments, user, backend, backend_type: str, db: Session) -> None:
+    bootstrapped: set[int] = set()
+
+    for seg in segments:
+        char = crud.get_audiobook_character(db, seg.character_id)
+        if not char or not char.voice_design_id or char.voice_design_id in bootstrapped:
+            continue
+        bootstrapped.add(char.voice_design_id)
+
+        design = crud.get_voice_design(db, char.voice_design_id, user.id)
+        if not design:
+            continue
+
+        try:
+            if backend_type == "local" and not design.voice_cache_id:
+                from core.model_manager import ModelManager
+                from core.cache_manager import VoiceCacheManager
+                from utils.audio import process_ref_audio
+                import hashlib
+
+                ref_text = "你好，这是参考音频。"
+                ref_audio_bytes, _ = await backend.generate_voice_design({
+                    "text": ref_text,
+                    "language": "Auto",
+                    "instruct": design.instruct or "",
+                    "max_new_tokens": 512,
+                    "temperature": 0.3,
+                    "top_k": 10,
+                    "top_p": 0.9,
+                    "repetition_penalty": 1.05,
+                })
+
+                model_manager = await ModelManager.get_instance()
+                await model_manager.load_model("base")
+                _, tts = await model_manager.get_current_model()
+
+                ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
+                x_vector = tts.create_voice_clone_prompt(
+                    ref_audio=(ref_audio_array, ref_sr),
+                    ref_text=ref_text,
+                )
+
+                cache_manager = await VoiceCacheManager.get_instance()
+                ref_audio_hash = hashlib.sha256(ref_audio_bytes).hexdigest()
+                cache_id = await cache_manager.set_cache(
+                    user.id, ref_audio_hash, x_vector,
+                    {"ref_text": ref_text, "instruct": design.instruct},
+                    db
+                )
+                design.voice_cache_id = cache_id
+                db.commit()
+                logger.info(f"Bootstrapped local voice cache: design_id={design.id}, cache_id={cache_id}")
+
+            elif backend_type == "aliyun" and not design.aliyun_voice_id:
+                from core.tts_service import AliyunTTSBackend
+                if isinstance(backend, AliyunTTSBackend):
+                    voice_id = await backend._create_voice_design(
+                        instruct=design.instruct or "",
+                        preview_text="你好，这是参考音频。"
+                    )
+                    design.aliyun_voice_id = voice_id
+                    db.commit()
+                    logger.info(f"Bootstrapped aliyun voice_id: design_id={design.id}, voice_id={voice_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to bootstrap voice for design_id={design.id}: {e}", exc_info=True)
+
+
 async def generate_project(project_id: int, user: User, db: Session) -> None:
     project = db.query(AudiobookProject).filter(AudiobookProject.id == project_id).first()
     if not project:
@@ -193,6 +261,8 @@ async def generate_project(project_id: int, user: User, db: Session) -> None:
             user_api_key = decrypt_api_key(user.aliyun_api_key)
 
         backend = await TTSServiceFactory.get_backend(backend_type, user_api_key)
+
+        await _bootstrap_character_voices(segments, user, backend, backend_type, db)
 
         for seg in segments:
             try:
