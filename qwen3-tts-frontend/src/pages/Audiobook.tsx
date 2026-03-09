@@ -39,8 +39,105 @@ const STEP_HINTS: Record<string, string> = {
 const SEGMENT_STATUS_LABELS: Record<string, string> = {
   pending: '待生成',
   generating: '生成中',
-  done: '完成',
   error: '出错',
+}
+
+function SequentialPlayer({
+  segments,
+  projectId,
+  onPlayingChange,
+}: {
+  segments: AudiobookSegment[]
+  projectId: number
+  onPlayingChange: (segmentId: number | null) => void
+}) {
+  const [displayIndex, setDisplayIndex] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const audioRef = useRef<HTMLAudioElement>(new Audio())
+  const blobUrlsRef = useRef<Record<number, string>>({})
+  const currentIndexRef = useRef<number | null>(null)
+  const doneSegments = segments.filter(s => s.status === 'done')
+
+  useEffect(() => {
+    const audio = audioRef.current
+    return () => {
+      audio.pause()
+      audio.src = ''
+      Object.values(blobUrlsRef.current).forEach(url => URL.revokeObjectURL(url))
+    }
+  }, [])
+
+  const stop = useCallback(() => {
+    audioRef.current.pause()
+    audioRef.current.src = ''
+    currentIndexRef.current = null
+    setDisplayIndex(null)
+    setIsLoading(false)
+    onPlayingChange(null)
+  }, [onPlayingChange])
+
+  const playSegment = useCallback(async (index: number) => {
+    if (index >= doneSegments.length) {
+      currentIndexRef.current = null
+      setDisplayIndex(null)
+      onPlayingChange(null)
+      return
+    }
+    const seg = doneSegments[index]
+    currentIndexRef.current = index
+    setDisplayIndex(index)
+    onPlayingChange(seg.id)
+    setIsLoading(true)
+
+    try {
+      if (!blobUrlsRef.current[seg.id]) {
+        const response = await apiClient.get(
+          audiobookApi.getSegmentAudioUrl(projectId, seg.id),
+          { responseType: 'blob' }
+        )
+        blobUrlsRef.current[seg.id] = URL.createObjectURL(response.data)
+      }
+      const audio = audioRef.current
+      audio.src = blobUrlsRef.current[seg.id]
+      await audio.play()
+    } catch {
+      playSegment(index + 1)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [doneSegments, projectId, onPlayingChange])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    const handleEnded = () => {
+      if (currentIndexRef.current !== null) {
+        playSegment(currentIndexRef.current + 1)
+      }
+    }
+    audio.addEventListener('ended', handleEnded)
+    return () => audio.removeEventListener('ended', handleEnded)
+  }, [playSegment])
+
+  if (doneSegments.length === 0) return null
+
+  return (
+    <div className="flex items-center gap-2">
+      {displayIndex !== null ? (
+        <>
+          <Button size="sm" variant="outline" onClick={stop}>
+            <Square className="h-3 w-3 mr-1 fill-current" />停止
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {isLoading ? '加载中...' : `第 ${displayIndex + 1} / ${doneSegments.length} 段`}
+          </span>
+        </>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => playSegment(0)}>
+          <Play className="h-3 w-3 mr-1" />顺序播放全部（{doneSegments.length} 段）
+        </Button>
+      )}
+    </div>
+  )
 }
 
 function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
@@ -142,7 +239,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [segments, setSegments] = useState<AudiobookSegment[]>([])
   const [expanded, setExpanded] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
-  const [playingSegmentId, setPlayingSegmentId] = useState<number | null>(null)
+  const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
   const autoExpandedRef = useRef(false)
 
   const fetchDetail = useCallback(async () => {
@@ -324,28 +421,26 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
           {segments.length > 0 && (
             <div>
-              <div className="text-xs font-medium text-muted-foreground mb-2">
-                片段列表 ({segments.length} 条)
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium text-muted-foreground">
+                  片段列表（{segments.length} 条）
+                </div>
+                <SequentialPlayer
+                  segments={segments}
+                  projectId={project.id}
+                  onPlayingChange={setSequentialPlayingId}
+                />
               </div>
-              <div className="max-h-96 overflow-y-auto space-y-1 pr-1">
+              <div className="space-y-2">
                 {segments.slice(0, 50).map(seg => (
-                  <div key={seg.id}>
-                    <div className="flex items-start gap-2 text-xs border rounded px-2 py-1.5">
+                  <div
+                    key={seg.id}
+                    className={`border rounded px-2 py-2 space-y-2 transition-colors ${sequentialPlayingId === seg.id ? 'border-primary/50 bg-primary/5' : ''}`}
+                  >
+                    <div className="flex items-start gap-2 text-xs">
                       <Badge variant="outline" className="shrink-0 text-xs mt-0.5">{seg.character_name || '?'}</Badge>
                       <span className="text-muted-foreground flex-1 min-w-0 break-words leading-relaxed">{seg.text}</span>
-                      {seg.status === 'done' ? (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-5 w-5 shrink-0 mt-0.5"
-                          onClick={() => setPlayingSegmentId(playingSegmentId === seg.id ? null : seg.id)}
-                        >
-                          {playingSegmentId === seg.id
-                            ? <Square className="h-2.5 w-2.5 fill-current" />
-                            : <Play className="h-2.5 w-2.5" />
-                          }
-                        </Button>
-                      ) : (
+                      {seg.status !== 'done' && (
                         <Badge
                           variant={seg.status === 'error' ? 'destructive' : 'secondary'}
                           className="shrink-0 text-xs mt-0.5"
@@ -354,13 +449,11 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                         </Badge>
                       )}
                     </div>
-                    {playingSegmentId === seg.id && (
-                      <div className="mt-1 ml-1">
-                        <AudioPlayer
-                          audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)}
-                          jobId={seg.id}
-                        />
-                      </div>
+                    {seg.status === 'done' && (
+                      <AudioPlayer
+                        audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)}
+                        jobId={seg.id}
+                      />
                     )}
                   </div>
                 ))}
