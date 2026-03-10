@@ -542,4 +542,4 @@ def merge_audio_files(audio_paths: list[str], output_path: str) -> None:
 
     if combined:
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        combined.export(output_path, format="mp3")
+        combined.export(output_path, format="wav")

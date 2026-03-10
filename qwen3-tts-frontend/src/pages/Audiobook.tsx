@@ -321,6 +321,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [editFields, setEditFields] = useState({ name: '', description: '', instruct: '' })
   const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
   const [turbo, setTurbo] = useState(false)
+  const [charsCollapsed, setCharsCollapsed] = useState(false)
+  const [chaptersCollapsed, setChaptersCollapsed] = useState(false)
   const prevStatusRef = useRef(project.status)
   const autoExpandedRef = useRef(new Set<string>())
 
@@ -589,10 +591,14 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="space-y-4 pt-2 border-t">
           {detail && detail.characters.length > 0 && (
             <div>
-              <div className="text-xs font-medium text-muted-foreground mb-2">
+              <button
+                className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors w-full text-left"
+                onClick={() => setCharsCollapsed(v => !v)}
+              >
+                {charsCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
                 角色列表（{detail.characters.length} 个）
-              </div>
-              <div className="space-y-1.5">
+              </button>
+              {!charsCollapsed && <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
                 {detail.characters.map(char => (
                   <div key={char.id} className="border rounded px-3 py-2">
                     {editingCharId === char.id ? (
@@ -643,7 +649,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                     )}
                   </div>
                 ))}
-              </div>
+              </div>}
               {status === 'characters_ready' && (
                 <Button
                   className="w-full mt-3"
@@ -659,9 +665,13 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
           {detail && detail.chapters.length > 0 && ['ready', 'generating', 'done'].includes(status) && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-medium text-muted-foreground">
+                <button
+                  className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors text-left"
+                  onClick={() => setChaptersCollapsed(v => !v)}
+                >
+                  {chaptersCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
                   章节列表（共 {detail.chapters.length} 章）
-                </div>
+                </button>
                 {detail.chapters.some(c => ['pending', 'error', 'ready'].includes(c.status)) && (
                   <Button
                     size="sm"
@@ -673,7 +683,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   </Button>
                 )}
               </div>
-              <div className="space-y-2">
+              {!chaptersCollapsed && <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                 {detail.chapters.map(ch => {
                   const chSegs = segments.filter(s => s.chapter_index === ch.chapter_index)
                   const chDone = chSegs.filter(s => s.status === 'done').length
@@ -729,8 +739,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                     </div>
                   )
                 })}
-              </div>
-              {doneCount > 0 && (
+              </div>}
+              {!chaptersCollapsed && doneCount > 0 && (
                 <div className="mt-2">
                   <SequentialPlayer segments={segments} projectId={project.id} onPlayingChange={setSequentialPlayingId} />
                 </div>

@@ -461,19 +461,19 @@ async def download_project(
 
     if chapter is not None:
         output_path = str(
-            Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "chapters" / f"chapter_{chapter}.mp3"
+            Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "chapters" / f"chapter_{chapter}.wav"
         )
     else:
         output_path = str(
-            Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "full.mp3"
+            Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "full.wav"
         )
 
     if not Path(output_path).exists():
         from core.audiobook_service import merge_audio_files
         merge_audio_files(audio_paths, output_path)
 
-    filename = f"chapter_{chapter}.mp3" if chapter is not None else f"{project.title}.mp3"
-    return FileResponse(output_path, media_type="audio/mpeg", filename=filename)
+    filename = f"chapter_{chapter}.wav" if chapter is not None else f"{project.title}.wav"
+    return FileResponse(output_path, media_type="audio/wav", filename=filename)
 
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
