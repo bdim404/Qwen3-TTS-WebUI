@@ -1,10 +1,11 @@
 import asyncio
+import json
 import logging
 from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from api.auth import get_current_user
@@ -286,6 +287,45 @@ async def generate_project(
     asyncio.create_task(run_generation())
     msg = f"Generation started for chapter {chapter_index}" if chapter_index is not None else "Generation started"
     return {"message": msg, "project_id": project_id, "chapter_index": chapter_index}
+
+
+@router.get("/projects/{project_id}/logs")
+async def stream_project_logs(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    from core import progress_store as ps
+
+    async def generator():
+        sent_complete = -1
+        last_streaming = ""
+        while True:
+            state = ps.get_snapshot(project_id)
+            lines = state["lines"]
+            n = len(lines)
+
+            for i in range(sent_complete + 1, max(0, n - 1)):
+                yield f"data: {json.dumps({'index': i, 'line': lines[i]})}\n\n"
+                sent_complete = i
+
+            if n > 0:
+                cur = lines[n - 1]
+                if cur != last_streaming or (sent_complete < n - 1):
+                    yield f"data: {json.dumps({'index': n - 1, 'line': cur})}\n\n"
+                    last_streaming = cur
+                    sent_complete = max(sent_complete, n - 2)
+
+            if state["done"]:
+                yield f"data: {json.dumps({'done': True})}\n\n"
+                break
+
+            await asyncio.sleep(0.05)
+
+    return StreamingResponse(
+        generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/projects/{project_id}/segments", response_model=list[AudiobookSegmentResponse])

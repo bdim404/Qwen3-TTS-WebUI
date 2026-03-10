@@ -140,6 +140,77 @@ function SequentialPlayer({
   )
 }
 
+function LogStream({ projectId, active }: { projectId: number; active: boolean }) {
+  const [lines, setLines] = useState<string[]>([])
+  const [done, setDone] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const activeRef = useRef(active)
+  activeRef.current = active
+
+  useEffect(() => {
+    if (!active) return
+    setLines([])
+    setDone(false)
+
+    const token = localStorage.getItem('token')
+    const apiBase = (import.meta.env.VITE_API_URL as string) || ''
+    const controller = new AbortController()
+
+    fetch(`${apiBase}/audiobook/projects/${projectId}/logs`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    }).then(async res => {
+      const reader = res.body?.getReader()
+      if (!reader) return
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { done: streamDone, value } = await reader.read()
+        if (streamDone) break
+        buffer += decoder.decode(value, { stream: true })
+        const parts = buffer.split('\n\n')
+        buffer = parts.pop() ?? ''
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data: ')) continue
+          try {
+            const msg = JSON.parse(line.slice(6))
+            if (msg.done) {
+              setDone(true)
+            } else if (typeof msg.index === 'number') {
+              setLines(prev => {
+                const next = [...prev]
+                next[msg.index] = msg.line
+                return next
+              })
+            }
+          } catch {}
+        }
+      }
+    }).catch(() => {})
+
+    return () => controller.abort()
+  }, [projectId, active])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [lines])
+
+  if (lines.length === 0) return null
+
+  return (
+    <div className="rounded border border-green-900/40 bg-black/90 text-green-400 font-mono text-xs p-3 max-h-52 overflow-y-auto leading-relaxed">
+      {lines.map((line, i) => (
+        <div key={i} className="whitespace-pre-wrap">{line}</div>
+      ))}
+      {!done && (
+        <span className="inline-block w-2 h-3 bg-green-400 animate-pulse ml-0.5 align-middle" />
+      )}
+      <div ref={bottomRef} />
+    </div>
+  )
+}
+
 function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -458,6 +529,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-2 border-l-2 border-primary/40">
           {STEP_HINTS[status]}
         </div>
+      )}
+
+      {['analyzing', 'parsing'].includes(status) && (
+        <LogStream projectId={project.id} active={['analyzing', 'parsing'].includes(status)} />
       )}
 
       {project.error_message && (

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import re
 from pathlib import Path
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.llm_service import LLMService
+from core import progress_store as ps
 from db import crud
 from db.models import AudiobookProject, AudiobookCharacter, User
 
@@ -115,16 +117,20 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
     if not project:
         return
 
+    ps.reset(project_id)
     try:
         crud.update_audiobook_project_status(db, project_id, "analyzing")
+        ps.append_line(project_id, f"[分析] 项目「{project.title}」开始角色分析")
 
         llm = _get_llm_service(user)
 
         if project.source_type == "epub" and project.source_path:
+            ps.append_line(project_id, "[解析] 正在提取 EPUB 章节内容...")
             epub_chapters = _extract_epub_chapters(project.source_path)
             if not epub_chapters:
                 raise ValueError("No text content extracted from epub.")
             text = "\n\n".join(epub_chapters)
+            ps.append_line(project_id, f"[解析] 提取完成，共 {len(epub_chapters)} 章，{len(text)} 字")
             project.source_text = text
             db.commit()
         else:
@@ -133,7 +139,13 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
         if not text.strip():
             raise ValueError("No text content found in project.")
 
-        characters_data = await llm.extract_characters(text)
+        ps.append_line(project_id, f"\n[LLM] 模型：{user.llm_model}，正在分析角色...\n")
+        ps.append_line(project_id, "")
+
+        def on_token(token: str) -> None:
+            ps.append_token(project_id, token)
+
+        characters_data = await llm.extract_characters(text, on_token=on_token)
 
         has_narrator = any(c.get("name") == "narrator" for c in characters_data)
         if not has_narrator:
@@ -142,6 +154,8 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
                 "description": "旁白叙述者",
                 "instruct": "中性声音，语速平稳，叙述感强"
             })
+
+        ps.append_line(project_id, f"\n\n[完成] 发现 {len(characters_data)} 个角色：{', '.join(c.get('name', '') for c in characters_data)}")
 
         crud.delete_audiobook_segments(db, project_id)
         crud.delete_audiobook_characters(db, project_id)
@@ -172,10 +186,13 @@ async def analyze_project(project_id: int, user: User, db: Session) -> None:
             )
 
         crud.update_audiobook_project_status(db, project_id, "characters_ready")
+        ps.mark_done(project_id)
         logger.info(f"Project {project_id} character extraction complete: {len(characters_data)} characters")
 
     except Exception as e:
         logger.error(f"Analysis failed for project {project_id}: {e}", exc_info=True)
+        ps.append_line(project_id, f"\n[错误] {e}")
+        ps.mark_done(project_id)
         crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
 
 
@@ -184,6 +201,7 @@ async def parse_chapters(project_id: int, user: User, db: Session) -> None:
     if not project:
         return
 
+    ps.reset(project_id)
     try:
         crud.update_audiobook_project_status(db, project_id, "parsing")
 
@@ -205,19 +223,29 @@ async def parse_chapters(project_id: int, user: User, db: Session) -> None:
         else:
             chapters = _split_into_chapters(text)
 
+        non_empty = [(i, t) for i, t in enumerate(chapters) if t.strip()]
+        ps.append_line(project_id, f"[解析] 共 {len(non_empty)} 章，角色：{', '.join(character_names)}\n")
+
         crud.delete_audiobook_segments(db, project_id)
 
         seg_counters: dict[int, int] = {}
-        for chapter_idx, chapter_text in enumerate(chapters):
-            if not chapter_text.strip():
-                continue
+        for chapter_idx, chapter_text in non_empty:
             chunks = _chunk_chapter(chapter_text, max_chars=4000)
             logger.info(f"Chapter {chapter_idx}: {len(chapter_text)} chars → {len(chunks)} chunk(s)")
-            for chunk in chunks:
+            ps.append_line(project_id, f"[第 {chapter_idx + 1} 章] {len(chapter_text)} 字，{len(chunks)} 块")
+
+            for chunk_i, chunk in enumerate(chunks):
+                ps.append_line(project_id, f"  块 {chunk_i + 1}/{len(chunks)} → ")
+                ps.append_line(project_id, "")
+
+                def on_token(token: str) -> None:
+                    ps.append_token(project_id, token)
+
                 try:
-                    segments_data = await llm.parse_chapter_segments(chunk, character_names)
+                    segments_data = await llm.parse_chapter_segments(chunk, character_names, on_token=on_token)
                 except Exception as e:
                     logger.warning(f"Chapter {chapter_idx} chunk LLM parse failed, fallback to narrator: {e}")
+                    ps.append_line(project_id, f"\n  [回退] LLM 失败，整块归属 narrator")
                     narrator = char_map.get("narrator")
                     if narrator:
                         idx = seg_counters.get(chapter_idx, 0)
@@ -231,6 +259,8 @@ async def parse_chapters(project_id: int, user: User, db: Session) -> None:
                         )
                         seg_counters[chapter_idx] = idx + 1
                     continue
+
+                chunk_seg_count = 0
                 for seg in segments_data:
                     char_name = seg.get("character", "narrator")
                     seg_text = seg.get("text", "").strip()
@@ -249,12 +279,20 @@ async def parse_chapters(project_id: int, user: User, db: Session) -> None:
                         segment_index=idx,
                     )
                     seg_counters[chapter_idx] = idx + 1
+                    chunk_seg_count += 1
 
+                ps.append_line(project_id, f"\n  [完成] 解析出 {chunk_seg_count} 段")
+
+        total_segs = sum(seg_counters.values())
+        ps.append_line(project_id, f"\n[完成] 全部解析完毕，共 {total_segs} 段")
         crud.update_audiobook_project_status(db, project_id, "ready")
+        ps.mark_done(project_id)
         logger.info(f"Project {project_id} chapter parsing complete: {len(chapters)} chapters")
 
     except Exception as e:
         logger.error(f"Chapter parsing failed for project {project_id}: {e}", exc_info=True)
+        ps.append_line(project_id, f"\n[错误] {e}")
+        ps.mark_done(project_id)
         crud.update_audiobook_project_status(db, project_id, "error", error_message=str(e))
 
 
