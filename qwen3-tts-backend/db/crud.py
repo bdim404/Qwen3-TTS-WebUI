@@ -513,6 +513,7 @@ def create_audiobook_character(
     db: Session,
     project_id: int,
     name: str,
+    gender: Optional[str] = None,
     description: Optional[str] = None,
     instruct: Optional[str] = None,
     voice_design_id: Optional[int] = None,
@@ -520,6 +521,7 @@ def create_audiobook_character(
     char = AudiobookCharacter(
         project_id=project_id,
         name=name,
+        gender=gender,
         description=description,
         instruct=instruct,
         voice_design_id=voice_design_id,
@@ -558,6 +560,7 @@ def update_audiobook_character(
     db: Session,
     char_id: int,
     name: Optional[str] = None,
+    gender: Optional[str] = None,
     description: Optional[str] = None,
     instruct: Optional[str] = None,
     voice_design_id: Optional[int] = None,
@@ -567,6 +570,8 @@ def update_audiobook_character(
         return None
     if name is not None:
         char.name = name
+    if gender is not None:
+        char.gender = gender
     if description is not None:
         char.description = description
     if instruct is not None:

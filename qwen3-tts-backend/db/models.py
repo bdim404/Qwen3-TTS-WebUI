@@ -169,6 +169,7 @@ class AudiobookCharacter(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("audiobook_projects.id"), nullable=False, index=True)
     name = Column(String(200), nullable=False)
+    gender = Column(String(20), nullable=True)
     description = Column(Text, nullable=True)
     instruct = Column(Text, nullable=True)
     voice_design_id = Column(Integer, ForeignKey("voice_designs.id"), nullable=True)

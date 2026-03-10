@@ -195,6 +195,7 @@ async def analyze_project(project_id: int, user: User, db: Session, turbo: bool 
             name = char_data.get("name", "narrator")
             instruct = char_data.get("instruct", "")
             description = char_data.get("description", "")
+            gender = char_data.get("gender") or ("未知" if name == "narrator" else None)
 
             voice_design = crud.create_voice_design(
                 db=db,
@@ -209,6 +210,7 @@ async def analyze_project(project_id: int, user: User, db: Session, turbo: bool 
                 db=db,
                 project_id=project_id,
                 name=name,
+                gender=gender,
                 description=description,
                 instruct=instruct,
                 voice_design_id=voice_design.id,

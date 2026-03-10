@@ -334,7 +334,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [loadingAction, setLoadingAction] = useState(false)
   const [isPolling, setIsPolling] = useState(false)
   const [editingCharId, setEditingCharId] = useState<number | null>(null)
-  const [editFields, setEditFields] = useState({ name: '', description: '', instruct: '' })
+  const [editFields, setEditFields] = useState({ name: '', gender: '', description: '', instruct: '' })
   const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
   const [charsCollapsed, setCharsCollapsed] = useState(false)
   const [chaptersCollapsed, setChaptersCollapsed] = useState(false)
@@ -520,13 +520,14 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
   const startEditChar = (char: AudiobookCharacter) => {
     setEditingCharId(char.id)
-    setEditFields({ name: char.name, description: char.description || '', instruct: char.instruct || '' })
+    setEditFields({ name: char.name, gender: char.gender || '', description: char.description || '', instruct: char.instruct || '' })
   }
 
   const saveEditChar = async (char: AudiobookCharacter) => {
     try {
       await audiobookApi.updateCharacter(project.id, char.id, {
         name: editFields.name || char.name,
+        gender: editFields.gender || undefined,
         description: editFields.description,
         instruct: editFields.instruct,
       })
@@ -632,6 +633,16 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                           onChange={e => setEditFields(f => ({ ...f, name: e.target.value }))}
                           placeholder="角色名"
                         />
+                        <select
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                          value={editFields.gender}
+                          onChange={e => setEditFields(f => ({ ...f, gender: e.target.value }))}
+                        >
+                          <option value="">性别（未设置）</option>
+                          <option value="男">男</option>
+                          <option value="女">女</option>
+                          <option value="未知">未知</option>
+                        </select>
                         <Input
                           value={editFields.instruct}
                           onChange={e => setEditFields(f => ({ ...f, instruct: e.target.value }))}
@@ -653,7 +664,14 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                       </div>
                     ) : (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm">
-                        <span className="font-medium shrink-0 truncate">{char.name}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-medium truncate">{char.name}</span>
+                          {char.gender && (
+                            <Badge variant="outline" className={`text-xs shrink-0 ${char.gender === '男' ? 'border-blue-400/50 text-blue-400' : char.gender === '女' ? 'border-pink-400/50 text-pink-400' : 'border-muted-foreground/40 text-muted-foreground'}`}>
+                              {char.gender}
+                            </Badge>
+                          )}
+                        </div>
                         <span className="text-xs text-muted-foreground truncate sm:mx-2 sm:flex-1">{char.instruct}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           {char.voice_design_id

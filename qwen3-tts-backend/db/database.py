@@ -27,3 +27,12 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    if "sqlite" in str(engine.url):
+        with engine.connect() as conn:
+            try:
+                conn.execute(__import__("sqlalchemy").text(
+                    "ALTER TABLE audiobook_characters ADD COLUMN gender VARCHAR(20)"
+                ))
+                conn.commit()
+            except Exception:
+                pass

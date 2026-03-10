@@ -291,6 +291,7 @@ async def update_character(
     char = crud.update_audiobook_character(
         db, char_id,
         name=data.name,
+        gender=data.gender,
         description=data.description,
         instruct=data.instruct,
         voice_design_id=data.voice_design_id,

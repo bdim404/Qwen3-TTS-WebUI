@@ -16,6 +16,7 @@ export interface AudiobookCharacter {
   id: number
   project_id: number
   name: string
+  gender?: string
   description?: string
   instruct?: string
   voice_design_id?: number
@@ -92,7 +93,7 @@ export const audiobookApi = {
   updateCharacter: async (
     projectId: number,
     charId: number,
-    data: { name?: string; description?: string; instruct?: string; voice_design_id?: number }
+    data: { name?: string; gender?: string; description?: string; instruct?: string; voice_design_id?: number }
   ): Promise<AudiobookCharacter> => {
     const response = await apiClient.put<AudiobookCharacter>(
       `/audiobook/projects/${projectId}/characters/${charId}`,

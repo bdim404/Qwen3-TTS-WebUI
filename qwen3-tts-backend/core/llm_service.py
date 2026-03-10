@@ -119,6 +119,8 @@ class LLMService:
     async def extract_characters(self, text_samples: list[str], on_token=None, on_sample=None, turbo: bool = False) -> list[Dict]:
         system_prompt = (
             "你是一个专业的小说分析助手兼声音导演。请分析给定的小说文本，提取所有出现的角色（包括旁白narrator）。\n"
+            "gender字段必须明确标注性别，只能取以下三个值之一：\"男\"、\"女\"、\"未知\"。\n"
+            "narrator的gender固定为\"未知\"。\n"
             "对每个角色，instruct字段必须是详细的声音导演说明，需覆盖以下六个维度，每个维度单独一句，用换行分隔：\n"
             "1. 音色信息：嗓音质感、音域、音量、气息特征（如：青年男性中低音，音色干净略带沙哑，音量偏小但稳定，情绪激动时呼吸明显）\n"
             "2. 身份背景：角色身份、职业、出身、所处时代背景对声音的影响\n"
@@ -127,7 +129,7 @@ class LLMService:
             "5. 性格特质：核心性格、情绪模式、表达习惯\n"
             "6. 叙事风格：语速节奏、停顿习惯、语气色彩、整体叙述感\n\n"
             "只输出JSON，格式如下，不要有其他文字：\n"
-            '{"characters": [{"name": "narrator", "description": "第三人称叙述者", "instruct": "音色信息：...\\n身份背景：...\\n年龄设定：...\\n外貌特征：...\\n性格特质：...\\n叙事风格：..."}, ...]}'
+            '{"characters": [{"name": "narrator", "gender": "未知", "description": "第三人称叙述者", "instruct": "音色信息：...\\n身份背景：...\\n年龄设定：...\\n外貌特征：...\\n性格特质：...\\n叙事风格：..."}, ...]}'
         )
         if turbo and len(text_samples) > 1:
             logger.info(f"Extracting characters in turbo mode: {len(text_samples)} samples concurrent")
@@ -169,11 +171,12 @@ class LLMService:
             "你是一个专业的小说角色整合助手。你收到的是从同一本书不同段落中提取的角色列表，其中可能存在重复。\n"
             "请完成以下任务：\n"
             "1. 识别并合并重复角色：通过名字完全相同或高度相似（全名与简称、不同译写）来判断。\n"
-            "2. 合并时保留最完整、最详细的 description 和 instruct 字段。\n"
-            "3. narrator 角色只保留一个。\n"
+            "2. 合并时保留最完整、最详细的 description 和 instruct 字段，gender 字段以最明确的值为准（优先选\"男\"或\"女\"，而非\"未知\"）。\n"
+            "3. narrator 角色只保留一个，其 gender 固定为\"未知\"。\n"
             "4. 去除无意义的占位角色（name 为空或仅含标点）。\n"
+            "gender 字段只能取 \"男\"、\"女\"、\"未知\" 之一。\n"
             "只输出 JSON，不要有其他文字：\n"
-            '{"characters": [{"name": "...", "description": "...", "instruct": "..."}, ...]}'
+            '{"characters": [{"name": "...", "gender": "男", "description": "...", "instruct": "..."}, ...]}'
         )
         user_message = f"请整合以下角色列表：\n\n{json.dumps(raw_characters, ensure_ascii=False, indent=2)}"
         try:

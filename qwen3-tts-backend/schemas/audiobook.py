@@ -27,6 +27,7 @@ class AudiobookCharacterResponse(BaseModel):
     id: int
     project_id: int
     name: str
+    gender: Optional[str] = None
     description: Optional[str] = None
     instruct: Optional[str] = None
     voice_design_id: Optional[int] = None
@@ -64,6 +65,7 @@ class AudiobookCharacterUpdate(BaseModel):
 
 class AudiobookCharacterEdit(BaseModel):
     name: Optional[str] = None
+    gender: Optional[str] = None
     description: Optional[str] = None
     instruct: Optional[str] = None
     voice_design_id: Optional[int] = None
