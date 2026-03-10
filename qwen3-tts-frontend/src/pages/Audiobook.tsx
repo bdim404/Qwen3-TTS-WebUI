@@ -547,51 +547,17 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Book className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="font-medium truncate">{project.title}</span>
-          <Badge variant={(STATUS_COLORS[status] || 'secondary') as any} className="shrink-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2 min-w-0 flex-1">
+          <Book className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+          <span className="font-medium break-words">{project.title}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <Badge variant={(STATUS_COLORS[status] || 'secondary') as any}>
             {STATUS_LABELS[status] || status}
           </Badge>
-        </div>
-        <div className="flex gap-1 shrink-0">
-          {!isActive && (
-            <div className="flex items-center gap-1">
-              <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3"
-                  checked={turbo}
-                  onChange={e => setTurbo(e.target.checked)}
-                />
-                极速
-              </label>
-              <Button
-                size="sm"
-                variant={status === 'pending' ? 'default' : 'outline'}
-                onClick={handleAnalyze}
-                disabled={loadingAction}
-              >
-                {status === 'pending' ? '分析' : '重新分析'}
-              </Button>
-            </div>
-          )}
-          {status === 'ready' && (
-            <Button size="sm" onClick={() => handleGenerate()} disabled={loadingAction}>
-              生成全书
-            </Button>
-          )}
-          {status === 'done' && (
-            <Button size="sm" variant="outline" onClick={() => handleDownload()} disabled={loadingAction}>
-              <Download className="h-3 w-3 mr-1" />下载全书
-            </Button>
-          )}
-          <Button size="icon" variant="ghost" onClick={() => setExpanded(!expanded)}>
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-          <Button size="icon" variant="ghost" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
         </div>
       </div>
@@ -616,6 +582,46 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
           <Progress value={progress} />
         </div>
       )}
+
+      <div className="flex items-center justify-between gap-2 pt-1 border-t">
+        <div className="flex items-center gap-1 flex-wrap">
+          {!isActive && (
+            <>
+              <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3"
+                  checked={turbo}
+                  onChange={e => setTurbo(e.target.checked)}
+                />
+                极速
+              </label>
+              <Button
+                size="sm"
+                variant={status === 'pending' ? 'default' : 'outline'}
+                className="h-7 text-xs px-2"
+                onClick={handleAnalyze}
+                disabled={loadingAction}
+              >
+                {status === 'pending' ? '分析' : '重新分析'}
+              </Button>
+            </>
+          )}
+          {status === 'ready' && (
+            <Button size="sm" className="h-7 text-xs px-2" onClick={() => handleGenerate()} disabled={loadingAction}>
+              生成全书
+            </Button>
+          )}
+          {status === 'done' && (
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => handleDownload()} disabled={loadingAction}>
+              <Download className="h-3 w-3 mr-1" />下载全书
+            </Button>
+          )}
+        </div>
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={handleDelete}>
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
 
       {expanded && (
         <div className="space-y-3 pt-2 border-t">
@@ -661,9 +667,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium shrink-0 w-20 truncate">{char.name}</span>
-                        <span className="text-xs text-muted-foreground truncate mx-2 flex-1">{char.instruct}</span>
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm">
+                        <span className="font-medium shrink-0 truncate">{char.name}</span>
+                        <span className="text-xs text-muted-foreground truncate sm:mx-2 sm:flex-1">{char.instruct}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           {char.voice_design_id
                             ? <Badge variant="outline" className="text-xs">音色 #{char.voice_design_id}</Badge>
@@ -694,7 +700,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
           {detail && detail.chapters.length > 0 && ['ready', 'generating', 'done'].includes(status) && (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-2">
                 <button
                   className="flex items-center gap-1 text-xs font-medium text-emerald-400/80 hover:text-emerald-300 transition-colors text-left"
                   onClick={() => setChaptersCollapsed(v => !v)}
@@ -705,7 +711,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                 {detail.chapters.some(c => ['pending', 'error', 'ready'].includes(c.status)) && (
                   <Button
                     size="sm"
-                    className="h-6 text-xs px-2"
+                    className="h-6 text-xs px-2 self-start sm:self-auto"
                     disabled={loadingAction}
                     onClick={handleProcessAll}
                   >
@@ -730,9 +736,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   })
                   return (
                     <div key={ch.id} className="border rounded px-3 py-2 space-y-2">
-                      <div className="flex items-center justify-between text-sm gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm">
                         <span className="text-xs font-medium truncate">{chTitle}</span>
-                        <div className="flex gap-1 items-center shrink-0">
+                        <div className="flex gap-1 items-center flex-wrap shrink-0">
                           {ch.status === 'pending' && (
                             <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => handleParseChapter(ch.id, ch.title)}>
                               解析此章
@@ -841,9 +847,9 @@ export default function Audiobook() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 container max-w-3xl mx-auto px-4 py-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">有声书生成</h1>
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-xl sm:text-2xl font-bold">有声书生成</h1>
+          <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" onClick={() => setShowLLM(!showLLM)}>LLM 配置</Button>
             <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
               <Plus className="h-4 w-4 mr-1" />新建项目
