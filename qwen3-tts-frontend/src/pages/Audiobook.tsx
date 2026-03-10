@@ -142,7 +142,7 @@ function SequentialPlayer({
 function LogStream({ projectId, active }: { projectId: number; active: boolean }) {
   const [lines, setLines] = useState<string[]>([])
   const [done, setDone] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const activeRef = useRef(active)
   activeRef.current = active
 
@@ -192,20 +192,20 @@ function LogStream({ projectId, active }: { projectId: number; active: boolean }
   }, [projectId, active])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = containerRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [lines])
 
   if (lines.length === 0) return null
 
   return (
-    <div className="rounded border border-green-900/40 bg-black/90 text-green-400 font-mono text-xs p-3 max-h-52 overflow-y-auto leading-relaxed">
+    <div ref={containerRef} className="rounded border border-green-900/40 bg-black/90 text-green-400 font-mono text-xs p-3 max-h-52 overflow-y-auto leading-relaxed">
       {lines.map((line, i) => (
         <div key={i} className="whitespace-pre-wrap">{line}</div>
       ))}
       {!done && (
         <span className="inline-block w-2 h-3 bg-green-400 animate-pulse ml-0.5 align-middle" />
       )}
-      <div ref={bottomRef} />
     </div>
   )
 }
@@ -429,6 +429,29 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
+  const handleProcessAll = async () => {
+    if (!detail) return
+    setLoadingAction(true)
+    setIsPolling(true)
+    try {
+      const pending = detail.chapters.filter(c => c.status === 'pending' || c.status === 'error')
+      const ready = detail.chapters.filter(c => c.status === 'ready')
+      await Promise.all([
+        ...pending.map(c => audiobookApi.parseChapter(project.id, c.id)),
+        ...ready.map(c => audiobookApi.generate(project.id, c.chapter_index)),
+      ])
+      toast.success('全部任务已触发')
+      onRefresh()
+      fetchDetail()
+      fetchSegments()
+    } catch (e: any) {
+      setIsPolling(false)
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
   const handleDownload = async (chapterIndex?: number) => {
     setLoadingAction(true)
     try {
@@ -622,8 +645,20 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
           {detail && detail.chapters.length > 0 && ['ready', 'generating', 'done'].includes(status) && (
             <div>
-              <div className="text-xs font-medium text-muted-foreground mb-2">
-                章节列表（共 {detail.chapters.length} 章）
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium text-muted-foreground">
+                  章节列表（共 {detail.chapters.length} 章）
+                </div>
+                {detail.chapters.some(c => ['pending', 'error', 'ready'].includes(c.status)) && (
+                  <Button
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                    disabled={loadingAction}
+                    onClick={handleProcessAll}
+                  >
+                    {loadingAction ? <Loader2 className="h-3 w-3 animate-spin" /> : '一键全部处理'}
+                  </Button>
+                )}
               </div>
               <div className="space-y-2">
                 {detail.chapters.map(ch => {
