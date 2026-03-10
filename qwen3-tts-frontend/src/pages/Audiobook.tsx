@@ -335,6 +335,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [isPolling, setIsPolling] = useState(false)
   const [editingCharId, setEditingCharId] = useState<number | null>(null)
   const [editFields, setEditFields] = useState({ name: '', gender: '', description: '', instruct: '' })
+  const [generatingChapterIndices, setGeneratingChapterIndices] = useState<Set<number>>(new Set())
   const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
   const [charsCollapsed, setCharsCollapsed] = useState(false)
   const [chaptersCollapsed, setChaptersCollapsed] = useState(false)
@@ -382,11 +383,29 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   }, [isPolling, project.status, segments, hasParsingChapter])
 
   useEffect(() => {
-    const shouldPoll = isPolling || ['analyzing', 'generating'].includes(project.status) || hasParsingChapter
+    if (generatingChapterIndices.size === 0) return
+    const done: number[] = []
+    generatingChapterIndices.forEach(chIdx => {
+      const chSegs = segments.filter(s => s.chapter_index === chIdx)
+      if (chSegs.length > 0 && chSegs.every(s => s.status === 'done' || s.status === 'error')) {
+        done.push(chIdx)
+      }
+    })
+    if (done.length > 0) {
+      setGeneratingChapterIndices(prev => {
+        const n = new Set(prev)
+        done.forEach(i => n.delete(i))
+        return n
+      })
+    }
+  }, [segments, generatingChapterIndices])
+
+  useEffect(() => {
+    const shouldPoll = isPolling || ['analyzing', 'generating'].includes(project.status) || hasParsingChapter || generatingChapterIndices.size > 0
     if (!shouldPoll) return
     const id = setInterval(() => { onRefresh(); fetchSegments(); fetchDetail() }, 1500)
     return () => clearInterval(id)
-  }, [isPolling, project.status, hasParsingChapter, onRefresh, fetchSegments, fetchDetail])
+  }, [isPolling, project.status, hasParsingChapter, generatingChapterIndices, onRefresh, fetchSegments, fetchDetail])
 
   useEffect(() => {
     if (!detail || segments.length === 0) return
@@ -448,14 +467,22 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
   const handleGenerate = async (chapterIndex?: number) => {
     setLoadingAction(true)
-    setIsPolling(true)
+    if (chapterIndex !== undefined) {
+      setGeneratingChapterIndices(prev => new Set([...prev, chapterIndex]))
+    } else {
+      setIsPolling(true)
+    }
     try {
       await audiobookApi.generate(project.id, chapterIndex)
       toast.success(chapterIndex !== undefined ? `第 ${chapterIndex + 1} 章生成已开始` : '全书生成已开始')
       onRefresh()
       fetchSegments()
     } catch (e: any) {
-      setIsPolling(false)
+      if (chapterIndex !== undefined) {
+        setGeneratingChapterIndices(prev => { const n = new Set(prev); n.delete(chapterIndex); return n })
+      } else {
+        setIsPolling(false)
+      }
       toast.error(formatApiError(e))
     } finally {
       setLoadingAction(false)
@@ -465,10 +492,13 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const handleProcessAll = async () => {
     if (!detail) return
     setLoadingAction(true)
+    const ready = detail.chapters.filter(c => c.status === 'ready')
+    if (ready.length > 0) {
+      setGeneratingChapterIndices(prev => new Set([...prev, ...ready.map(c => c.chapter_index)]))
+    }
     setIsPolling(true)
     try {
       const pending = detail.chapters.filter(c => c.status === 'pending' || c.status === 'error')
-      const ready = detail.chapters.filter(c => c.status === 'ready')
       await Promise.all([
         ...pending.map(c => audiobookApi.parseChapter(project.id, c.id)),
         ...ready.map(c => audiobookApi.generate(project.id, c.chapter_index)),
@@ -759,7 +789,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                             <span>解析中</span>
                           </div>
                         )}
-                        {ch.status === 'ready' && !chGenerating && !chAllDone && (
+                        {ch.status === 'ready' && !chGenerating && !chAllDone && !generatingChapterIndices.has(ch.chapter_index) && (
                           <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => {
                             setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
                             handleGenerate(ch.chapter_index)
@@ -767,7 +797,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                             生成此章
                           </Button>
                         )}
-                        {ch.status === 'ready' && chGenerating && (
+                        {ch.status === 'ready' && (chGenerating || generatingChapterIndices.has(ch.chapter_index)) && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Loader2 className="h-3 w-3 animate-spin" />
                             <span>{chDone}/{chTotal} 段</span>
