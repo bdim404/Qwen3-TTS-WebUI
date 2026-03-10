@@ -1,8 +1,9 @@
+import asyncio
 import logging
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -152,7 +153,6 @@ async def get_project(
 @router.post("/projects/{project_id}/analyze")
 async def analyze_project(
     project_id: int,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -176,14 +176,13 @@ async def analyze_project(
         finally:
             async_db.close()
 
-    background_tasks.add_task(run_analysis)
+    asyncio.create_task(run_analysis())
     return {"message": "Analysis started", "project_id": project_id}
 
 
 @router.post("/projects/{project_id}/confirm")
 async def confirm_characters(
     project_id: int,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -207,7 +206,7 @@ async def confirm_characters(
         finally:
             async_db.close()
 
-    background_tasks.add_task(run_parsing)
+    asyncio.create_task(run_parsing())
     return {"message": "Chapter parsing started", "project_id": project_id}
 
 
@@ -259,7 +258,6 @@ async def update_character(
 @router.post("/projects/{project_id}/generate")
 async def generate_project(
     project_id: int,
-    background_tasks: BackgroundTasks,
     data: AudiobookGenerateRequest = AudiobookGenerateRequest(),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -285,7 +283,7 @@ async def generate_project(
         finally:
             async_db.close()
 
-    background_tasks.add_task(run_generation)
+    asyncio.create_task(run_generation())
     msg = f"Generation started for chapter {chapter_index}" if chapter_index is not None else "Generation started"
     return {"message": msg, "project_id": project_id, "chapter_index": chapter_index}
 

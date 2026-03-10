@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp, Play, Square, Pencil, Check, X } from 'lucide-react'
+import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp, Play, Square, Pencil, Check, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -227,7 +227,13 @@ function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
         <Textarea placeholder="粘贴小说文本..." rows={6} value={text} onChange={e => setText(e.target.value)} />
       )}
       {sourceType === 'epub' && (
-        <Input type="file" accept=".epub" onChange={e => setEpubFile(e.target.files?.[0] || null)} />
+        <Input type="file" accept=".epub" onChange={e => {
+          const file = e.target.files?.[0] || null
+          setEpubFile(file)
+          if (file && !title) {
+            setTitle(file.name.replace(/\.epub$/i, ''))
+          }
+        }} />
       )}
       <Button size="sm" onClick={handleCreate} disabled={loading}>{loading ? '创建中...' : '创建项目'}</Button>
     </div>
@@ -553,7 +559,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                       <span className="text-xs text-muted-foreground mx-2 flex-1">{chDone}/{chTotal} 段</span>
                       <div className="flex gap-1 shrink-0">
                         {chGenerating ? (
-                          <Badge variant="secondary" className="text-xs">生成中...</Badge>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>生成中</span>
+                          </div>
                         ) : chAllDone ? (
                           <>
                             <Badge variant="outline" className="text-xs">已完成</Badge>
@@ -571,7 +580,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                             disabled={loadingAction}
                             onClick={() => handleGenerate(chIdx)}
                           >
-                            生成此章
+                            {loadingAction
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : '生成此章'
+                            }
                           </Button>
                         )}
                       </div>
@@ -604,14 +616,18 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                     <div className="flex items-start gap-2 text-xs">
                       <Badge variant="outline" className="shrink-0 text-xs mt-0.5">{seg.character_name || '?'}</Badge>
                       <span className="text-muted-foreground flex-1 min-w-0 break-words leading-relaxed">{seg.text}</span>
-                      {seg.status !== 'done' && (
+                      {seg.status === 'generating' ? (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 mt-0.5">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        </div>
+                      ) : seg.status !== 'done' ? (
                         <Badge
                           variant={seg.status === 'error' ? 'destructive' : 'secondary'}
                           className="shrink-0 text-xs mt-0.5"
                         >
-                          {seg.status === 'generating' ? '生成中' : seg.status === 'error' ? '出错' : '待生成'}
+                          {seg.status === 'error' ? '出错' : '待生成'}
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
                     {seg.status === 'done' && (
                       <AudioPlayer
