@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import time
 import logging
 from abc import ABC, abstractmethod
@@ -39,16 +41,21 @@ class LocalTTSBackend(TTSBackend):
         await self.model_manager.load_model("custom-voice")
         _, tts = await self.model_manager.get_current_model()
 
-        result = tts.generate_custom_voice(
-            text=params['text'],
-            language=params['language'],
-            speaker=params['speaker'],
-            instruct=params.get('instruct', ''),
-            max_new_tokens=params['max_new_tokens'],
-            temperature=params['temperature'],
-            top_k=params['top_k'],
-            top_p=params['top_p'],
-            repetition_penalty=params['repetition_penalty']
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            functools.partial(
+                tts.generate_custom_voice,
+                text=params['text'],
+                language=params['language'],
+                speaker=params['speaker'],
+                instruct=params.get('instruct', ''),
+                max_new_tokens=params['max_new_tokens'],
+                temperature=params['temperature'],
+                top_k=params['top_k'],
+                top_p=params['top_p'],
+                repetition_penalty=params['repetition_penalty'],
+            )
         )
 
         import numpy as np
@@ -60,15 +67,20 @@ class LocalTTSBackend(TTSBackend):
         await self.model_manager.load_model("voice-design")
         _, tts = await self.model_manager.get_current_model()
 
-        result = tts.generate_voice_design(
-            text=params['text'],
-            language=params['language'],
-            instruct=params['instruct'],
-            max_new_tokens=params['max_new_tokens'],
-            temperature=params['temperature'],
-            top_k=params['top_k'],
-            top_p=params['top_p'],
-            repetition_penalty=params['repetition_penalty']
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            functools.partial(
+                tts.generate_voice_design,
+                text=params['text'],
+                language=params['language'],
+                instruct=params['instruct'],
+                max_new_tokens=params['max_new_tokens'],
+                temperature=params['temperature'],
+                top_k=params['top_k'],
+                top_p=params['top_p'],
+                repetition_penalty=params['repetition_penalty'],
+            )
         )
 
         import numpy as np
@@ -82,27 +94,37 @@ class LocalTTSBackend(TTSBackend):
         await self.model_manager.load_model("base")
         _, tts = await self.model_manager.get_current_model()
 
+        loop = asyncio.get_event_loop()
+
         if x_vector is None:
             if ref_audio_bytes is None:
                 raise ValueError("Either ref_audio_bytes or x_vector must be provided")
 
             ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
 
-            x_vector = tts.create_voice_clone_prompt(
-                ref_audio=(ref_audio_array, ref_sr),
-                ref_text=params.get('ref_text', ''),
-                x_vector_only_mode=False
+            x_vector = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    tts.create_voice_clone_prompt,
+                    ref_audio=(ref_audio_array, ref_sr),
+                    ref_text=params.get('ref_text', ''),
+                    x_vector_only_mode=False,
+                )
             )
 
-        wavs, sample_rate = tts.generate_voice_clone(
-            text=params['text'],
-            language=params['language'],
-            voice_clone_prompt=x_vector,
-            max_new_tokens=params['max_new_tokens'],
-            temperature=params['temperature'],
-            top_k=params['top_k'],
-            top_p=params['top_p'],
-            repetition_penalty=params['repetition_penalty']
+        wavs, sample_rate = await loop.run_in_executor(
+            None,
+            functools.partial(
+                tts.generate_voice_clone,
+                text=params['text'],
+                language=params['language'],
+                voice_clone_prompt=x_vector,
+                max_new_tokens=params['max_new_tokens'],
+                temperature=params['temperature'],
+                top_k=params['top_k'],
+                top_p=params['top_p'],
+                repetition_penalty=params['repetition_penalty'],
+            )
         )
 
         import numpy as np

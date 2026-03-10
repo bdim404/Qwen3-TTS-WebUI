@@ -323,6 +323,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [turbo, setTurbo] = useState(false)
   const [charsCollapsed, setCharsCollapsed] = useState(false)
   const [chaptersCollapsed, setChaptersCollapsed] = useState(false)
+  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
   const prevStatusRef = useRef(project.status)
   const autoExpandedRef = useRef(new Set<string>())
 
@@ -691,10 +692,17 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   const chGenerating = chSegs.some(s => s.status === 'generating')
                   const chAllDone = chTotal > 0 && chDone === chTotal
                   const chTitle = ch.title || `第 ${ch.chapter_index + 1} 章`
+                  const chExpanded = expandedChapters.has(ch.id)
+                  const toggleChExpand = () => setExpandedChapters(prev => {
+                    const next = new Set(prev)
+                    if (next.has(ch.id)) next.delete(ch.id)
+                    else next.add(ch.id)
+                    return next
+                  })
                   return (
                     <div key={ch.id} className="border rounded px-3 py-2 space-y-2">
                       <div className="flex items-center justify-between text-sm gap-2">
-                        <span className="text-xs font-medium truncate max-w-[55%]">{chTitle}</span>
+                        <span className="text-xs font-medium truncate">{chTitle}</span>
                         <div className="flex gap-1 items-center shrink-0">
                           {ch.status === 'pending' && (
                             <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => handleParseChapter(ch.id, ch.title)}>
@@ -731,10 +739,32 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                               重新解析
                             </Button>
                           )}
+                          {chSegs.length > 0 && (
+                            <button onClick={toggleChExpand} className="text-muted-foreground hover:text-foreground">
+                              {chExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </button>
+                          )}
                         </div>
                       </div>
                       {ch.status === 'parsing' && (
                         <LogStream projectId={project.id} chapterId={ch.id} active={ch.status === 'parsing'} />
+                      )}
+                      {chExpanded && chSegs.length > 0 && (
+                        <div className="space-y-1.5 pt-1 border-t">
+                          {chSegs.map(seg => (
+                            <div key={seg.id} className={`space-y-1 ${sequentialPlayingId === seg.id ? 'bg-primary/5 rounded px-1' : ''}`}>
+                              <div className="flex items-start gap-2 text-xs">
+                                <Badge variant="outline" className="shrink-0 text-xs mt-0.5">{seg.character_name || '?'}</Badge>
+                                <span className="text-muted-foreground flex-1 min-w-0 break-words leading-relaxed">{seg.text}</span>
+                                {seg.status === 'generating' && <Loader2 className="h-3 w-3 animate-spin shrink-0 mt-0.5" />}
+                                {seg.status === 'error' && <Badge variant="destructive" className="text-xs shrink-0 mt-0.5">出错</Badge>}
+                              </div>
+                              {seg.status === 'done' && (
+                                <AudioPlayer audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)} jobId={seg.id} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )
@@ -748,52 +778,6 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
             </div>
           )}
 
-          {['generating', 'done'].includes(status) && segments.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-medium text-muted-foreground">
-                  片段列表（{segments.length} 条）
-                </div>
-                <SequentialPlayer segments={segments} projectId={project.id} onPlayingChange={setSequentialPlayingId} />
-              </div>
-              <div className="space-y-2">
-                {segments.slice(0, 50).map(seg => (
-                  <div
-                    key={seg.id}
-                    className={`border rounded px-2 py-2 space-y-2 transition-colors ${sequentialPlayingId === seg.id ? 'border-primary/50 bg-primary/5' : ''}`}
-                  >
-                    <div className="flex items-start gap-2 text-xs">
-                      <Badge variant="outline" className="shrink-0 text-xs mt-0.5">{seg.character_name || '?'}</Badge>
-                      <span className="text-muted-foreground flex-1 min-w-0 break-words leading-relaxed">{seg.text}</span>
-                      {seg.status === 'generating' ? (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 mt-0.5">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        </div>
-                      ) : seg.status !== 'done' ? (
-                        <Badge
-                          variant={seg.status === 'error' ? 'destructive' : 'secondary'}
-                          className="shrink-0 text-xs mt-0.5"
-                        >
-                          {seg.status === 'error' ? '出错' : '待生成'}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    {seg.status === 'done' && (
-                      <AudioPlayer
-                        audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)}
-                        jobId={seg.id}
-                      />
-                    )}
-                  </div>
-                ))}
-                {segments.length > 50 && (
-                  <div className="text-xs text-muted-foreground text-center py-1">
-                    仅显示前 50 条，共 {segments.length} 条
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
