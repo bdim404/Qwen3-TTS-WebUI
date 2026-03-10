@@ -736,67 +736,67 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   })
                   return (
                     <div key={ch.id} className="border rounded px-3 py-2 space-y-2">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm">
-                        <span className="text-xs font-medium truncate">{chTitle}</span>
-                        <div className="flex gap-1 items-center flex-wrap shrink-0">
-                          {ch.status === 'pending' && (
-                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => handleParseChapter(ch.id, ch.title)}>
-                              解析此章
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-xs font-medium break-words flex-1">{chTitle}</span>
+                        {chSegs.length > 0 && (
+                          <button onClick={toggleChExpand} className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5">
+                            {chExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {ch.status === 'pending' && (
+                          <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => handleParseChapter(ch.id, ch.title)}>
+                            解析此章
+                          </Button>
+                        )}
+                        {ch.status === 'parsing' && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>解析中</span>
+                          </div>
+                        )}
+                        {ch.status === 'ready' && !chGenerating && !chAllDone && (
+                          <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => {
+                            setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
+                            handleGenerate(ch.chapter_index)
+                          }}>
+                            生成此章
+                          </Button>
+                        )}
+                        {ch.status === 'ready' && chGenerating && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>{chDone}/{chTotal} 段</span>
+                          </div>
+                        )}
+                        {ch.status === 'ready' && chAllDone && (
+                          <>
+                            <Badge variant="outline" className="text-xs">已完成 {chDone} 段</Badge>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDownload(ch.chapter_index)} title="下载此章">
+                              <Download className="h-3 w-3" />
                             </Button>
-                          )}
-                          {ch.status === 'parsing' && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              <span>解析中</span>
-                            </div>
-                          )}
-                          {ch.status === 'ready' && !chGenerating && !chAllDone && (
-                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => {
-                              setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
-                              handleGenerate(ch.chapter_index)
-                            }}>
-                              生成此章
-                            </Button>
-                          )}
-                          {ch.status === 'ready' && chGenerating && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              <span>{chDone}/{chTotal} 段</span>
-                            </div>
-                          )}
-                          {ch.status === 'ready' && chAllDone && (
-                            <>
-                              <Badge variant="outline" className="text-xs">已完成 {chDone} 段</Badge>
-                              <Button size="sm" variant="ghost" className="h-5 w-5 p-0" onClick={() => handleDownload(ch.chapter_index)} title="下载此章">
-                                <Download className="h-3 w-3" />
-                              </Button>
-                            </>
-                          )}
-                          {ch.status === 'error' && (
-                            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={() => handleParseChapter(ch.id, ch.title)}>
-                              重新解析
-                            </Button>
-                          )}
-                          {chSegs.length > 0 && (
-                            <button onClick={toggleChExpand} className="text-muted-foreground hover:text-foreground">
-                              {chExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                            </button>
-                          )}
-                        </div>
+                          </>
+                        )}
+                        {ch.status === 'error' && (
+                          <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={() => handleParseChapter(ch.id, ch.title)}>
+                            重新解析
+                          </Button>
+                        )}
                       </div>
                       {ch.status === 'parsing' && (
                         <LogStream projectId={project.id} chapterId={ch.id} active={ch.status === 'parsing'} />
                       )}
                       {chExpanded && chSegs.length > 0 && (
-                        <div className="space-y-1.5 pt-1 border-t">
+                        <div className="pt-2 border-t divide-y divide-border/50">
                           {chSegs.map(seg => (
-                            <div key={seg.id} className={`space-y-1 ${sequentialPlayingId === seg.id ? 'bg-primary/5 rounded px-1' : ''}`}>
-                              <div className="flex items-start gap-2 text-xs">
-                                <Badge variant="outline" className="shrink-0 text-xs mt-0.5">{seg.character_name || '?'}</Badge>
-                                <span className="text-muted-foreground flex-1 min-w-0 break-words leading-relaxed">{seg.text}</span>
-                                {seg.status === 'generating' && <Loader2 className="h-3 w-3 animate-spin shrink-0 mt-0.5" />}
-                                {seg.status === 'error' && <Badge variant="destructive" className="text-xs shrink-0 mt-0.5">出错</Badge>}
+                            <div key={seg.id} className={`py-2 space-y-1.5 ${sequentialPlayingId === seg.id ? 'bg-primary/5 px-1 rounded' : ''}`}>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs shrink-0">{seg.character_name || '?'}</Badge>
+                                {seg.status === 'generating' && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                                {seg.status === 'error' && <Badge variant="destructive" className="text-xs">出错</Badge>}
                               </div>
+                              <p className="text-xs text-muted-foreground break-words leading-relaxed">{seg.text}</p>
                               {seg.status === 'done' && (
                                 <LazyAudioPlayer audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)} jobId={seg.id} />
                               )}
