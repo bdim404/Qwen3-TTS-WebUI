@@ -373,6 +373,19 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     return () => clearInterval(id)
   }, [isPolling, project.status, hasParsingChapter, onRefresh, fetchSegments, fetchDetail])
 
+  useEffect(() => {
+    if (!detail || segments.length === 0) return
+    const generatingChapterIds = detail.chapters
+      .filter(ch => segments.some(s => s.chapter_index === ch.chapter_index && s.status === 'generating'))
+      .map(ch => ch.id)
+    if (generatingChapterIds.length === 0) return
+    setExpandedChapters(prev => {
+      const next = new Set(prev)
+      generatingChapterIds.forEach(id => next.add(id))
+      return next.size === prev.size ? prev : next
+    })
+  }, [segments, detail])
+
   const handleAnalyze = async () => {
     const s = project.status
     if (['characters_ready', 'ready', 'done'].includes(s)) {
@@ -716,7 +729,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                             </div>
                           )}
                           {ch.status === 'ready' && !chGenerating && !chAllDone && (
-                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => handleGenerate(ch.chapter_index)}>
+                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => {
+                              setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
+                              handleGenerate(ch.chapter_index)
+                            }}>
                               生成此章
                             </Button>
                           )}
