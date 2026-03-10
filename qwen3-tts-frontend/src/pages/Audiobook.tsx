@@ -336,7 +336,6 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [editingCharId, setEditingCharId] = useState<number | null>(null)
   const [editFields, setEditFields] = useState({ name: '', description: '', instruct: '' })
   const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
-  const [turbo, setTurbo] = useState(false)
   const [charsCollapsed, setCharsCollapsed] = useState(false)
   const [chaptersCollapsed, setChaptersCollapsed] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
@@ -412,8 +411,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     setLoadingAction(true)
     setIsPolling(true)
     try {
-      await audiobookApi.analyze(project.id, { turbo })
-      toast.success(turbo ? '分析已开始（极速模式）' : '分析已开始')
+      await audiobookApi.analyze(project.id, {})
+      toast.success('分析已开始')
       onRefresh()
     } catch (e: any) {
       setIsPolling(false)
@@ -586,26 +585,15 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
       <div className="flex items-center justify-between gap-2 pt-1 border-t">
         <div className="flex items-center gap-1 flex-wrap">
           {!isActive && (
-            <>
-              <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3"
-                  checked={turbo}
-                  onChange={e => setTurbo(e.target.checked)}
-                />
-                极速
-              </label>
-              <Button
-                size="sm"
-                variant={status === 'pending' ? 'default' : 'outline'}
-                className="h-7 text-xs px-2"
-                onClick={handleAnalyze}
-                disabled={loadingAction}
-              >
-                {status === 'pending' ? '分析' : '重新分析'}
-              </Button>
-            </>
+            <Button
+              size="sm"
+              variant={status === 'pending' ? 'default' : 'outline'}
+              className="h-7 text-xs px-2"
+              onClick={handleAnalyze}
+              disabled={loadingAction}
+            >
+              {status === 'pending' ? '分析' : '重新分析'}
+            </Button>
           )}
           {status === 'ready' && (
             <Button size="sm" className="h-7 text-xs px-2" onClick={() => handleGenerate()} disabled={loadingAction}>
@@ -634,34 +622,31 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                 {charsCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
                 角色列表（{detail.characters.length} 个）
               </button>
-              {!charsCollapsed && <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+              {!charsCollapsed && <div className={`space-y-1.5 pr-1 ${editingCharId ? '' : 'max-h-72 overflow-y-auto'}`}>
                 {detail.characters.map(char => (
                   <div key={char.id} className="border rounded px-3 py-2">
                     {editingCharId === char.id ? (
                       <div className="space-y-2">
                         <Input
-                          className="h-7 text-sm"
                           value={editFields.name}
                           onChange={e => setEditFields(f => ({ ...f, name: e.target.value }))}
                           placeholder="角色名"
                         />
                         <Input
-                          className="h-7 text-sm"
                           value={editFields.instruct}
                           onChange={e => setEditFields(f => ({ ...f, instruct: e.target.value }))}
                           placeholder="音色描述（用于 TTS）"
                         />
                         <Input
-                          className="h-7 text-sm"
                           value={editFields.description}
                           onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
                           placeholder="角色描述"
                         />
-                        <div className="flex gap-1">
-                          <Button size="sm" className="h-6 text-xs px-2" onClick={() => saveEditChar(char)}>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => saveEditChar(char)}>
                             <Check className="h-3 w-3 mr-1" />保存
                           </Button>
-                          <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setEditingCharId(null)}>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingCharId(null)}>
                             <X className="h-3 w-3 mr-1" />取消
                           </Button>
                         </div>
