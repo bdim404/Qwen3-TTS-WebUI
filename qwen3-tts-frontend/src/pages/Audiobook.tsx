@@ -11,6 +11,22 @@ import { AudioPlayer } from '@/components/AudioPlayer'
 import { audiobookApi, type AudiobookProject, type AudiobookProjectDetail, type AudiobookCharacter, type AudiobookSegment } from '@/lib/api/audiobook'
 import apiClient, { formatApiError } from '@/lib/api'
 
+function LazyAudioPlayer({ audioUrl, jobId }: { audioUrl: string; jobId: number }) {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect() } },
+      { rootMargin: '120px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return <div ref={ref}>{visible && <AudioPlayer audioUrl={audioUrl} jobId={jobId} />}</div>
+}
+
 const STATUS_LABELS: Record<string, string> = {
   pending: '待分析',
   analyzing: '分析中',
@@ -776,7 +792,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                                 {seg.status === 'error' && <Badge variant="destructive" className="text-xs shrink-0 mt-0.5">出错</Badge>}
                               </div>
                               {seg.status === 'done' && (
-                                <AudioPlayer audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)} jobId={seg.id} />
+                                <LazyAudioPlayer audioUrl={audiobookApi.getSegmentAudioUrl(project.id, seg.id)} jobId={seg.id} />
                               )}
                             </div>
                           ))}
