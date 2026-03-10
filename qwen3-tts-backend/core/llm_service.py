@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from typing import Any, Dict
@@ -115,7 +116,7 @@ class LLMService:
             logger.error(f"JSON parse failed. Raw response (first 500 chars): {raw[:500]}")
             raise
 
-    async def extract_characters(self, text_samples: list[str], on_token=None, on_sample=None) -> list[Dict]:
+    async def extract_characters(self, text_samples: list[str], on_token=None, on_sample=None, turbo: bool = False) -> list[Dict]:
         system_prompt = (
             "你是一个专业的小说分析助手兼声音导演。请分析给定的小说文本，提取所有出现的角色（包括旁白narrator）。\n"
             "对每个角色，instruct字段必须是详细的声音导演说明，需覆盖以下六个维度，每个维度单独一句，用换行分隔：\n"
@@ -128,6 +129,26 @@ class LLMService:
             "只输出JSON，格式如下，不要有其他文字：\n"
             '{"characters": [{"name": "narrator", "description": "第三人称叙述者", "instruct": "音色信息：...\\n身份背景：...\\n年龄设定：...\\n外貌特征：...\\n性格特质：...\\n叙事风格：..."}, ...]}'
         )
+        if turbo and len(text_samples) > 1:
+            logger.info(f"Extracting characters in turbo mode: {len(text_samples)} samples concurrent")
+
+            async def _extract_one(sample: str) -> list[Dict]:
+                user_message = f"请分析以下小说文本并提取角色：\n\n{sample}"
+                result = await self.stream_chat_json(system_prompt, user_message, None)
+                return result.get("characters", [])
+
+            results = await asyncio.gather(
+                *[_extract_one(s) for s in text_samples],
+                return_exceptions=True,
+            )
+            raw_all: list[Dict] = []
+            for i, r in enumerate(results):
+                if isinstance(r, Exception):
+                    logger.warning(f"Character extraction failed for sample {i+1}: {r}")
+                else:
+                    raw_all.extend(r)
+            return await self.merge_characters(raw_all)
+
         raw_all: list[Dict] = []
         for i, sample in enumerate(text_samples):
             logger.info(f"Extracting characters from sample {i+1}/{len(text_samples)}")

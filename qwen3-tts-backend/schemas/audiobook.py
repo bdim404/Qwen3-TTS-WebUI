@@ -50,6 +50,10 @@ class AudiobookProjectDetail(AudiobookProjectResponse):
     chapters: List[AudiobookChapterResponse] = []
 
 
+class AudiobookAnalyzeRequest(BaseModel):
+    turbo: bool = False
+
+
 class AudiobookGenerateRequest(BaseModel):
     chapter_index: Optional[int] = None
 

@@ -139,7 +139,7 @@ function SequentialPlayer({
   )
 }
 
-function LogStream({ projectId, active }: { projectId: number; active: boolean }) {
+function LogStream({ projectId, chapterId, active }: { projectId: number; chapterId?: number; active: boolean }) {
   const [lines, setLines] = useState<string[]>([])
   const [done, setDone] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -155,7 +155,8 @@ function LogStream({ projectId, active }: { projectId: number; active: boolean }
     const apiBase = (import.meta.env.VITE_API_URL as string) || ''
     const controller = new AbortController()
 
-    fetch(`${apiBase}/audiobook/projects/${projectId}/logs`, {
+    const chapterParam = chapterId !== undefined ? `?chapter_id=${chapterId}` : ''
+    fetch(`${apiBase}/audiobook/projects/${projectId}/logs${chapterParam}`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: controller.signal,
     }).then(async res => {
@@ -189,7 +190,7 @@ function LogStream({ projectId, active }: { projectId: number; active: boolean }
     }).catch(() => {})
 
     return () => controller.abort()
-  }, [projectId, active])
+  }, [projectId, chapterId, active])
 
   useEffect(() => {
     const el = containerRef.current
@@ -319,6 +320,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [editingCharId, setEditingCharId] = useState<number | null>(null)
   const [editFields, setEditFields] = useState({ name: '', description: '', instruct: '' })
   const [sequentialPlayingId, setSequentialPlayingId] = useState<number | null>(null)
+  const [turbo, setTurbo] = useState(false)
   const prevStatusRef = useRef(project.status)
   const autoExpandedRef = useRef(new Set<string>())
 
@@ -378,8 +380,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     setLoadingAction(true)
     setIsPolling(true)
     try {
-      await audiobookApi.analyze(project.id)
-      toast.success('分析已开始')
+      await audiobookApi.analyze(project.id, { turbo })
+      toast.success(turbo ? '分析已开始（极速模式）' : '分析已开始')
       onRefresh()
     } catch (e: any) {
       setIsPolling(false)
@@ -523,14 +525,25 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         </div>
         <div className="flex gap-1 shrink-0">
           {!isActive && (
-            <Button
-              size="sm"
-              variant={status === 'pending' ? 'default' : 'outline'}
-              onClick={handleAnalyze}
-              disabled={loadingAction}
-            >
-              {status === 'pending' ? '分析' : '重新分析'}
-            </Button>
+            <div className="flex items-center gap-1">
+              <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3"
+                  checked={turbo}
+                  onChange={e => setTurbo(e.target.checked)}
+                />
+                极速
+              </label>
+              <Button
+                size="sm"
+                variant={status === 'pending' ? 'default' : 'outline'}
+                onClick={handleAnalyze}
+                disabled={loadingAction}
+              >
+                {status === 'pending' ? '分析' : '重新分析'}
+              </Button>
+            </div>
           )}
           {status === 'ready' && (
             <Button size="sm" onClick={() => handleGenerate()} disabled={loadingAction}>
@@ -711,7 +724,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                         </div>
                       </div>
                       {ch.status === 'parsing' && (
-                        <LogStream projectId={project.id} active={ch.status === 'parsing'} />
+                        <LogStream projectId={project.id} chapterId={ch.id} active={ch.status === 'parsing'} />
                       )}
                     </div>
                   )

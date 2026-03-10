@@ -21,6 +21,7 @@ from schemas.audiobook import (
     AudiobookCharacterEdit,
     AudiobookSegmentResponse,
     AudiobookGenerateRequest,
+    AudiobookAnalyzeRequest,
 )
 from core.config import settings
 
@@ -161,6 +162,7 @@ async def get_project(
 @router.post("/projects/{project_id}/analyze")
 async def analyze_project(
     project_id: int,
+    data: AudiobookAnalyzeRequest = AudiobookAnalyzeRequest(),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -176,16 +178,18 @@ async def analyze_project(
     from core.audiobook_service import analyze_project as _analyze
     from core.database import SessionLocal
 
+    turbo = data.turbo
+
     async def run_analysis():
         async_db = SessionLocal()
         try:
             db_user = crud.get_user_by_id(async_db, current_user.id)
-            await _analyze(project_id, db_user, async_db)
+            await _analyze(project_id, db_user, async_db, turbo=turbo)
         finally:
             async_db.close()
 
     asyncio.create_task(run_analysis())
-    return {"message": "Analysis started", "project_id": project_id}
+    return {"message": "Analysis started", "project_id": project_id, "turbo": turbo}
 
 
 @router.post("/projects/{project_id}/confirm")
@@ -318,9 +322,9 @@ async def generate_project(
     project = crud.get_audiobook_project(db, project_id, current_user.id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.status in ("analyzing", "generating", "parsing"):
-        raise HTTPException(status_code=400, detail=f"Project is currently {project.status}, please wait")
-    if project.status not in ("ready", "done", "error"):
+    if project.status == "analyzing":
+        raise HTTPException(status_code=400, detail="Project is currently analyzing, please wait")
+    if project.status not in ("ready", "generating", "done", "error"):
         raise HTTPException(status_code=400, detail=f"Project must be in 'ready' state, current: {project.status}")
 
     from core.audiobook_service import generate_project as _generate
@@ -344,15 +348,18 @@ async def generate_project(
 @router.get("/projects/{project_id}/logs")
 async def stream_project_logs(
     project_id: int,
+    chapter_id: Optional[int] = None,
     current_user: User = Depends(get_current_user),
 ):
     from core import progress_store as ps
+
+    log_key = f"ch_{chapter_id}" if chapter_id is not None else str(project_id)
 
     async def generator():
         sent_complete = -1
         last_streaming = ""
         while True:
-            state = ps.get_snapshot(project_id)
+            state = ps.get_snapshot(log_key)
             lines = state["lines"]
             n = len(lines)
 

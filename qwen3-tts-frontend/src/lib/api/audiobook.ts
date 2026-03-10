@@ -85,8 +85,8 @@ export const audiobookApi = {
     return response.data
   },
 
-  analyze: async (id: number): Promise<void> => {
-    await apiClient.post(`/audiobook/projects/${id}/analyze`)
+  analyze: async (id: number, options?: { turbo?: boolean }): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${id}/analyze`, { turbo: options?.turbo ?? false })
   },
 
   updateCharacter: async (
