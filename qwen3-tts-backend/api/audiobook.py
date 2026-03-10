@@ -17,6 +17,7 @@ from schemas.audiobook import (
     AudiobookProjectResponse,
     AudiobookProjectDetail,
     AudiobookCharacterResponse,
+    AudiobookChapterResponse,
     AudiobookCharacterEdit,
     AudiobookSegmentResponse,
     AudiobookGenerateRequest,
@@ -53,11 +54,17 @@ def _project_to_detail(project, db: Session) -> AudiobookProjectDetail:
         )
         for c in (project.characters or [])
     ]
-    from db.models import AudiobookSegment
-    chapter_indices = db.query(AudiobookSegment.chapter_index).filter(
-        AudiobookSegment.project_id == project.id
-    ).distinct().all()
-    chapter_count = len(chapter_indices)
+    chapters = [
+        AudiobookChapterResponse(
+            id=ch.id,
+            project_id=ch.project_id,
+            chapter_index=ch.chapter_index,
+            title=ch.title,
+            status=ch.status,
+            error_message=ch.error_message,
+        )
+        for ch in (project.chapters or [])
+    ]
     return AudiobookProjectDetail(
         id=project.id,
         user_id=project.user_id,
@@ -69,7 +76,7 @@ def _project_to_detail(project, db: Session) -> AudiobookProjectDetail:
         created_at=project.created_at,
         updated_at=project.updated_at,
         characters=characters,
-        chapter_count=chapter_count,
+        chapters=chapters,
     )
 
 
@@ -193,22 +200,67 @@ async def confirm_characters(
     if project.status != "characters_ready":
         raise HTTPException(status_code=400, detail="Project must be in 'characters_ready' state to confirm characters")
 
-    if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
-        raise HTTPException(status_code=400, detail="LLM config not set. Please configure LLM API key first.")
+    from core.audiobook_service import identify_chapters
+    try:
+        identify_chapters(project_id, db, project)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    from core.audiobook_service import parse_chapters as _parse
+    return {"message": "Chapters identified", "project_id": project_id}
+
+
+@router.get("/projects/{project_id}/chapters", response_model=list[AudiobookChapterResponse])
+async def list_chapters(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    chapters = crud.list_audiobook_chapters(db, project_id)
+    return [
+        AudiobookChapterResponse(
+            id=ch.id, project_id=ch.project_id, chapter_index=ch.chapter_index,
+            title=ch.title, status=ch.status, error_message=ch.error_message,
+        )
+        for ch in chapters
+    ]
+
+
+@router.post("/projects/{project_id}/chapters/{chapter_id}/parse")
+async def parse_chapter(
+    project_id: int,
+    chapter_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    chapter = crud.get_audiobook_chapter(db, chapter_id)
+    if not chapter or chapter.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    if chapter.status == "parsing":
+        raise HTTPException(status_code=400, detail="Chapter is already being parsed")
+
+    if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
+        raise HTTPException(status_code=400, detail="LLM config not set")
+
+    from core.audiobook_service import parse_one_chapter
     from core.database import SessionLocal
 
-    async def run_parsing():
+    async def run():
         async_db = SessionLocal()
         try:
             db_user = crud.get_user_by_id(async_db, current_user.id)
-            await _parse(project_id, db_user, async_db)
+            await parse_one_chapter(project_id, chapter_id, db_user, async_db)
         finally:
             async_db.close()
 
-    asyncio.create_task(run_parsing())
-    return {"message": "Chapter parsing started", "project_id": project_id}
+    asyncio.create_task(run())
+    return {"message": "Parsing started", "chapter_id": chapter_id}
 
 
 @router.put("/projects/{project_id}/characters/{char_id}", response_model=AudiobookCharacterResponse)

@@ -36,10 +36,9 @@ const STATUS_COLORS: Record<string, string> = {
 const STEP_HINTS: Record<string, string> = {
   pending: '第 1 步：点击「分析」，LLM 将自动提取角色列表',
   analyzing: '第 1 步：LLM 正在提取角色，请稍候...',
-  characters_ready: '第 2 步：确认角色信息，可编辑后点击「确认角色 · 解析章节」',
-  parsing: '第 3 步：LLM 正在解析章节脚本，请稍候...',
-  ready: '第 4 步：按章节逐章生成音频，或一次性生成全书',
-  generating: '第 5 步：正在合成音频，已完成片段可立即播放',
+  characters_ready: '第 2 步：确认角色信息，可编辑后点击「确认角色 · 识别章节」',
+  ready: '第 3 步：逐章解析剧本（LLM），解析完的章节可立即生成音频',
+  generating: '第 4 步：正在合成音频，已完成片段可立即播放',
 }
 
 function SequentialPlayer({
@@ -353,18 +352,21 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     prevStatusRef.current = project.status
   }, [project.status, project.title])
 
-  useEffect(() => {
-    if (!isPolling) return
-    if (['analyzing', 'parsing', 'generating'].includes(project.status)) return
-    if (!segments.some(s => s.status === 'generating')) setIsPolling(false)
-  }, [isPolling, project.status, segments])
+  const hasParsingChapter = detail?.chapters.some(c => c.status === 'parsing') ?? false
 
   useEffect(() => {
-    const shouldPoll = isPolling || ['analyzing', 'parsing', 'generating'].includes(project.status)
+    if (!isPolling) return
+    if (['analyzing', 'generating'].includes(project.status)) return
+    if (hasParsingChapter) return
+    if (!segments.some(s => s.status === 'generating')) setIsPolling(false)
+  }, [isPolling, project.status, segments, hasParsingChapter])
+
+  useEffect(() => {
+    const shouldPoll = isPolling || ['analyzing', 'generating'].includes(project.status) || hasParsingChapter
     if (!shouldPoll) return
-    const id = setInterval(() => { onRefresh(); fetchSegments() }, 1500)
+    const id = setInterval(() => { onRefresh(); fetchSegments(); fetchDetail() }, 1500)
     return () => clearInterval(id)
-  }, [isPolling, project.status, onRefresh, fetchSegments])
+  }, [isPolling, project.status, hasParsingChapter, onRefresh, fetchSegments, fetchDetail])
 
   const handleAnalyze = async () => {
     const s = project.status
@@ -389,16 +391,25 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
   const handleConfirm = async () => {
     setLoadingAction(true)
-    setIsPolling(true)
     try {
       await audiobookApi.confirmCharacters(project.id)
-      toast.success('章节解析已开始')
+      toast.success('章节已识别')
       onRefresh()
+      fetchDetail()
     } catch (e: any) {
-      setIsPolling(false)
       toast.error(formatApiError(e))
     } finally {
       setLoadingAction(false)
+    }
+  }
+
+  const handleParseChapter = async (chapterId: number, title?: string) => {
+    try {
+      await audiobookApi.parseChapter(project.id, chapterId)
+      toast.success(title ? `「${title}」解析已开始` : '章节解析已开始')
+      fetchDetail()
+    } catch (e: any) {
+      toast.error(formatApiError(e))
     }
   }
 
@@ -472,18 +483,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   }
 
   const status = project.status
-  const isActive = ['analyzing', 'parsing', 'generating'].includes(status)
+  const isActive = ['analyzing', 'generating'].includes(status)
   const doneCount = segments.filter(s => s.status === 'done').length
   const totalCount = segments.length
   const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
-
-  const chapterMap = new Map<number, AudiobookSegment[]>()
-  segments.forEach(s => {
-    const arr = chapterMap.get(s.chapter_index) ?? []
-    arr.push(s)
-    chapterMap.set(s.chapter_index, arr)
-  })
-  const chapters = Array.from(chapterMap.entries()).sort(([a], [b]) => a - b)
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -531,8 +534,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         </div>
       )}
 
-      {['analyzing', 'parsing'].includes(status) && (
-        <LogStream projectId={project.id} active={['analyzing', 'parsing'].includes(status)} />
+      {status === 'analyzing' && (
+        <LogStream projectId={project.id} active={status === 'analyzing'} />
       )}
 
       {project.error_message && (
@@ -611,57 +614,70 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   onClick={handleConfirm}
                   disabled={loadingAction || editingCharId !== null}
                 >
-                  {loadingAction ? '解析中...' : '确认角色 · 解析章节'}
+                  {loadingAction ? '识别中...' : '确认角色 · 识别章节'}
                 </Button>
               )}
             </div>
           )}
 
-          {status === 'ready' && chapters.length > 0 && (
+          {detail && detail.chapters.length > 0 && ['ready', 'generating', 'done'].includes(status) && (
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-2">
-                按章节生成（共 {chapters.length} 章）
+                章节列表（共 {detail.chapters.length} 章）
               </div>
-              <div className="space-y-1">
-                {chapters.map(([chIdx, chSegs]) => {
+              <div className="space-y-2">
+                {detail.chapters.map(ch => {
+                  const chSegs = segments.filter(s => s.chapter_index === ch.chapter_index)
                   const chDone = chSegs.filter(s => s.status === 'done').length
                   const chTotal = chSegs.length
                   const chGenerating = chSegs.some(s => s.status === 'generating')
-                  const chAllDone = chDone === chTotal && chTotal > 0
+                  const chAllDone = chTotal > 0 && chDone === chTotal
+                  const chTitle = ch.title || `第 ${ch.chapter_index + 1} 章`
                   return (
-                    <div key={chIdx} className="flex items-center justify-between border rounded px-2 py-1.5 text-sm">
-                      <span className="text-xs text-muted-foreground shrink-0">第 {chIdx + 1} 章</span>
-                      <span className="text-xs text-muted-foreground mx-2 flex-1">{chDone}/{chTotal} 段</span>
-                      <div className="flex gap-1 shrink-0">
-                        {chGenerating ? (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            <span>生成中</span>
-                          </div>
-                        ) : chAllDone ? (
-                          <>
-                            <Badge variant="outline" className="text-xs">已完成</Badge>
-                            <Button
-                              size="sm" variant="ghost" className="h-5 w-5 p-0"
-                              onClick={() => handleDownload(chIdx)}
-                              title="下载此章"
-                            >
-                              <Download className="h-3 w-3" />
+                    <div key={ch.id} className="border rounded px-3 py-2 space-y-2">
+                      <div className="flex items-center justify-between text-sm gap-2">
+                        <span className="text-xs font-medium truncate max-w-[55%]">{chTitle}</span>
+                        <div className="flex gap-1 items-center shrink-0">
+                          {ch.status === 'pending' && (
+                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => handleParseChapter(ch.id, ch.title)}>
+                              解析此章
                             </Button>
-                          </>
-                        ) : (
-                          <Button
-                            size="sm" variant="outline" className="h-6 text-xs px-2"
-                            disabled={loadingAction}
-                            onClick={() => handleGenerate(chIdx)}
-                          >
-                            {loadingAction
-                              ? <Loader2 className="h-3 w-3 animate-spin" />
-                              : '生成此章'
-                            }
-                          </Button>
-                        )}
+                          )}
+                          {ch.status === 'parsing' && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <span>解析中</span>
+                            </div>
+                          )}
+                          {ch.status === 'ready' && !chGenerating && !chAllDone && (
+                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => handleGenerate(ch.chapter_index)}>
+                              生成此章
+                            </Button>
+                          )}
+                          {ch.status === 'ready' && chGenerating && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <span>{chDone}/{chTotal} 段</span>
+                            </div>
+                          )}
+                          {ch.status === 'ready' && chAllDone && (
+                            <>
+                              <Badge variant="outline" className="text-xs">已完成 {chDone} 段</Badge>
+                              <Button size="sm" variant="ghost" className="h-5 w-5 p-0" onClick={() => handleDownload(ch.chapter_index)} title="下载此章">
+                                <Download className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                          {ch.status === 'error' && (
+                            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={() => handleParseChapter(ch.id, ch.title)}>
+                              重新解析
+                            </Button>
+                          )}
+                        </div>
                       </div>
+                      {ch.status === 'parsing' && (
+                        <LogStream projectId={project.id} active={ch.status === 'parsing'} />
+                      )}
                     </div>
                   )
                 })}

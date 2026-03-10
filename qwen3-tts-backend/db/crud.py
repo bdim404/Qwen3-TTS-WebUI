@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from db.models import User, Job, VoiceCache, SystemSettings, VoiceDesign, AudiobookProject, AudiobookCharacter, AudiobookSegment
+from db.models import User, Job, VoiceCache, SystemSettings, VoiceDesign, AudiobookProject, AudiobookChapter, AudiobookCharacter, AudiobookSegment
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
@@ -447,6 +447,66 @@ def delete_audiobook_project(db: Session, project_id: int, user_id: int) -> bool
     db.delete(project)
     db.commit()
     return True
+
+
+def create_audiobook_chapter(
+    db: Session,
+    project_id: int,
+    chapter_index: int,
+    source_text: str,
+    title: Optional[str] = None,
+) -> AudiobookChapter:
+    chapter = AudiobookChapter(
+        project_id=project_id,
+        chapter_index=chapter_index,
+        source_text=source_text,
+        title=title,
+        status="pending",
+    )
+    db.add(chapter)
+    db.commit()
+    db.refresh(chapter)
+    return chapter
+
+
+def get_audiobook_chapter(db: Session, chapter_id: int) -> Optional[AudiobookChapter]:
+    return db.query(AudiobookChapter).filter(AudiobookChapter.id == chapter_id).first()
+
+
+def list_audiobook_chapters(db: Session, project_id: int) -> List[AudiobookChapter]:
+    return db.query(AudiobookChapter).filter(
+        AudiobookChapter.project_id == project_id
+    ).order_by(AudiobookChapter.chapter_index).all()
+
+
+def update_audiobook_chapter_status(
+    db: Session,
+    chapter_id: int,
+    status: str,
+    error_message: Optional[str] = None,
+) -> Optional[AudiobookChapter]:
+    chapter = db.query(AudiobookChapter).filter(AudiobookChapter.id == chapter_id).first()
+    if not chapter:
+        return None
+    chapter.status = status
+    if error_message is not None:
+        chapter.error_message = error_message
+    db.commit()
+    db.refresh(chapter)
+    return chapter
+
+
+def delete_audiobook_chapters(db: Session, project_id: int) -> None:
+    db.query(AudiobookChapter).filter(AudiobookChapter.project_id == project_id).delete()
+    db.commit()
+
+
+def delete_audiobook_segments_for_chapter(db: Session, project_id: int, chapter_index: int) -> None:
+    db.query(AudiobookSegment).filter(
+        AudiobookSegment.project_id == project_id,
+        AudiobookSegment.chapter_index == chapter_index,
+    ).delete()
+    db.commit()
 
 
 def create_audiobook_character(

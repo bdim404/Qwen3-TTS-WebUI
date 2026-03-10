@@ -141,7 +141,26 @@ class AudiobookProject(Base):
 
     user = relationship("User", back_populates="audiobook_projects")
     characters = relationship("AudiobookCharacter", back_populates="project", cascade="all, delete-orphan")
+    chapters = relationship("AudiobookChapter", back_populates="project", cascade="all, delete-orphan", order_by="AudiobookChapter.chapter_index")
     segments = relationship("AudiobookSegment", back_populates="project", cascade="all, delete-orphan")
+
+
+class AudiobookChapter(Base):
+    __tablename__ = "audiobook_chapters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("audiobook_projects.id"), nullable=False, index=True)
+    chapter_index = Column(Integer, nullable=False)
+    title = Column(String(500), nullable=True)
+    source_text = Column(Text, nullable=False)
+    status = Column(String(20), default="pending", nullable=False)
+    error_message = Column(Text, nullable=True)
+
+    project = relationship("AudiobookProject", back_populates="chapters")
+
+    __table_args__ = (
+        Index('idx_chapter_project_idx', 'project_id', 'chapter_index'),
+    )
 
 
 class AudiobookCharacter(Base):

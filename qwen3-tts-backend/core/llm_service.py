@@ -115,7 +115,7 @@ class LLMService:
             logger.error(f"JSON parse failed. Raw response (first 500 chars): {raw[:500]}")
             raise
 
-    async def extract_characters(self, text: str, on_token=None) -> list[Dict]:
+    async def extract_characters(self, text_samples: list[str], on_token=None, on_sample=None) -> list[Dict]:
         system_prompt = (
             "你是一个专业的小说分析助手兼声音导演。请分析给定的小说文本，提取所有出现的角色（包括旁白narrator）。\n"
             "对每个角色，instruct字段必须是详细的声音导演说明，需覆盖以下六个维度，每个维度单独一句，用换行分隔：\n"
@@ -128,9 +128,44 @@ class LLMService:
             "只输出JSON，格式如下，不要有其他文字：\n"
             '{"characters": [{"name": "narrator", "description": "第三人称叙述者", "instruct": "音色信息：...\\n身份背景：...\\n年龄设定：...\\n外貌特征：...\\n性格特质：...\\n叙事风格：..."}, ...]}'
         )
-        user_message = f"请分析以下小说文本并提取角色：\n\n{text[:30000]}"
-        result = await self.stream_chat_json(system_prompt, user_message, on_token)
-        return result.get("characters", [])
+        raw_all: list[Dict] = []
+        for i, sample in enumerate(text_samples):
+            logger.info(f"Extracting characters from sample {i+1}/{len(text_samples)}")
+            user_message = f"请分析以下小说文本并提取角色：\n\n{sample}"
+            try:
+                result = await self.stream_chat_json(system_prompt, user_message, on_token)
+                raw_all.extend(result.get("characters", []))
+            except Exception as e:
+                logger.warning(f"Character extraction failed for sample {i+1}: {e}")
+            if on_sample:
+                on_sample(i, len(text_samples))
+        if len(text_samples) == 1:
+            return raw_all
+        return await self.merge_characters(raw_all)
+
+    async def merge_characters(self, raw_characters: list[Dict]) -> list[Dict]:
+        system_prompt = (
+            "你是一个专业的小说角色整合助手。你收到的是从同一本书不同段落中提取的角色列表，其中可能存在重复。\n"
+            "请完成以下任务：\n"
+            "1. 识别并合并重复角色：通过名字完全相同或高度相似（全名与简称、不同译写）来判断。\n"
+            "2. 合并时保留最完整、最详细的 description 和 instruct 字段。\n"
+            "3. narrator 角色只保留一个。\n"
+            "4. 去除无意义的占位角色（name 为空或仅含标点）。\n"
+            "只输出 JSON，不要有其他文字：\n"
+            '{"characters": [{"name": "...", "description": "...", "instruct": "..."}, ...]}'
+        )
+        user_message = f"请整合以下角色列表：\n\n{json.dumps(raw_characters, ensure_ascii=False, indent=2)}"
+        try:
+            result = await self.chat_json(system_prompt, user_message)
+            return result.get("characters", [])
+        except Exception as e:
+            logger.warning(f"Character merge failed, falling back to name-dedup: {e}")
+            seen: dict[str, Dict] = {}
+            for c in raw_characters:
+                name = c.get("name", "")
+                if name and name not in seen:
+                    seen[name] = c
+            return list(seen.values())
 
     async def parse_chapter_segments(self, chapter_text: str, character_names: list[str], on_token=None) -> list[Dict]:
         names_str = "、".join(character_names)

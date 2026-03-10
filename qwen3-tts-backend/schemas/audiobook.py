@@ -34,9 +34,20 @@ class AudiobookCharacterResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AudiobookChapterResponse(BaseModel):
+    id: int
+    project_id: int
+    chapter_index: int
+    title: Optional[str] = None
+    status: str
+    error_message: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AudiobookProjectDetail(AudiobookProjectResponse):
     characters: List[AudiobookCharacterResponse] = []
-    chapter_count: int = 0
+    chapters: List[AudiobookChapterResponse] = []
 
 
 class AudiobookGenerateRequest(BaseModel):

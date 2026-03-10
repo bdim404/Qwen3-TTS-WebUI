@@ -21,9 +21,18 @@ export interface AudiobookCharacter {
   voice_design_id?: number
 }
 
+export interface AudiobookChapter {
+  id: number
+  project_id: number
+  chapter_index: number
+  title?: string
+  status: string
+  error_message?: string
+}
+
 export interface AudiobookProjectDetail extends AudiobookProject {
   characters: AudiobookCharacter[]
-  chapter_count: number
+  chapters: AudiobookChapter[]
 }
 
 export interface AudiobookSegment {
@@ -94,6 +103,15 @@ export const audiobookApi = {
 
   confirmCharacters: async (id: number): Promise<void> => {
     await apiClient.post(`/audiobook/projects/${id}/confirm`)
+  },
+
+  listChapters: async (id: number): Promise<AudiobookChapter[]> => {
+    const response = await apiClient.get<AudiobookChapter[]>(`/audiobook/projects/${id}/chapters`)
+    return response.data
+  },
+
+  parseChapter: async (projectId: number, chapterId: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${projectId}/chapters/${chapterId}/parse`)
   },
 
   generate: async (id: number, chapterIndex?: number): Promise<void> => {
