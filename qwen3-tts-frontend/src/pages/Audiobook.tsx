@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Book, Plus, Trash2, RefreshCw, Download, ChevronDown, ChevronUp, Play, Square, Pencil, Check, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -27,17 +28,6 @@ function LazyAudioPlayer({ audioUrl, jobId }: { audioUrl: string; jobId: number 
   return <div ref={ref}>{visible && <AudioPlayer audioUrl={audioUrl} jobId={jobId} />}</div>
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: '待分析',
-  analyzing: '分析中',
-  characters_ready: '角色待确认',
-  parsing: '解析章节',
-  ready: '待生成',
-  generating: '生成中',
-  done: '已完成',
-  error: '出错',
-}
-
 const STATUS_COLORS: Record<string, string> = {
   pending: 'secondary',
   analyzing: 'default',
@@ -49,13 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
   error: 'destructive',
 }
 
-const STEP_HINTS: Record<string, string> = {
-  pending: '第 1 步：点击「分析」，LLM 将自动提取角色列表',
-  analyzing: '第 1 步：LLM 正在提取角色，请稍候...',
-  characters_ready: '第 2 步：确认角色信息，可编辑后点击「确认角色 · 识别章节」',
-  ready: '第 3 步：逐章解析剧本（LLM），解析完的章节可立即生成音频',
-  generating: '第 4 步：正在合成音频，已完成片段可立即播放',
-}
+const STEP_HINT_STATUSES = ['pending', 'analyzing', 'characters_ready', 'ready', 'generating']
 
 function SequentialPlayer({
   segments,
@@ -66,6 +50,7 @@ function SequentialPlayer({
   projectId: number
   onPlayingChange: (segmentId: number | null) => void
 }) {
+  const { t } = useTranslation('audiobook')
   const [displayIndex, setDisplayIndex] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(new Audio())
@@ -140,15 +125,17 @@ function SequentialPlayer({
       {displayIndex !== null ? (
         <>
           <Button size="sm" variant="outline" onClick={stop}>
-            <Square className="h-3 w-3 mr-1 fill-current" />停止
+            <Square className="h-3 w-3 mr-1 fill-current" />{t('projectCard.sequential.stop')}
           </Button>
           <span className="text-xs text-muted-foreground">
-            {isLoading ? '加载中...' : `第 ${displayIndex + 1} / ${doneSegments.length} 段`}
+            {isLoading
+              ? t('projectCard.sequential.loading')
+              : t('projectCard.sequential.progress', { current: displayIndex + 1, total: doneSegments.length })}
           </span>
         </>
       ) : (
         <Button size="sm" variant="outline" onClick={() => playSegment(0)}>
-          <Play className="h-3 w-3 mr-1" />顺序播放（{doneSegments.length} 段）
+          <Play className="h-3 w-3 mr-1" />{t('projectCard.sequential.play', { count: doneSegments.length })}
         </Button>
       )}
     </div>
@@ -228,6 +215,7 @@ function LogStream({ projectId, chapterId, active }: { projectId: number; chapte
 }
 
 function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
+  const { t } = useTranslation('audiobook')
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [model, setModel] = useState('')
@@ -240,13 +228,13 @@ function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
 
   const handleSave = async () => {
     if (!baseUrl || !apiKey || !model) {
-      toast.error('请填写完整的 LLM 配置')
+      toast.error(t('llmConfigPanel.incompleteError'))
       return
     }
     setLoading(true)
     try {
       await audiobookApi.setLLMConfig({ base_url: baseUrl, api_key: apiKey, model })
-      toast.success('LLM 配置已保存')
+      toast.success(t('llmConfigPanel.savedSuccess'))
       setApiKey('')
       const updated = await audiobookApi.getLLMConfig()
       setExisting(updated)
@@ -260,21 +248,28 @@ function LLMConfigPanel({ onSaved }: { onSaved?: () => void }) {
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
-      <div className="font-medium text-sm">LLM 配置</div>
+      <div className="font-medium text-sm">{t('llmConfigPanel.title')}</div>
       {existing && (
         <div className="text-xs text-muted-foreground">
-          当前: {existing.base_url || '未设置'} / {existing.model || '未设置'} / {existing.has_key ? '已配置密钥' : '未配置密钥'}
+          {t('llmConfigPanel.current', {
+            baseUrl: existing.base_url || t('llmConfigPanel.notSet'),
+            model: existing.model || t('llmConfigPanel.notSet'),
+            keyStatus: existing.has_key ? t('llmConfigPanel.hasKey') : t('llmConfigPanel.noKey'),
+          })}
         </div>
       )}
       <Input placeholder="Base URL (e.g. https://api.openai.com/v1)" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} />
       <Input placeholder="API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} />
       <Input placeholder="Model (e.g. gpt-4o)" value={model} onChange={e => setModel(e.target.value)} />
-      <Button size="sm" onClick={handleSave} disabled={loading}>{loading ? '保存中...' : '保存配置'}</Button>
+      <Button size="sm" onClick={handleSave} disabled={loading}>
+        {loading ? t('llmConfigPanel.saving') : t('llmConfigPanel.save')}
+      </Button>
     </div>
   )
 }
 
 function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
+  const { t } = useTranslation('audiobook')
   const [title, setTitle] = useState('')
   const [sourceType, setSourceType] = useState<'text' | 'epub'>('text')
   const [text, setText] = useState('')
@@ -282,9 +277,9 @@ function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
   const [loading, setLoading] = useState(false)
 
   const handleCreate = async () => {
-    if (!title) { toast.error('请输入书名'); return }
-    if (sourceType === 'text' && !text) { toast.error('请输入文本内容'); return }
-    if (sourceType === 'epub' && !epubFile) { toast.error('请选择 epub 文件'); return }
+    if (!title) { toast.error(t('createPanel.titleRequired')); return }
+    if (sourceType === 'text' && !text) { toast.error(t('createPanel.textRequired')); return }
+    if (sourceType === 'epub' && !epubFile) { toast.error(t('createPanel.epubRequired')); return }
     setLoading(true)
     try {
       if (sourceType === 'text') {
@@ -292,7 +287,7 @@ function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
       } else {
         await audiobookApi.uploadEpub(title, epubFile!)
       }
-      toast.success('项目已创建')
+      toast.success(t('createPanel.createdSuccess'))
       setTitle(''); setText(''); setEpubFile(null)
       onCreated()
     } catch (e: any) {
@@ -304,14 +299,18 @@ function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
-      <div className="font-medium text-sm">新建有声书项目</div>
-      <Input placeholder="书名" value={title} onChange={e => setTitle(e.target.value)} />
+      <div className="font-medium text-sm">{t('createPanel.title')}</div>
+      <Input placeholder={t('createPanel.titlePlaceholder')} value={title} onChange={e => setTitle(e.target.value)} />
       <div className="flex gap-2">
-        <Button size="sm" variant={sourceType === 'text' ? 'default' : 'outline'} onClick={() => setSourceType('text')}>粘贴文本</Button>
-        <Button size="sm" variant={sourceType === 'epub' ? 'default' : 'outline'} onClick={() => setSourceType('epub')}>上传 epub</Button>
+        <Button size="sm" variant={sourceType === 'text' ? 'default' : 'outline'} onClick={() => setSourceType('text')}>
+          {t('createPanel.pasteText')}
+        </Button>
+        <Button size="sm" variant={sourceType === 'epub' ? 'default' : 'outline'} onClick={() => setSourceType('epub')}>
+          {t('createPanel.uploadEpub')}
+        </Button>
       </div>
       {sourceType === 'text' && (
-        <Textarea placeholder="粘贴小说文本..." rows={6} value={text} onChange={e => setText(e.target.value)} />
+        <Textarea placeholder={t('createPanel.textPlaceholder')} rows={6} value={text} onChange={e => setText(e.target.value)} />
       )}
       {sourceType === 'epub' && (
         <Input type="file" accept=".epub" onChange={e => {
@@ -322,12 +321,15 @@ function CreateProjectPanel({ onCreated }: { onCreated: () => void }) {
           }
         }} />
       )}
-      <Button size="sm" onClick={handleCreate} disabled={loading}>{loading ? '创建中...' : '创建项目'}</Button>
+      <Button size="sm" onClick={handleCreate} disabled={loading}>
+        {loading ? t('createPanel.creating') : t('createPanel.create')}
+      </Button>
     </div>
   )
 }
 
 function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefresh: () => void }) {
+  const { t } = useTranslation('audiobook')
   const [detail, setDetail] = useState<AudiobookProjectDetail | null>(null)
   const [segments, setSegments] = useState<AudiobookSegment[]>([])
   const [expanded, setExpanded] = useState(false)
@@ -368,10 +370,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
   useEffect(() => {
     if (prevStatusRef.current === 'generating' && project.status === 'done') {
-      toast.success(`「${project.title}」音频全部生成完成！`)
+      toast.success(t('projectCard.allDoneToast', { title: project.title }))
     }
     prevStatusRef.current = project.status
-  }, [project.status, project.title])
+  }, [project.status, project.title, t])
 
   const hasParsingChapter = detail?.chapters.some(c => c.status === 'parsing') ?? false
 
@@ -423,7 +425,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const handleAnalyze = async () => {
     const s = project.status
     if (['characters_ready', 'ready', 'done'].includes(s)) {
-      if (!confirm('重新分析将清除所有角色和章节数据，确定继续？')) return
+      if (!confirm(t('projectCard.reanalyzeConfirm'))) return
     }
     autoExpandedRef.current.clear()
     setEditingCharId(null)
@@ -431,7 +433,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     setIsPolling(true)
     try {
       await audiobookApi.analyze(project.id, {})
-      toast.success('分析已开始')
+      toast.success(t('projectCard.analyzeStarted'))
       onRefresh()
     } catch (e: any) {
       setIsPolling(false)
@@ -445,7 +447,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     setLoadingAction(true)
     try {
       await audiobookApi.confirmCharacters(project.id)
-      toast.success('章节已识别')
+      toast.success(t('projectCard.confirm.chaptersRecognized'))
       onRefresh()
       fetchDetail()
     } catch (e: any) {
@@ -458,7 +460,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const handleParseChapter = async (chapterId: number, title?: string) => {
     try {
       await audiobookApi.parseChapter(project.id, chapterId)
-      toast.success(title ? `「${title}」解析已开始` : '章节解析已开始')
+      toast.success(title
+        ? t('projectCard.chapters.parseStarted', { title })
+        : t('projectCard.chapters.parseStartedDefault'))
       fetchDetail()
     } catch (e: any) {
       toast.error(formatApiError(e))
@@ -474,7 +478,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
     try {
       await audiobookApi.generate(project.id, chapterIndex)
-      toast.success(chapterIndex !== undefined ? `第 ${chapterIndex + 1} 章生成已开始` : '全书生成已开始')
+      toast.success(chapterIndex !== undefined
+        ? t('projectCard.chapters.generateStarted', { index: chapterIndex + 1 })
+        : t('projectCard.chapters.generateAllStarted'))
       onRefresh()
       fetchSegments()
     } catch (e: any) {
@@ -503,7 +509,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         ...pending.map(c => audiobookApi.parseChapter(project.id, c.id)),
         ...ready.map(c => audiobookApi.generate(project.id, c.chapter_index)),
       ])
-      toast.success('全部任务已触发')
+      toast.success(t('projectCard.chapters.processAllStarted'))
       onRefresh()
       fetchDetail()
       fetchSegments()
@@ -538,10 +544,10 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   }
 
   const handleDelete = async () => {
-    if (!confirm(`确认删除项目「${project.title}」及所有音频？`)) return
+    if (!confirm(t('projectCard.deleteConfirm', { title: project.title }))) return
     try {
       await audiobookApi.deleteProject(project.id)
-      toast.success('项目已删除')
+      toast.success(t('projectCard.deleteSuccess'))
       onRefresh()
     } catch (e: any) {
       toast.error(formatApiError(e))
@@ -563,10 +569,17 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
       })
       setEditingCharId(null)
       await fetchDetail()
-      toast.success('角色已保存')
+      toast.success(t('projectCard.characters.savedSuccess'))
     } catch (e: any) {
       toast.error(formatApiError(e))
     }
+  }
+
+  const genderLabel = (gender: string) => {
+    if (gender === '男') return t('projectCard.characters.genderMale')
+    if (gender === '女') return t('projectCard.characters.genderFemale')
+    if (gender === '未知') return t('projectCard.characters.genderUnknown')
+    return gender
   }
 
   const status = project.status
@@ -584,7 +597,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <Badge variant={(STATUS_COLORS[status] || 'secondary') as any}>
-            {STATUS_LABELS[status] || status}
+            {t(`status.${status}`, { defaultValue: status })}
           </Badge>
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -592,9 +605,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         </div>
       </div>
 
-      {STEP_HINTS[status] && (
+      {STEP_HINT_STATUSES.includes(status) && (
         <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-2 border-l-2 border-primary/40">
-          {STEP_HINTS[status]}
+          {t(`stepHints.${status}`)}
         </div>
       )}
 
@@ -608,7 +621,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
       {totalCount > 0 && doneCount > 0 && (
         <div className="space-y-1">
-          <div className="text-xs text-muted-foreground">{doneCount} / {totalCount} 片段完成</div>
+          <div className="text-xs text-muted-foreground">
+            {t('projectCard.segmentsProgress', { done: doneCount, total: totalCount })}
+          </div>
           <Progress value={progress} />
         </div>
       )}
@@ -623,17 +638,17 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
               onClick={handleAnalyze}
               disabled={loadingAction}
             >
-              {status === 'pending' ? '分析' : '重新分析'}
+              {status === 'pending' ? t('projectCard.analyze') : t('projectCard.reanalyze')}
             </Button>
           )}
           {status === 'ready' && (
             <Button size="sm" className="h-7 text-xs px-2" onClick={() => handleGenerate()} disabled={loadingAction}>
-              生成全书
+              {t('projectCard.generateAll')}
             </Button>
           )}
           {status === 'done' && (
             <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => handleDownload()} disabled={loadingAction}>
-              <Download className="h-3 w-3 mr-1" />下载全书
+              <Download className="h-3 w-3 mr-1" />{t('projectCard.downloadAll')}
             </Button>
           )}
         </div>
@@ -651,7 +666,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                 onClick={() => setCharsCollapsed(v => !v)}
               >
                 {charsCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-                角色列表（{detail.characters.length} 个）
+                {t('projectCard.characters.title', { count: detail.characters.length })}
               </button>
               {!charsCollapsed && <div className={`space-y-1.5 pr-1 ${editingCharId ? '' : 'max-h-72 overflow-y-auto'}`}>
                 {detail.characters.map(char => (
@@ -661,34 +676,34 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                         <Input
                           value={editFields.name}
                           onChange={e => setEditFields(f => ({ ...f, name: e.target.value }))}
-                          placeholder="角色名"
+                          placeholder={t('projectCard.characters.namePlaceholder')}
                         />
                         <select
                           className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
                           value={editFields.gender}
                           onChange={e => setEditFields(f => ({ ...f, gender: e.target.value }))}
                         >
-                          <option value="">性别（未设置）</option>
-                          <option value="男">男</option>
-                          <option value="女">女</option>
-                          <option value="未知">未知</option>
+                          <option value="">{t('projectCard.characters.genderPlaceholder')}</option>
+                          <option value="男">{t('projectCard.characters.genderMale')}</option>
+                          <option value="女">{t('projectCard.characters.genderFemale')}</option>
+                          <option value="未知">{t('projectCard.characters.genderUnknown')}</option>
                         </select>
                         <Input
                           value={editFields.instruct}
                           onChange={e => setEditFields(f => ({ ...f, instruct: e.target.value }))}
-                          placeholder="音色描述（用于 TTS）"
+                          placeholder={t('projectCard.characters.instructPlaceholder')}
                         />
                         <Input
                           value={editFields.description}
                           onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
-                          placeholder="角色描述"
+                          placeholder={t('projectCard.characters.descPlaceholder')}
                         />
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => saveEditChar(char)}>
-                            <Check className="h-3 w-3 mr-1" />保存
+                            <Check className="h-3 w-3 mr-1" />{t('common:save')}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditingCharId(null)}>
-                            <X className="h-3 w-3 mr-1" />取消
+                            <X className="h-3 w-3 mr-1" />{t('common:cancel')}
                           </Button>
                         </div>
                       </div>
@@ -698,15 +713,15 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                           <span className="font-medium truncate">{char.name}</span>
                           {char.gender && (
                             <Badge variant="outline" className={`text-xs shrink-0 ${char.gender === '男' ? 'border-blue-400/50 text-blue-400' : char.gender === '女' ? 'border-pink-400/50 text-pink-400' : 'border-muted-foreground/40 text-muted-foreground'}`}>
-                              {char.gender}
+                              {genderLabel(char.gender)}
                             </Badge>
                           )}
                         </div>
                         <span className="text-xs text-muted-foreground truncate sm:mx-2 sm:flex-1">{char.instruct}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           {char.voice_design_id
-                            ? <Badge variant="outline" className="text-xs">音色 #{char.voice_design_id}</Badge>
-                            : <Badge variant="secondary" className="text-xs">未分配</Badge>
+                            ? <Badge variant="outline" className="text-xs">{t('projectCard.characters.voiceDesign', { id: char.voice_design_id })}</Badge>
+                            : <Badge variant="secondary" className="text-xs">{t('projectCard.characters.noVoice')}</Badge>
                           }
                           {status === 'characters_ready' && (
                             <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => startEditChar(char)}>
@@ -725,7 +740,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   onClick={handleConfirm}
                   disabled={loadingAction || editingCharId !== null}
                 >
-                  {loadingAction ? '识别中...' : '确认角色 · 识别章节'}
+                  {loadingAction ? t('projectCard.confirm.loading') : t('projectCard.confirm.button')}
                 </Button>
               )}
             </div>
@@ -739,7 +754,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   onClick={() => setChaptersCollapsed(v => !v)}
                 >
                   {chaptersCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-                  章节列表（共 {detail.chapters.length} 章）
+                  {t('projectCard.chapters.title', { count: detail.chapters.length })}
                 </button>
                 {detail.chapters.some(c => ['pending', 'error', 'ready'].includes(c.status)) && (
                   <Button
@@ -748,7 +763,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                     disabled={loadingAction}
                     onClick={handleProcessAll}
                   >
-                    {loadingAction ? <Loader2 className="h-3 w-3 animate-spin" /> : '一键全部处理'}
+                    {loadingAction ? <Loader2 className="h-3 w-3 animate-spin" /> : t('projectCard.chapters.processAll')}
                   </Button>
                 )}
               </div>
@@ -759,7 +774,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   const chTotal = chSegs.length
                   const chGenerating = chSegs.some(s => s.status === 'generating')
                   const chAllDone = chTotal > 0 && chDone === chTotal
-                  const chTitle = ch.title || `第 ${ch.chapter_index + 1} 章`
+                  const chTitle = ch.title || t('projectCard.chapters.defaultTitle', { index: ch.chapter_index + 1 })
                   const chExpanded = expandedChapters.has(ch.id)
                   const toggleChExpand = () => setExpandedChapters(prev => {
                     const next = new Set(prev)
@@ -780,13 +795,13 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                       <div className="flex items-center gap-1 flex-wrap">
                         {ch.status === 'pending' && (
                           <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => handleParseChapter(ch.id, ch.title)}>
-                            解析此章
+                            {t('projectCard.chapters.parse')}
                           </Button>
                         )}
                         {ch.status === 'parsing' && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            <span>解析中</span>
+                            <span>{t('projectCard.chapters.parsing')}</span>
                           </div>
                         )}
                         {ch.status === 'ready' && !chGenerating && !chAllDone && !generatingChapterIndices.has(ch.chapter_index) && (
@@ -794,26 +809,28 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                             setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
                             handleGenerate(ch.chapter_index)
                           }}>
-                            生成此章
+                            {t('projectCard.chapters.generate')}
                           </Button>
                         )}
                         {ch.status === 'ready' && (chGenerating || generatingChapterIndices.has(ch.chapter_index)) && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            <span>{chDone}/{chTotal} 段</span>
+                            <span>{t('projectCard.chapters.segmentProgress', { done: chDone, total: chTotal })}</span>
                           </div>
                         )}
                         {ch.status === 'ready' && chAllDone && (
                           <>
-                            <Badge variant="outline" className="text-xs">已完成 {chDone} 段</Badge>
-                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDownload(ch.chapter_index)} title="下载此章">
+                            <Badge variant="outline" className="text-xs">
+                              {t('projectCard.chapters.doneBadge', { count: chDone })}
+                            </Badge>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDownload(ch.chapter_index)} title={t('projectCard.downloadAll')}>
                               <Download className="h-3 w-3" />
                             </Button>
                           </>
                         )}
                         {ch.status === 'error' && (
                           <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={() => handleParseChapter(ch.id, ch.title)}>
-                            重新解析
+                            {t('projectCard.chapters.reparse')}
                           </Button>
                         )}
                       </div>
@@ -825,9 +842,11 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                           {chSegs.map(seg => (
                             <div key={seg.id} className={`py-2 space-y-1.5 ${sequentialPlayingId === seg.id ? 'bg-primary/5 px-1 rounded' : ''}`}>
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs shrink-0">{seg.character_name || '?'}</Badge>
+                                <Badge variant="outline" className="text-xs shrink-0">
+                                  {seg.character_name || t('projectCard.segments.unknownCharacter')}
+                                </Badge>
                                 {seg.status === 'generating' && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-                                {seg.status === 'error' && <Badge variant="destructive" className="text-xs">出错</Badge>}
+                                {seg.status === 'error' && <Badge variant="destructive" className="text-xs">{t('projectCard.segments.errorBadge')}</Badge>}
                               </div>
                               <p className="text-xs text-muted-foreground break-words leading-relaxed">{seg.text}</p>
                               {seg.status === 'done' && (
@@ -856,6 +875,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 }
 
 export default function Audiobook() {
+  const { t } = useTranslation('audiobook')
   const [projects, setProjects] = useState<AudiobookProject[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [showLLM, setShowLLM] = useState(false)
@@ -881,11 +901,11 @@ export default function Audiobook() {
       <Navbar />
       <main className="flex-1 container max-w-3xl mx-auto px-4 py-6 space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-xl sm:text-2xl font-bold">有声书生成</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">{t('title')}</h1>
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="outline" onClick={() => setShowLLM(!showLLM)}>LLM 配置</Button>
+            <Button size="sm" variant="outline" onClick={() => setShowLLM(!showLLM)}>{t('llmConfig')}</Button>
             <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
-              <Plus className="h-4 w-4 mr-1" />新建项目
+              <Plus className="h-4 w-4 mr-1" />{t('newProject')}
             </Button>
             <Button size="icon" variant="ghost" onClick={fetchProjects}>
               <RefreshCw className="h-4 w-4" />
@@ -897,12 +917,12 @@ export default function Audiobook() {
         {showCreate && <CreateProjectPanel onCreated={() => { setShowCreate(false); fetchProjects() }} />}
 
         {loading ? (
-          <div className="text-center text-muted-foreground py-12">加载中...</div>
+          <div className="text-center text-muted-foreground py-12">{t('loading')}</div>
         ) : projects.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <Book className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>暂无有声书项目</p>
-            <p className="text-sm mt-1">点击「新建项目」开始创建</p>
+            <p>{t('noProjects')}</p>
+            <p className="text-sm mt-1">{t('noProjectsHint')}</p>
           </div>
         ) : (
           <div className="space-y-3">

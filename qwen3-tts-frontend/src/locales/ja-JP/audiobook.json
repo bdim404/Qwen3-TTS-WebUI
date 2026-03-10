@@ -1,0 +1,115 @@
+{
+  "title": "オーディオブック生成",
+  "llmConfig": "LLM 設定",
+  "newProject": "新規プロジェクト",
+  "loading": "読み込み中...",
+  "noProjects": "オーディオブックプロジェクトがありません",
+  "noProjectsHint": "「新規プロジェクト」をクリックして作成を開始",
+
+  "status": {
+    "pending": "未分析",
+    "analyzing": "分析中",
+    "characters_ready": "キャラクター確認待ち",
+    "parsing": "章を解析中",
+    "ready": "生成待ち",
+    "generating": "生成中",
+    "done": "完了",
+    "error": "エラー"
+  },
+
+  "stepHints": {
+    "pending": "ステップ 1：「分析」をクリック — LLM がキャラクターリストを自動抽出します",
+    "analyzing": "ステップ 1：LLM がキャラクターを抽出中です。少々お待ちください...",
+    "characters_ready": "ステップ 2：キャラクター情報を確認し、「キャラクター確認 · 章を識別」をクリック",
+    "ready": "ステップ 3：章ごとに解析（LLM）— 解析済みの章はすぐに音声生成できます",
+    "generating": "ステップ 4：音声合成中 — 完成したセグメントはすぐに再生できます"
+  },
+
+  "llmConfigPanel": {
+    "title": "LLM 設定",
+    "current": "現在：{{baseUrl}} / {{model}} / {{keyStatus}}",
+    "hasKey": "APIキー設定済み",
+    "noKey": "APIキー未設定",
+    "notSet": "未設定",
+    "saving": "保存中...",
+    "save": "設定を保存",
+    "savedSuccess": "LLM 設定を保存しました",
+    "incompleteError": "LLM 設定をすべて入力してください"
+  },
+
+  "createPanel": {
+    "title": "新規オーディオブックプロジェクト",
+    "titlePlaceholder": "タイトル",
+    "pasteText": "テキストを貼り付け",
+    "uploadEpub": "EPUB アップロード",
+    "textPlaceholder": "小説のテキストを貼り付け...",
+    "creating": "作成中...",
+    "create": "プロジェクト作成",
+    "createdSuccess": "プロジェクトを作成しました",
+    "titleRequired": "タイトルを入力してください",
+    "textRequired": "テキスト内容を入力してください",
+    "epubRequired": "EPUB ファイルを選択してください"
+  },
+
+  "projectCard": {
+    "analyze": "分析",
+    "reanalyze": "再分析",
+    "reanalyzeConfirm": "再分析するとすべてのキャラクターと章のデータが削除されます。続けますか？",
+    "analyzeStarted": "分析を開始しました",
+    "generateAll": "全冊生成",
+    "downloadAll": "全冊ダウンロード",
+    "deleteConfirm": "プロジェクト「{{title}}」とすべての音声を削除しますか？",
+    "deleteSuccess": "プロジェクトを削除しました",
+    "allDoneToast": "「{{title}}」の音声生成がすべて完了しました！",
+    "segmentsProgress": "{{done}} / {{total}} セグメント完了",
+
+    "characters": {
+      "title": "キャラクター（{{count}} 人）",
+      "namePlaceholder": "キャラクター名",
+      "genderPlaceholder": "性別（未設定）",
+      "genderMale": "男性",
+      "genderFemale": "女性",
+      "genderUnknown": "不明",
+      "instructPlaceholder": "音声説明（TTS 用）",
+      "descPlaceholder": "キャラクター説明",
+      "voiceDesign": "音声 #{{id}}",
+      "noVoice": "未割り当て",
+      "savedSuccess": "キャラクターを保存しました"
+    },
+
+    "confirm": {
+      "button": "キャラクター確認 · 章を識別",
+      "loading": "識別中...",
+      "chaptersRecognized": "章を識別しました"
+    },
+
+    "chapters": {
+      "title": "章一覧（全 {{count}} 章）",
+      "processAll": "すべて処理",
+      "defaultTitle": "第 {{index}} 章",
+      "parse": "この章を解析",
+      "parsing": "解析中",
+      "parseStarted": "「{{title}}」の解析を開始しました",
+      "parseStartedDefault": "章の解析を開始しました",
+      "reparse": "再解析",
+      "generate": "この章を生成",
+      "generateStarted": "第 {{index}} 章の生成を開始しました",
+      "generateAllStarted": "全冊生成を開始しました",
+      "processAllStarted": "すべてのタスクを開始しました",
+      "doneBadge": "{{count}} セグメント完了",
+      "segmentProgress": "{{done}}/{{total}} セグメント"
+    },
+
+    "segments": {
+      "errorBadge": "エラー",
+      "unknownCharacter": "?"
+    },
+
+    "sequential": {
+      "play": "順番に再生（{{count}} セグメント）",
+      "stop": "停止",
+      "progress": "{{current}} / {{total}}",
+      "loading": "読み込み中..."
+    }
+  }
+}

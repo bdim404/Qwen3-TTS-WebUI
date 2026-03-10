@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback, memo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '@/contexts/ThemeContext'
 import WaveformPlayer from '@arraypress/waveform-player'
 import '@arraypress/waveform-player/dist/waveform-player.css'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ interface AudioPlayerProps {
 
 const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   const { t } = useTranslation('common')
+  const { theme } = useTheme()
   const [blobUrl, setBlobUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -71,6 +73,9 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
   useEffect(() => {
     if (!containerRef.current || !blobUrl) return
 
+    const waveformColor = theme === 'dark' ? '#4b5563' : '#d1d5db'
+    const progressColor = theme === 'dark' ? '#a78bfa' : '#7c3aed'
+
     const player = new WaveformPlayer(containerRef.current, {
       url: blobUrl,
       waveformStyle: 'mirror',
@@ -78,6 +83,8 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
       barWidth: 3,
       barSpacing: 1,
       samples: 200,
+      waveformColor,
+      progressColor,
       showTime: true,
       showPlaybackSpeed: false,
       autoplay: false,
@@ -103,7 +110,7 @@ const AudioPlayer = memo(({ audioUrl, jobId }: AudioPlayerProps) => {
         playerInstanceRef.current = null
       }
     }
-  }, [blobUrl])
+  }, [blobUrl, theme])
 
   const handleDownload = useCallback(() => {
     const link = document.createElement('a')

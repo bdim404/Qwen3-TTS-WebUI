@@ -1,0 +1,115 @@
+{
+  "title": "Audiobook Generation",
+  "llmConfig": "LLM Config",
+  "newProject": "New Project",
+  "loading": "Loading...",
+  "noProjects": "No audiobook projects yet",
+  "noProjectsHint": "Click \"New Project\" to get started",
+
+  "status": {
+    "pending": "Pending",
+    "analyzing": "Analyzing",
+    "characters_ready": "Awaiting Character Review",
+    "parsing": "Parsing Chapters",
+    "ready": "Ready",
+    "generating": "Generating",
+    "done": "Done",
+    "error": "Error"
+  },
+
+  "stepHints": {
+    "pending": "Step 1: Click \"Analyze\" — the LLM will automatically extract the character list",
+    "analyzing": "Step 1: LLM is extracting characters, please wait...",
+    "characters_ready": "Step 2: Review character info, then click \"Confirm Characters · Identify Chapters\"",
+    "ready": "Step 3: Parse chapters one by one (LLM); parsed chapters can generate audio immediately",
+    "generating": "Step 4: Synthesizing audio — completed segments can be played immediately"
+  },
+
+  "llmConfigPanel": {
+    "title": "LLM Configuration",
+    "current": "Current: {{baseUrl}} / {{model}} / {{keyStatus}}",
+    "hasKey": "API key set",
+    "noKey": "No API key",
+    "notSet": "Not set",
+    "saving": "Saving...",
+    "save": "Save Config",
+    "savedSuccess": "LLM config saved",
+    "incompleteError": "Please fill in all LLM configuration fields"
+  },
+
+  "createPanel": {
+    "title": "New Audiobook Project",
+    "titlePlaceholder": "Title",
+    "pasteText": "Paste Text",
+    "uploadEpub": "Upload EPUB",
+    "textPlaceholder": "Paste novel text here...",
+    "creating": "Creating...",
+    "create": "Create Project",
+    "createdSuccess": "Project created",
+    "titleRequired": "Please enter a title",
+    "textRequired": "Please enter text content",
+    "epubRequired": "Please select an EPUB file"
+  },
+
+  "projectCard": {
+    "analyze": "Analyze",
+    "reanalyze": "Re-analyze",
+    "reanalyzeConfirm": "Re-analyzing will clear all character and chapter data. Continue?",
+    "analyzeStarted": "Analysis started",
+    "generateAll": "Generate Full Book",
+    "downloadAll": "Download Full Book",
+    "deleteConfirm": "Delete project \"{{title}}\" and all its audio?",
+    "deleteSuccess": "Project deleted",
+    "allDoneToast": "\"{{title}}\" — all audio generation complete!",
+    "segmentsProgress": "{{done}} / {{total}} segments done",
+
+    "characters": {
+      "title": "Characters ({{count}})",
+      "namePlaceholder": "Character name",
+      "genderPlaceholder": "Gender (not set)",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "genderUnknown": "Unknown",
+      "instructPlaceholder": "Voice description (for TTS)",
+      "descPlaceholder": "Character description",
+      "voiceDesign": "Voice #{{id}}",
+      "noVoice": "Unassigned",
+      "savedSuccess": "Character saved"
+    },
+
+    "confirm": {
+      "button": "Confirm Characters · Identify Chapters",
+      "loading": "Identifying...",
+      "chaptersRecognized": "Chapters identified"
+    },
+
+    "chapters": {
+      "title": "Chapters ({{count}} total)",
+      "processAll": "Process All",
+      "defaultTitle": "Chapter {{index}}",
+      "parse": "Parse Chapter",
+      "parsing": "Parsing",
+      "parseStarted": "Parsing \"{{title}}\" started",
+      "parseStartedDefault": "Chapter parsing started",
+      "reparse": "Re-parse",
+      "generate": "Generate Chapter",
+      "generateStarted": "Chapter {{index}} generation started",
+      "generateAllStarted": "Full book generation started",
+      "processAllStarted": "All tasks triggered",
+      "doneBadge": "{{count}} segments done",
+      "segmentProgress": "{{done}}/{{total}} segments"
+    },
+
+    "segments": {
+      "errorBadge": "Error",
+      "unknownCharacter": "?"
+    },
+
+    "sequential": {
+      "play": "Play In Order ({{count}} segments)",
+      "stop": "Stop",
+      "progress": "{{current}} / {{total}}",
+      "loading": "Loading..."
+    }
+  }
+}
