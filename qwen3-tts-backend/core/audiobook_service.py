@@ -361,7 +361,7 @@ async def parse_one_chapter(project_id: int, chapter_id: int, user: User, db) ->
 
         crud.delete_audiobook_segments_for_chapter(db, project_id, chapter.chapter_index)
 
-        chunks = _chunk_chapter(chapter.source_text, max_chars=4000)
+        chunks = _chunk_chapter(chapter.source_text, max_chars=1500)
         ps.append_line(key, f"共 {len(chunks)} 块\n")
 
         seg_counter = 0
