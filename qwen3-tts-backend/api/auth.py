@@ -297,13 +297,29 @@ async def set_llm_config(
     db: Session = Depends(get_db)
 ):
     from core.security import encrypt_api_key
-    encrypted_key = encrypt_api_key(config.api_key.strip())
+    from core.llm_service import LLMService
+
+    api_key = config.api_key.strip()
+    base_url = config.base_url.strip()
+    model = config.model.strip()
+
+    # Validate LLM config by sending a test request
+    llm = LLMService(base_url=base_url, api_key=api_key, model=model)
+    try:
+        await llm.chat("You are a test assistant.", "Reply with 'ok'.")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"LLM API validation failed: {e}"
+        )
+
+    encrypted_key = encrypt_api_key(api_key)
     update_user_llm_config(
         db,
         user_id=current_user.id,
         llm_api_key=encrypted_key,
-        llm_base_url=config.base_url.strip(),
-        llm_model=config.model.strip(),
+        llm_base_url=base_url,
+        llm_model=model,
     )
     return {"message": "LLM config updated successfully"}
 
