@@ -572,12 +572,12 @@ def merge_audio_files(audio_paths: list[str], output_path: str) -> None:
         combined.export(output_path, format="wav")
 
 
-async def parse_all_chapters(project_id: int, user: User, db: Session) -> None:
-    """Concurrently parse all pending/error/ready chapters using asyncio.Semaphore."""
+async def parse_all_chapters(project_id: int, user: User, db: Session, statuses: tuple = ("pending", "error", "ready")) -> None:
+    """Concurrently parse chapters with matching statuses using asyncio.Semaphore."""
     from core.database import SessionLocal
 
     chapters = crud.list_audiobook_chapters(db, project_id)
-    pending = [ch for ch in chapters if ch.status in ("pending", "error", "ready")]
+    pending = [ch for ch in chapters if ch.status in statuses]
     if not pending:
         return
 

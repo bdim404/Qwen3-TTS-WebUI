@@ -512,6 +512,19 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
+  const handleRetryFailed = async () => {
+    setIsPolling(true)
+    try {
+      await audiobookApi.parseAllChapters(project.id, true)
+      toast.success(t('projectCard.chapters.parseAllStarted'))
+      onRefresh()
+      fetchDetail()
+    } catch (e: any) {
+      setIsPolling(false)
+      toast.error(formatApiError(e))
+    }
+  }
+
   const handleGenerateAll = async () => {
     if (!detail) return
     setLoadingAction(true)
@@ -689,19 +702,26 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="space-y-2">
           {(chaptersParsing > 0 || chaptersError > 0 || chaptersParsed < chaptersTotal) && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
-                <span>📝</span>
-                <span>{t('projectCard.chaptersProgress', { parsed: chaptersParsed, total: chaptersTotal })}</span>
-                {chaptersParsing > 0 && (
-                  <span className="text-primary">({t('projectCard.chaptersParsing', { count: chaptersParsing })})</span>
-                )}
-                {chaptersError > 0 && (
-                  <>
-                    <span className="text-destructive">({t('projectCard.chaptersError', { count: chaptersError })})</span>
-                    <Button size="sm" variant="outline" className="h-5 text-[10px] px-1.5 text-destructive border-destructive/40" onClick={handleParseAll}>
-                      {t('projectCard.retryFailed')}
-                    </Button>
-                  </>
+              <div className="text-xs text-muted-foreground flex items-center justify-between">
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span>📝</span>
+                  <span>{t('projectCard.chaptersProgress', { parsed: chaptersParsed, total: chaptersTotal })}</span>
+                  {chaptersParsing > 0 && (
+                    <span className="text-primary">({t('projectCard.chaptersParsing', { count: chaptersParsing })})</span>
+                  )}
+                  {chaptersError > 0 && (
+                    <>
+                      <span className="text-destructive">({t('projectCard.chaptersError', { count: chaptersError })})</span>
+                      <Button size="sm" variant="outline" className="h-5 text-[10px] px-1.5 text-destructive border-destructive/40" onClick={handleRetryFailed}>
+                        {t('projectCard.retryFailed')}
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {chaptersParsing > 0 && totalCount > 0 && (
+                  <Button size="sm" variant="ghost" className="h-5 text-[10px] px-1.5 text-destructive" onClick={handleCancelBatch}>
+                    {t('projectCard.cancelParsing')}
+                  </Button>
                 )}
               </div>
               <Progress value={chapterProgress} />
@@ -709,37 +729,40 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
           )}
           {totalCount > 0 && doneCount > 0 && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <span>🎵</span>
-                <span>{t('projectCard.segmentsProgress', { done: doneCount, total: totalCount })}</span>
+              <div className="text-xs text-muted-foreground flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <span>🎵</span>
+                  <span>{t('projectCard.segmentsProgress', { done: doneCount, total: totalCount })}</span>
+                </div>
+                {!chaptersParsing && hasGenerating && (
+                  <Button size="sm" variant="ghost" className="h-5 text-[10px] px-1.5 text-destructive" onClick={handleCancelBatch}>
+                    {t('projectCard.cancelGenerating')}
+                  </Button>
+                )}
               </div>
               <Progress value={progress} />
             </div>
           )}
-          {chaptersParsing > 0 && (
-            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={handleCancelBatch}>
-              {t('projectCard.cancelParsing')}
-            </Button>
-          )}
-          {!chaptersParsing && hasGenerating && (
-            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={handleCancelBatch}>
-              {t('projectCard.cancelGenerating')}
-            </Button>
+          {chaptersParsing > 0 && !totalCount && (
+            <div className="flex justify-end">
+              <Button size="sm" variant="ghost" className="h-5 text-[10px] px-1.5 text-destructive" onClick={handleCancelBatch}>
+                {t('projectCard.cancelParsing')}
+              </Button>
+            </div>
           )}
         </div>
       )}
 
       <div className="flex items-center justify-between gap-2 pt-1 border-t">
         <div className="flex items-center gap-1 flex-wrap">
-          {!isActive && status !== 'characters_ready' && (
+          {status === 'pending' && (
             <Button
               size="sm"
-              variant={status === 'pending' ? 'default' : 'outline'}
               className="h-7 text-xs px-2"
               onClick={handleAnalyze}
               disabled={loadingAction}
             >
-              {status === 'pending' ? t('projectCard.analyze') : t('projectCard.reanalyze')}
+              {t('projectCard.analyze')}
             </Button>
           )}
           {status === 'ready' && (
@@ -763,13 +786,20 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="space-y-3 pt-2 border-t">
           {detail && detail.characters.length > 0 && (
             <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-2">
-              <button
-                className="flex items-center gap-1 text-xs font-medium text-blue-400/80 mb-2 hover:text-blue-300 transition-colors w-full text-left"
-                onClick={() => setCharsCollapsed(v => !v)}
-              >
-                {charsCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-                {t('projectCard.characters.title', { count: detail.characters.length })}
-              </button>
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  className="flex items-center gap-1 text-xs font-medium text-blue-400/80 hover:text-blue-300 transition-colors text-left"
+                  onClick={() => setCharsCollapsed(v => !v)}
+                >
+                  {charsCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+                  {t('projectCard.characters.title', { count: detail.characters.length })}
+                </button>
+                {!isActive && status !== 'pending' && (
+                  <Button size="sm" variant="ghost" className="h-6 text-xs px-2 text-muted-foreground" onClick={handleAnalyze} disabled={loadingAction}>
+                    {t('projectCard.reanalyze')}
+                  </Button>
+                )}
+              </div>
               {!charsCollapsed && <div className={`space-y-1.5 pr-1 ${editingCharId ? '' : 'max-h-72 overflow-y-auto'}`}>
                 {detail.characters.map(char => (
                   <div key={char.id} className="border rounded px-3 py-2">

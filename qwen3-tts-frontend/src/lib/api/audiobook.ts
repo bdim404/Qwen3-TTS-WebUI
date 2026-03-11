@@ -139,8 +139,9 @@ export const audiobookApi = {
     return `/audiobook/projects/${projectId}/segments/${segmentId}/audio`
   },
 
-  parseAllChapters: async (projectId: number): Promise<void> => {
-    await apiClient.post(`/audiobook/projects/${projectId}/parse-all`)
+  parseAllChapters: async (projectId: number, onlyErrors?: boolean): Promise<void> => {
+    const params = onlyErrors ? '?only_errors=true' : ''
+    await apiClient.post(`/audiobook/projects/${projectId}/parse-all${params}`)
   },
 
   processAll: async (projectId: number): Promise<void> => {

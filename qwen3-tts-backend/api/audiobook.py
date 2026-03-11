@@ -270,6 +270,7 @@ async def parse_chapter(
 @router.post("/projects/{project_id}/parse-all")
 async def parse_all_chapters_endpoint(
     project_id: int,
+    only_errors: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -285,16 +286,18 @@ async def parse_all_chapters_endpoint(
     from core.audiobook_service import parse_all_chapters
     from core.database import SessionLocal
 
+    statuses = ("error",) if only_errors else ("pending", "error", "ready")
+
     async def run():
         async_db = SessionLocal()
         try:
             db_user = crud.get_user_by_id(async_db, current_user.id)
-            await parse_all_chapters(project_id, db_user, async_db)
+            await parse_all_chapters(project_id, db_user, async_db, statuses=statuses)
         finally:
             async_db.close()
 
     asyncio.create_task(run())
-    return {"message": "Batch parsing started", "project_id": project_id}
+    return {"message": "Batch parsing started", "project_id": project_id, "only_errors": only_errors}
 
 
 @router.post("/projects/{project_id}/process-all")
