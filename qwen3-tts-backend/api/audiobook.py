@@ -567,4 +567,9 @@ async def delete_project(
         import shutil
         shutil.rmtree(project_dir, ignore_errors=True)
 
+    if project.source_path:
+        source_file = Path(project.source_path)
+        if source_file.exists():
+            source_file.unlink(missing_ok=True)
+
     crud.delete_audiobook_project(db, project_id, current_user.id)
