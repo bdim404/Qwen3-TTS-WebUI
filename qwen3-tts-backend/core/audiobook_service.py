@@ -502,11 +502,10 @@ async def generate_project(project_id: int, user: User, db: Session, chapter_ind
     if not project:
         return
 
-    # Resolve cancel event: use explicit one, or fall back to global _cancel_events
+    # Resolve cancel event: use explicit one (from batch), or create a fresh one for this run
     if cancel_event is None:
-        if project_id not in _cancel_events:
-            _cancel_events[project_id] = asyncio.Event()
-        cancel_event = _cancel_events[project_id]
+        cancel_event = asyncio.Event()
+        _cancel_events[project_id] = cancel_event
 
     try:
         if chapter_index is None:
