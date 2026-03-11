@@ -13,6 +13,7 @@
 - 自定义语音：预定义说话人语音
 - 语音设计：自然语言描述创建语音
 - 语音克隆：上传音频克隆语音
+- 有声书生成：上传 EPUB 文件，通过 LLM 自动提取角色并分配语音，生成多角色有声书
 - 双后端支持：支持本地模型和阿里云 TTS API 切换
 - 多语言支持：English、简体中文、繁體中文、日本語、한국어
 - JWT 认证、异步任务、语音缓存、暗黑模式
@@ -30,6 +31,16 @@
   <tr>
     <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="移动端亮色模式" /></td>
     <td width="50%"><img src="./images/mobile-settings.png" alt="移动端设置" /></td>
+  </tr>
+</table>
+
+### 有声书生成
+![有声书概览](./images/audiobook-overview.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="./images/audiobook-characters.png" alt="有声书角色列表" /></td>
+    <td width="50%"><img src="./images/audiobook-chapters.png" alt="有声书章节列表" /></td>
   </tr>
 </table>
 

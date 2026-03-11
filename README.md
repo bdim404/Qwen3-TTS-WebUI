@@ -13,6 +13,7 @@
 - Custom Voice: Predefined speaker voices
 - Voice Design: Create voices from natural language descriptions
 - Voice Cloning: Clone voices from uploaded audio
+- Audiobook Generation: Upload EPUB files and generate multi-character audiobooks with LLM-powered character extraction and voice assignment
 - Dual Backend Support: Switch between local model and Aliyun TTS API
 - Multi-language Support: English, 简体中文, 繁體中文, 日本語, 한국어
 - JWT auth, async tasks, voice cache, dark mode
@@ -30,6 +31,16 @@
   <tr>
     <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="Mobile Light Mode" /></td>
     <td width="50%"><img src="./images/mobile-settings.png" alt="Mobile Settings" /></td>
+  </tr>
+</table>
+
+### Audiobook Generation
+![Audiobook Overview](./images/audiobook-overview.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="./images/audiobook-characters.png" alt="Audiobook Characters" /></td>
+    <td width="50%"><img src="./images/audiobook-chapters.png" alt="Audiobook Chapters" /></td>
   </tr>
 </table>
 
