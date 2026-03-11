@@ -87,6 +87,7 @@ class LLMService:
                 {"role": "user", "content": user_message},
             ],
             "temperature": 0.3,
+            "max_tokens": 8192,
         }
 
         timeout = httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=5.0)
