@@ -32,6 +32,8 @@ class TTSBackend(ABC):
 class LocalTTSBackend(TTSBackend):
     def __init__(self):
         self.model_manager = None
+        # Add a lock to prevent concurrent VRAM contention and CUDA errors on local GPU models
+        self._gpu_lock = asyncio.Lock()
 
     async def initialize(self):
         from core.model_manager import ModelManager
@@ -42,21 +44,22 @@ class LocalTTSBackend(TTSBackend):
         _, tts = await self.model_manager.get_current_model()
 
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None,
-            functools.partial(
-                tts.generate_custom_voice,
-                text=params['text'],
-                language=params['language'],
-                speaker=params['speaker'],
-                instruct=params.get('instruct', ''),
-                max_new_tokens=params['max_new_tokens'],
-                temperature=params['temperature'],
-                top_k=params['top_k'],
-                top_p=params['top_p'],
-                repetition_penalty=params['repetition_penalty'],
+        async with self._gpu_lock:
+            result = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    tts.generate_custom_voice,
+                    text=params['text'],
+                    language=params['language'],
+                    speaker=params['speaker'],
+                    instruct=params.get('instruct', ''),
+                    max_new_tokens=params['max_new_tokens'],
+                    temperature=params['temperature'],
+                    top_k=params['top_k'],
+                    top_p=params['top_p'],
+                    repetition_penalty=params['repetition_penalty'],
+                )
             )
-        )
 
         import numpy as np
         wavs, sample_rate = result if isinstance(result, tuple) else (result, 24000)
@@ -68,20 +71,21 @@ class LocalTTSBackend(TTSBackend):
         _, tts = await self.model_manager.get_current_model()
 
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None,
-            functools.partial(
-                tts.generate_voice_design,
-                text=params['text'],
-                language=params['language'],
-                instruct=params['instruct'],
-                max_new_tokens=params['max_new_tokens'],
-                temperature=params['temperature'],
-                top_k=params['top_k'],
-                top_p=params['top_p'],
-                repetition_penalty=params['repetition_penalty'],
+        async with self._gpu_lock:
+            result = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    tts.generate_voice_design,
+                    text=params['text'],
+                    language=params['language'],
+                    instruct=params['instruct'],
+                    max_new_tokens=params['max_new_tokens'],
+                    temperature=params['temperature'],
+                    top_k=params['top_k'],
+                    top_p=params['top_p'],
+                    repetition_penalty=params['repetition_penalty'],
+                )
             )
-        )
 
         import numpy as np
         wavs, sample_rate = result if isinstance(result, tuple) else (result, 24000)
@@ -96,36 +100,37 @@ class LocalTTSBackend(TTSBackend):
 
         loop = asyncio.get_event_loop()
 
-        if x_vector is None:
-            if ref_audio_bytes is None:
-                raise ValueError("Either ref_audio_bytes or x_vector must be provided")
+        async with self._gpu_lock:
+            if x_vector is None:
+                if ref_audio_bytes is None:
+                    raise ValueError("Either ref_audio_bytes or x_vector must be provided")
 
-            ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
+                ref_audio_array, ref_sr = process_ref_audio(ref_audio_bytes)
 
-            x_vector = await loop.run_in_executor(
+                x_vector = await loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        tts.create_voice_clone_prompt,
+                        ref_audio=(ref_audio_array, ref_sr),
+                        ref_text=params.get('ref_text', ''),
+                        x_vector_only_mode=False,
+                    )
+                )
+
+            wavs, sample_rate = await loop.run_in_executor(
                 None,
                 functools.partial(
-                    tts.create_voice_clone_prompt,
-                    ref_audio=(ref_audio_array, ref_sr),
-                    ref_text=params.get('ref_text', ''),
-                    x_vector_only_mode=False,
+                    tts.generate_voice_clone,
+                    text=params['text'],
+                    language=params['language'],
+                    voice_clone_prompt=x_vector,
+                    max_new_tokens=params['max_new_tokens'],
+                    temperature=params['temperature'],
+                    top_k=params['top_k'],
+                    top_p=params['top_p'],
+                    repetition_penalty=params['repetition_penalty'],
                 )
             )
-
-        wavs, sample_rate = await loop.run_in_executor(
-            None,
-            functools.partial(
-                tts.generate_voice_clone,
-                text=params['text'],
-                language=params['language'],
-                voice_clone_prompt=x_vector,
-                max_new_tokens=params['max_new_tokens'],
-                temperature=params['temperature'],
-                top_k=params['top_k'],
-                top_p=params['top_p'],
-                repetition_penalty=params['repetition_penalty'],
-            )
-        )
 
         import numpy as np
         audio_data = wavs[0] if isinstance(wavs, list) else wavs

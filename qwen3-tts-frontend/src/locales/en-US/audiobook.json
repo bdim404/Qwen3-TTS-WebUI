@@ -15,7 +15,8 @@
     "processing": "Processing",
     "generating": "Generating",
     "done": "Done",
-    "error": "Error"
+    "error": "Error",
+    "turboActive": "⚡ Turbo"
   },
 
   "stepHints": {

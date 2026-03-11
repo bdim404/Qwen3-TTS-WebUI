@@ -15,7 +15,8 @@
     "processing": "处理中",
     "generating": "生成中",
     "done": "已完成",
-    "error": "出错"
+    "error": "出错",
+    "turboActive": "⚡ 极速并发"
   },
 
   "stepHints": {
@@ -83,7 +84,10 @@
       "descPlaceholder": "角色描述",
       "voiceDesign": "音色 #{{id}}",
       "noVoice": "未分配",
-      "savedSuccess": "角色已保存"
+      "savedSuccess": "角色已保存",
+      "regeneratingPreview": "重新生成试听中...",
+      "regeneratePreview": "重生试听",
+      "previewNotReady": "试听收集中..."
     },
 
     "confirm": {

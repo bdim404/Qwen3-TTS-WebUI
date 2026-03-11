@@ -134,13 +134,15 @@ class LLMService:
         if turbo and len(text_samples) > 1:
             logger.info(f"Extracting characters in turbo mode: {len(text_samples)} samples concurrent")
 
-            async def _extract_one(sample: str) -> list[Dict]:
+            async def _extract_one(i: int, sample: str) -> list[Dict]:
                 user_message = f"请分析以下小说文本并提取角色：\n\n{sample}"
                 result = await self.stream_chat_json(system_prompt, user_message, None)
+                if on_sample:
+                    on_sample(i, len(text_samples))
                 return result.get("characters", [])
 
             results = await asyncio.gather(
-                *[_extract_one(s) for s in text_samples],
+                *[_extract_one(i, s) for i, s in enumerate(text_samples)],
                 return_exceptions=True,
             )
             raw_all: list[Dict] = []

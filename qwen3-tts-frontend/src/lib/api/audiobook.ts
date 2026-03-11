@@ -139,6 +139,14 @@ export const audiobookApi = {
     return `/audiobook/projects/${projectId}/segments/${segmentId}/audio`
   },
 
+  getCharacterAudioUrl: (projectId: number, charId: number): string => {
+    return `/audiobook/projects/${projectId}/characters/${charId}/audio`
+  },
+
+  regenerateCharacterPreview: async (projectId: number, charId: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${projectId}/characters/${charId}/regenerate-preview`)
+  },
+
   parseAllChapters: async (projectId: number, onlyErrors?: boolean): Promise<void> => {
     const params = onlyErrors ? '?only_errors=true' : ''
     await apiClient.post(`/audiobook/projects/${projectId}/parse-all${params}`)

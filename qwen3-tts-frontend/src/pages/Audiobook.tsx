@@ -343,6 +343,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const [charsCollapsed, setCharsCollapsed] = useState(false)
   const [chaptersCollapsed, setChaptersCollapsed] = useState(false)
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
+  const [voiceKeys, setVoiceKeys] = useState<Record<number, number>>({})
+  const [regeneratingVoices, setRegeneratingVoices] = useState<Set<number>>(new Set())
   const prevStatusRef = useRef(project.status)
   const autoExpandedRef = useRef(new Set<string>())
 
@@ -433,7 +435,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     setLoadingAction(true)
     setIsPolling(true)
     try {
-      await audiobookApi.analyze(project.id, {})
+      await audiobookApi.analyze(project.id, { turbo: true })
       toast.success(t('projectCard.analyzeStarted'))
       onRefresh()
     } catch (e: any) {
@@ -522,6 +524,24 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     } catch (e: any) {
       setIsPolling(false)
       toast.error(formatApiError(e))
+    }
+  }
+
+  const handleRegeneratePreview = async (charId: number) => {
+    if (!project) return
+    setRegeneratingVoices(prev => new Set(prev).add(charId))
+    try {
+      await audiobookApi.regenerateCharacterPreview(project.id, charId)
+      toast.success(t('projectCard.characters.savedSuccess')) // or add a new toast key
+      setVoiceKeys(prev => ({ ...prev, [charId]: (prev[charId] || 0) + 1 }))
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    } finally {
+      setRegeneratingVoices(prev => {
+        const next = new Set(prev)
+        next.delete(charId)
+        return next
+      })
     }
   }
 
@@ -667,6 +687,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     return status
   })()
 
+  const isTurboMode = ['analyzing', 'parsing', 'processing'].includes(displayStatus)
+
   return (
     <div className="border rounded-lg p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
@@ -675,6 +697,11 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
           <span className="font-medium break-words">{project.title}</span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {isTurboMode && (
+            <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 shadow-sm border-amber-500/20">
+              {t('status.turboActive')}
+            </Badge>
+          )}
           <Badge variant={(STATUS_COLORS[displayStatus] || 'secondary') as any}>
             {t(`status.${displayStatus}`, { defaultValue: displayStatus })}
           </Badge>
@@ -861,6 +888,34 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                             </Button>
                           )}
                         </div>
+                      </div>
+                    )}
+                    
+                    {!editingCharId && char.voice_design_id && (
+                      <div className="mt-2 pl-1 pr-2 flex items-center justify-between gap-3 bg-muted/30 rounded-md p-1.5 border border-muted/50">
+                        <div className="flex-1 max-w-[200px] sm:max-w-[300px]">
+                          <LazyAudioPlayer 
+                            key={`audio-${char.id}-${voiceKeys[char.id] || 0}`}
+                            audioUrl={`${audiobookApi.getCharacterAudioUrl(project.id, char.id)}?t=${voiceKeys[char.id] || 0}`} 
+                            jobId={char.id} 
+                          />
+                        </div>
+                        
+                        {status === 'characters_ready' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                            onClick={() => handleRegeneratePreview(char.id)}
+                            disabled={regeneratingVoices.has(char.id)}
+                          >
+                            {regeneratingVoices.has(char.id) ? (
+                              <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{t('projectCard.characters.regeneratingPreview')}</>
+                            ) : (
+                              <><RefreshCw className="h-3 w-3 mr-1" />{t('projectCard.characters.regeneratePreview')}</>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>

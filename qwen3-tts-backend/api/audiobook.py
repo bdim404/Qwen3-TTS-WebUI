@@ -49,6 +49,7 @@ def _project_to_detail(project, db: Session) -> AudiobookProjectDetail:
             id=c.id,
             project_id=c.project_id,
             name=c.name,
+            gender=c.gender,
             description=c.description,
             instruct=c.instruct,
             voice_design_id=c.voice_design_id,
@@ -211,6 +212,47 @@ async def confirm_characters(
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Chapters identified", "project_id": project_id}
+
+
+@router.get("/projects/{project_id}/characters/{char_id}/audio")
+async def get_character_audio(
+    project_id: int,
+    char_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    audio_path = Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "previews" / f"char_{char_id}.wav"
+    if not audio_path.exists():
+        raise HTTPException(status_code=404, detail="Preview audio not generated yet")
+        
+    return FileResponse(audio_path, media_type="audio/wav")
+
+
+@router.post("/projects/{project_id}/characters/{char_id}/regenerate-preview")
+async def regenerate_character_preview_endpoint(
+    project_id: int,
+    char_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    from core.audiobook_service import generate_character_preview
+    
+    try:
+        await generate_character_preview(project_id, char_id, current_user, db)
+        return {"message": "Preview generated successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to regenerate preview: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/projects/{project_id}/chapters", response_model=list[AudiobookChapterResponse])
@@ -385,6 +427,7 @@ async def update_character(
         id=char.id,
         project_id=char.project_id,
         name=char.name,
+        gender=char.gender,
         description=char.description,
         instruct=char.instruct,
         voice_design_id=char.voice_design_id,
