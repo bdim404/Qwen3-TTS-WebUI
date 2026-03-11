@@ -29,7 +29,6 @@ class LLMService:
             "temperature": 0.3,
             "max_tokens": max_tokens,
             "stream": True,
-            "enable_thinking": False,
         }
         full_text = ""
         timeout = httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=5.0)
@@ -89,7 +88,6 @@ class LLMService:
             ],
             "temperature": 0.3,
             "max_tokens": 8192,
-            "enable_thinking": False,
         }
 
         timeout = httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=5.0)
