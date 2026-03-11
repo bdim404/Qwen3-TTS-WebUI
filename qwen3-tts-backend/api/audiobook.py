@@ -267,6 +267,66 @@ async def parse_chapter(
     return {"message": "Parsing started", "chapter_id": chapter_id}
 
 
+@router.post("/projects/{project_id}/parse-all")
+async def parse_all_chapters_endpoint(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if project.status not in ("ready", "done", "error"):
+        raise HTTPException(status_code=400, detail=f"Project must be in 'ready' state, current: {project.status}")
+
+    if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
+        raise HTTPException(status_code=400, detail="LLM config not set")
+
+    from core.audiobook_service import parse_all_chapters
+    from core.database import SessionLocal
+
+    async def run():
+        async_db = SessionLocal()
+        try:
+            db_user = crud.get_user_by_id(async_db, current_user.id)
+            await parse_all_chapters(project_id, db_user, async_db)
+        finally:
+            async_db.close()
+
+    asyncio.create_task(run())
+    return {"message": "Batch parsing started", "project_id": project_id}
+
+
+@router.post("/projects/{project_id}/process-all")
+async def process_all_endpoint(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if project.status not in ("ready", "generating", "done", "error"):
+        raise HTTPException(status_code=400, detail=f"Project must be in 'ready' state, current: {project.status}")
+
+    if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
+        raise HTTPException(status_code=400, detail="LLM config not set")
+
+    from core.audiobook_service import process_all
+    from core.database import SessionLocal
+
+    async def run():
+        async_db = SessionLocal()
+        try:
+            db_user = crud.get_user_by_id(async_db, current_user.id)
+            await process_all(project_id, db_user, async_db)
+        finally:
+            async_db.close()
+
+    asyncio.create_task(run())
+    return {"message": "Full processing started", "project_id": project_id}
+
+
 @router.put("/projects/{project_id}/characters/{char_id}", response_model=AudiobookCharacterResponse)
 async def update_character(
     project_id: int,

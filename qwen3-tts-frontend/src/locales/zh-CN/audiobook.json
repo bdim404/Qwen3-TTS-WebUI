@@ -57,6 +57,7 @@
     "reanalyzeConfirm": "重新分析将清除所有角色和章节数据，确定继续？",
     "analyzeStarted": "分析已开始",
     "generateAll": "生成全书",
+    "processAll": "⚡ 全书一键处理",
     "downloadAll": "下载全书",
     "deleteConfirm": "确认删除项目「{{title}}」及所有音频？",
     "deleteSuccess": "项目已删除",
@@ -85,7 +86,9 @@
 
     "chapters": {
       "title": "章节列表（共 {{count}} 章）",
-      "processAll": "一键全部处理",
+      "processAll": "⚡ 全部处理",
+      "parseAll": "批量解析",
+      "generateAll": "批量生成",
       "defaultTitle": "第 {{index}} 章",
       "parse": "解析此章",
       "parsing": "解析中",
@@ -96,6 +99,7 @@
       "generateStarted": "第 {{index}} 章生成已开始",
       "generateAllStarted": "全书生成已开始",
       "processAllStarted": "全部任务已触发",
+      "parseAllStarted": "批量解析已开始",
       "doneBadge": "已完成 {{count}} 段",
       "segmentProgress": "{{done}}/{{total}} 段"
     },

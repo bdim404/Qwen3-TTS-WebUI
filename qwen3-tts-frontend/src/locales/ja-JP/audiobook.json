@@ -57,6 +57,7 @@
     "reanalyzeConfirm": "再分析するとすべてのキャラクターと章のデータが削除されます。続けますか？",
     "analyzeStarted": "分析を開始しました",
     "generateAll": "全冊生成",
+    "processAll": "⚡ 全冊一括処理",
     "downloadAll": "全冊ダウンロード",
     "deleteConfirm": "プロジェクト「{{title}}」とすべての音声を削除しますか？",
     "deleteSuccess": "プロジェクトを削除しました",
@@ -85,7 +86,9 @@
 
     "chapters": {
       "title": "章一覧（全 {{count}} 章）",
-      "processAll": "すべて処理",
+      "processAll": "⚡ すべて処理",
+      "parseAll": "一括解析",
+      "generateAll": "一括生成",
       "defaultTitle": "第 {{index}} 章",
       "parse": "この章を解析",
       "parsing": "解析中",
@@ -96,6 +99,7 @@
       "generateStarted": "第 {{index}} 章の生成を開始しました",
       "generateAllStarted": "全冊生成を開始しました",
       "processAllStarted": "すべてのタスクを開始しました",
+      "parseAllStarted": "一括解析を開始しました",
       "doneBadge": "{{count}} セグメント完了",
       "segmentProgress": "{{done}}/{{total}} セグメント"
     },

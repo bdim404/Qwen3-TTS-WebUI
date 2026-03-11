@@ -57,6 +57,7 @@
     "reanalyzeConfirm": "재분석하면 모든 캐릭터와 챕터 데이터가 삭제됩니다. 계속하시겠습니까?",
     "analyzeStarted": "분석이 시작되었습니다",
     "generateAll": "전체 책 생성",
+    "processAll": "⚡ 전체 일괄 처리",
     "downloadAll": "전체 책 다운로드",
     "deleteConfirm": "프로젝트 「{{title}}」와 모든 음성을 삭제하시겠습니까?",
     "deleteSuccess": "프로젝트가 삭제되었습니다",
@@ -85,7 +86,9 @@
 
     "chapters": {
       "title": "챕터 목록 (총 {{count}}챕터)",
-      "processAll": "전체 처리",
+      "processAll": "⚡ 전체 처리",
+      "parseAll": "일괄 파싱",
+      "generateAll": "일괄 생성",
       "defaultTitle": "제 {{index}} 장",
       "parse": "이 챕터 파싱",
       "parsing": "파싱 중",
@@ -96,6 +99,7 @@
       "generateStarted": "제 {{index}} 장 생성이 시작되었습니다",
       "generateAllStarted": "전체 책 생성이 시작되었습니다",
       "processAllStarted": "모든 작업이 시작되었습니다",
+      "parseAllStarted": "일괄 파싱이 시작되었습니다",
       "doneBadge": "{{count}}개 세그먼트 완료",
       "segmentProgress": "{{done}}/{{total}} 세그먼트"
     },

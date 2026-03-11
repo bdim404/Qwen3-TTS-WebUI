@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     DEFAULT_BACKEND: str = Field(default="local")
 
+    AUDIOBOOK_PARSE_CONCURRENCY: int = Field(default=3)
+    AUDIOBOOK_GENERATE_CONCURRENCY: int = Field(default=2)
+
     class Config:
         env_file = ".env"
         case_sensitive = True

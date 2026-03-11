@@ -57,6 +57,7 @@
     "reanalyzeConfirm": "Re-analyzing will clear all character and chapter data. Continue?",
     "analyzeStarted": "Analysis started",
     "generateAll": "Generate Full Book",
+    "processAll": "⚡ Process All",
     "downloadAll": "Download Full Book",
     "deleteConfirm": "Delete project \"{{title}}\" and all its audio?",
     "deleteSuccess": "Project deleted",
@@ -85,7 +86,9 @@
 
     "chapters": {
       "title": "Chapters ({{count}} total)",
-      "processAll": "Process All",
+      "processAll": "⚡ Process All",
+      "parseAll": "Batch Parse",
+      "generateAll": "Batch Generate",
       "defaultTitle": "Chapter {{index}}",
       "parse": "Parse Chapter",
       "parsing": "Parsing",
@@ -96,6 +99,7 @@
       "generateStarted": "Chapter {{index}} generation started",
       "generateAllStarted": "Full book generation started",
       "processAllStarted": "All tasks triggered",
+      "parseAllStarted": "Batch parsing started",
       "doneBadge": "{{count}} segments done",
       "segmentProgress": "{{done}}/{{total}} segments"
     },

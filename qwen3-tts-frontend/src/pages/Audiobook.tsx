@@ -495,6 +495,43 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
+  const handleParseAll = async () => {
+    setLoadingAction(true)
+    setIsPolling(true)
+    try {
+      await audiobookApi.parseAllChapters(project.id)
+      toast.success(t('projectCard.chapters.parseAllStarted'))
+      onRefresh()
+      fetchDetail()
+    } catch (e: any) {
+      setIsPolling(false)
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
+  const handleGenerateAll = async () => {
+    if (!detail) return
+    setLoadingAction(true)
+    const ready = detail.chapters.filter(c => c.status === 'ready')
+    if (ready.length > 0) {
+      setGeneratingChapterIndices(prev => new Set([...prev, ...ready.map(c => c.chapter_index)]))
+    }
+    setIsPolling(true)
+    try {
+      await audiobookApi.generate(project.id)
+      toast.success(t('projectCard.chapters.generateAllStarted'))
+      onRefresh()
+      fetchSegments()
+    } catch (e: any) {
+      setIsPolling(false)
+      toast.error(formatApiError(e))
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
   const handleProcessAll = async () => {
     if (!detail) return
     setLoadingAction(true)
@@ -504,11 +541,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
     setIsPolling(true)
     try {
-      const pending = detail.chapters.filter(c => c.status === 'pending' || c.status === 'error')
-      await Promise.all([
-        ...pending.map(c => audiobookApi.parseChapter(project.id, c.id)),
-        ...ready.map(c => audiobookApi.generate(project.id, c.chapter_index)),
-      ])
+      await audiobookApi.processAll(project.id)
       toast.success(t('projectCard.chapters.processAllStarted'))
       onRefresh()
       fetchDetail()
@@ -630,7 +663,7 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
 
       <div className="flex items-center justify-between gap-2 pt-1 border-t">
         <div className="flex items-center gap-1 flex-wrap">
-          {!isActive && (
+          {!isActive && status !== 'characters_ready' && (
             <Button
               size="sm"
               variant={status === 'pending' ? 'default' : 'outline'}
@@ -642,8 +675,9 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
             </Button>
           )}
           {status === 'ready' && (
-            <Button size="sm" className="h-7 text-xs px-2" onClick={() => handleGenerate()} disabled={loadingAction}>
-              {t('projectCard.generateAll')}
+            <Button size="sm" className="h-7 text-xs px-2" onClick={handleProcessAll} disabled={loadingAction}>
+              {loadingAction ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+              {t('projectCard.processAll')}
             </Button>
           )}
           {status === 'done' && (
@@ -756,16 +790,40 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                   {chaptersCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
                   {t('projectCard.chapters.title', { count: detail.chapters.length })}
                 </button>
-                {detail.chapters.some(c => ['pending', 'error', 'ready'].includes(c.status)) && (
-                  <Button
-                    size="sm"
-                    className="h-6 text-xs px-2 self-start sm:self-auto"
-                    disabled={loadingAction}
-                    onClick={handleProcessAll}
-                  >
-                    {loadingAction ? <Loader2 className="h-3 w-3 animate-spin" /> : t('projectCard.chapters.processAll')}
-                  </Button>
-                )}
+                <div className="flex items-center gap-1 self-start sm:self-auto flex-wrap">
+                  {detail.chapters.some(c => ['pending', 'error', 'ready'].includes(c.status)) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-xs px-2"
+                      disabled={loadingAction}
+                      onClick={handleParseAll}
+                    >
+                      {t('projectCard.chapters.parseAll')}
+                    </Button>
+                  )}
+                  {detail.chapters.some(c => c.status === 'ready') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-xs px-2"
+                      disabled={loadingAction}
+                      onClick={handleGenerateAll}
+                    >
+                      {t('projectCard.chapters.generateAll')}
+                    </Button>
+                  )}
+                  {detail.chapters.some(c => ['pending', 'error'].includes(c.status)) && detail.chapters.some(c => c.status === 'ready') && (
+                    <Button
+                      size="sm"
+                      className="h-6 text-xs px-2"
+                      disabled={loadingAction}
+                      onClick={handleProcessAll}
+                    >
+                      {loadingAction ? <Loader2 className="h-3 w-3 animate-spin" /> : t('projectCard.chapters.processAll')}
+                    </Button>
+                  )}
+                </div>
               </div>
               {!chaptersCollapsed && <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                 {detail.chapters.map(ch => {
@@ -805,12 +863,17 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                           </div>
                         )}
                         {ch.status === 'ready' && !chGenerating && !chAllDone && !generatingChapterIndices.has(ch.chapter_index) && (
-                          <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => {
-                            setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
-                            handleGenerate(ch.chapter_index)
-                          }}>
-                            {t('projectCard.chapters.generate')}
-                          </Button>
+                          <>
+                            <Button size="sm" variant="outline" className="h-6 text-xs px-2" disabled={loadingAction} onClick={() => {
+                              setExpandedChapters(prev => { const n = new Set(prev); n.add(ch.id); return n })
+                              handleGenerate(ch.chapter_index)
+                            }}>
+                              {t('projectCard.chapters.generate')}
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 text-xs px-2 text-muted-foreground" disabled={loadingAction} onClick={() => handleParseChapter(ch.id, ch.title)}>
+                              {t('projectCard.chapters.reparse')}
+                            </Button>
+                          </>
                         )}
                         {ch.status === 'ready' && (chGenerating || generatingChapterIndices.has(ch.chapter_index)) && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -829,9 +892,14 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
                           </>
                         )}
                         {ch.status === 'error' && (
-                          <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={() => handleParseChapter(ch.id, ch.title)}>
-                            {t('projectCard.chapters.reparse')}
-                          </Button>
+                          <>
+                            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={() => handleParseChapter(ch.id, ch.title)}>
+                              {t('projectCard.chapters.reparse')}
+                            </Button>
+                            {ch.error_message && (
+                              <span className="text-xs text-destructive/80 truncate max-w-[200px]" title={ch.error_message}>{ch.error_message}</span>
+                            )}
+                          </>
                         )}
                       </div>
                       {ch.status === 'parsing' && (

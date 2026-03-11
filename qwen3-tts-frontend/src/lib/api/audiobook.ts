@@ -139,6 +139,14 @@ export const audiobookApi = {
     return `/audiobook/projects/${projectId}/segments/${segmentId}/audio`
   },
 
+  parseAllChapters: async (projectId: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${projectId}/parse-all`)
+  },
+
+  processAll: async (projectId: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${projectId}/process-all`)
+  },
+
   deleteProject: async (id: number): Promise<void> => {
     await apiClient.delete(`/audiobook/projects/${id}`)
   },
