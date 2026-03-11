@@ -1,0 +1,127 @@
+{
+  "title": "오디오북 생성",
+  "llmConfig": "LLM 설정",
+  "newProject": "새 프로젝트",
+  "loading": "로딩 중...",
+  "noProjects": "오디오북 프로젝트가 없습니다",
+  "noProjectsHint": "「새 프로젝트」를 클릭하여 시작하세요",
+
+  "status": {
+    "pending": "분석 대기",
+    "analyzing": "분석 중",
+    "characters_ready": "캐릭터 확인 대기",
+    "parsing": "챕터 파싱 중",
+    "ready": "생성 대기",
+    "processing": "처리 중",
+    "generating": "생성 중",
+    "done": "완료",
+    "error": "오류"
+  },
+
+  "stepHints": {
+    "pending": "1단계: 「분석」을 클릭하면 LLM이 캐릭터 목록을 자동으로 추출합니다",
+    "analyzing": "1단계: LLM이 캐릭터를 추출 중입니다. 잠시 기다려 주세요...",
+    "characters_ready": "2단계: 캐릭터 정보를 확인한 후 「캐릭터 확인 · 챕터 식별」을 클릭하세요",
+    "ready": "3단계: 챕터별로 대본을 파싱합니다(LLM). 파싱된 챕터는 즉시 음성 생성이 가능합니다",
+    "generating": "4단계: 음성 합성 중 — 완료된 세그먼트는 즉시 재생할 수 있습니다"
+  },
+
+  "llmConfigPanel": {
+    "title": "LLM 설정",
+    "current": "현재: {{baseUrl}} / {{model}} / {{keyStatus}}",
+    "hasKey": "API 키 설정됨",
+    "noKey": "API 키 없음",
+    "notSet": "미설정",
+    "saving": "저장 중...",
+    "save": "설정 저장",
+    "savedSuccess": "LLM 설정이 저장되었습니다",
+    "incompleteError": "LLM 설정을 모두 입력해 주세요"
+  },
+
+  "createPanel": {
+    "title": "새 오디오북 프로젝트",
+    "titlePlaceholder": "제목",
+    "pasteText": "텍스트 붙여넣기",
+    "uploadEpub": "EPUB 업로드",
+    "textPlaceholder": "소설 텍스트를 붙여넣으세요...",
+    "creating": "생성 중...",
+    "create": "프로젝트 생성",
+    "createdSuccess": "프로젝트가 생성되었습니다",
+    "titleRequired": "제목을 입력해 주세요",
+    "textRequired": "텍스트 내용을 입력해 주세요",
+    "epubRequired": "EPUB 파일을 선택해 주세요"
+  },
+
+  "projectCard": {
+    "analyze": "분석",
+    "reanalyze": "재분석",
+    "reanalyzeConfirm": "재분석하면 모든 캐릭터와 챕터 데이터가 삭제됩니다. 계속하시겠습니까?",
+    "analyzeStarted": "분석이 시작되었습니다",
+    "generateAll": "전체 책 생성",
+    "processAll": "⚡ 전체 일괄 처리",
+    "downloadAll": "전체 책 다운로드",
+    "deleteConfirm": "프로젝트 「{{title}}」와 모든 음성을 삭제하시겠습니까?",
+    "deleteSuccess": "프로젝트가 삭제되었습니다",
+    "allDoneToast": "「{{title}}」 음성 생성이 모두 완료되었습니다!",
+    "segmentsProgress": "{{done}} / {{total}} 세그먼트 완료",
+    "chaptersProgress": "챕터 파싱: {{parsed}} / {{total}} 챕터",
+    "chaptersParsing": "{{count}} 파싱 중",
+    "chaptersError": "{{count}} 오류",
+    "cancelParsing": "✖ 파싱 취소",
+    "cancelGenerating": "✖ 생성 취소",
+    "retryFailed": "실패 재시도",
+    "cancelledToast": "취소 신호가 전송되었습니다. 실행 중인 작업은 완료 후 중지됩니다.",
+
+    "characters": {
+      "title": "캐릭터 목록 ({{count}}명)",
+      "namePlaceholder": "캐릭터 이름",
+      "genderPlaceholder": "성별 (미설정)",
+      "genderMale": "남성",
+      "genderFemale": "여성",
+      "genderUnknown": "알 수 없음",
+      "instructPlaceholder": "음성 설명 (TTS용)",
+      "descPlaceholder": "캐릭터 설명",
+      "voiceDesign": "음성 #{{id}}",
+      "noVoice": "미할당",
+      "savedSuccess": "캐릭터가 저장되었습니다"
+    },
+
+    "confirm": {
+      "button": "캐릭터 확인 · 챕터 식별",
+      "loading": "식별 중...",
+      "chaptersRecognized": "챕터가 식별되었습니다"
+    },
+
+    "chapters": {
+      "title": "챕터 목록 (총 {{count}}챕터)",
+      "processAll": "⚡ 전체 처리",
+      "parseAll": "일괄 파싱",
+      "generateAll": "일괄 생성",
+      "defaultTitle": "제 {{index}} 장",
+      "parse": "이 챕터 파싱",
+      "parsing": "파싱 중",
+      "parseStarted": "「{{title}}」 파싱이 시작되었습니다",
+      "parseStartedDefault": "챕터 파싱이 시작되었습니다",
+      "reparse": "재파싱",
+      "generate": "이 챕터 생성",
+      "generateStarted": "제 {{index}} 장 생성이 시작되었습니다",
+      "generateAllStarted": "전체 책 생성이 시작되었습니다",
+      "processAllStarted": "모든 작업이 시작되었습니다",
+      "parseAllStarted": "일괄 파싱이 시작되었습니다",
+      "doneBadge": "{{count}}개 세그먼트 완료",
+      "segmentProgress": "{{done}}/{{total}} 세그먼트"
+    },
+
+    "segments": {
+      "errorBadge": "오류",
+      "unknownCharacter": "?"
+    },
+
+    "sequential": {
+      "play": "순차 재생 ({{count}}개 세그먼트)",
+      "stop": "정지",
+      "progress": "{{current}} / {{total}}",
+      "loading": "로딩 중..."
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "title": "有聲書生成",
+  "llmConfig": "LLM 配置",
+  "newProject": "新建專案",
+  "loading": "載入中...",
+  "noProjects": "暫無有聲書專案",
+  "noProjectsHint": "點擊「新建專案」開始建立",
+
+  "status": {
+    "pending": "待分析",
+    "analyzing": "分析中",
+    "characters_ready": "角色待確認",
+    "parsing": "解析章節",
+    "ready": "待生成",
+    "processing": "處理中",
+    "generating": "生成中",
+    "done": "已完成",
+    "error": "出錯"
+  },
+
+  "stepHints": {
+    "pending": "第 1 步：點擊「分析」，LLM 將自動提取角色列表",
+    "analyzing": "第 1 步：LLM 正在提取角色，請稍候...",
+    "characters_ready": "第 2 步：確認角色資訊，可編輯後點擊「確認角色 · 識別章節」",
+    "ready": "第 3 步：逐章解析劇本（LLM），解析完的章節可立即生成音訊",
+    "generating": "第 4 步：正在合成音訊，已完成片段可立即播放"
+  },
+
+  "llmConfigPanel": {
+    "title": "LLM 配置",
+    "current": "當前：{{baseUrl}} / {{model}} / {{keyStatus}}",
+    "hasKey": "已配置金鑰",
+    "noKey": "未配置金鑰",
+    "notSet": "未設置",
+    "saving": "儲存中...",
+    "save": "儲存配置",
+    "savedSuccess": "LLM 配置已儲存",
+    "incompleteError": "請填寫完整的 LLM 配置"
+  },
+
+  "createPanel": {
+    "title": "新建有聲書專案",
+    "titlePlaceholder": "書名",
+    "pasteText": "貼上文字",
+    "uploadEpub": "上傳 epub",
+    "textPlaceholder": "貼上小說文字...",
+    "creating": "建立中...",
+    "create": "建立專案",
+    "createdSuccess": "專案已建立",
+    "titleRequired": "請輸入書名",
+    "textRequired": "請輸入文字內容",
+    "epubRequired": "請選擇 epub 檔案"
+  },
+
+  "projectCard": {
+    "analyze": "分析",
+    "reanalyze": "重新分析",
+    "reanalyzeConfirm": "重新分析將清除所有角色和章節資料，確定繼續？",
+    "analyzeStarted": "分析已開始",
+    "generateAll": "生成全書",
+    "processAll": "⚡ 全書一鍵處理",
+    "downloadAll": "下載全書",
+    "deleteConfirm": "確認刪除專案「{{title}}」及所有音訊？",
+    "deleteSuccess": "專案已刪除",
+    "allDoneToast": "「{{title}}」音訊全部生成完成！",
+    "segmentsProgress": "{{done}} / {{total}} 片段完成",
+    "chaptersProgress": "章節解析：{{parsed}} / {{total}} 章",
+    "chaptersParsing": "{{count}} 解析中",
+    "chaptersError": "{{count}} 出錯",
+    "cancelParsing": "✖ 取消解析",
+    "cancelGenerating": "✖ 取消生成",
+    "retryFailed": "重試失敗",
+    "cancelledToast": "已發送取消信號，當前正在執行的任務會完成後停止",
+
+    "characters": {
+      "title": "角色列表（{{count}} 個）",
+      "namePlaceholder": "角色名",
+      "genderPlaceholder": "性別（未設置）",
+      "genderMale": "男",
+      "genderFemale": "女",
+      "genderUnknown": "未知",
+      "instructPlaceholder": "音色描述（用於 TTS）",
+      "descPlaceholder": "角色描述",
+      "voiceDesign": "音色 #{{id}}",
+      "noVoice": "未分配",
+      "savedSuccess": "角色已儲存"
+    },
+
+    "confirm": {
+      "button": "確認角色 · 識別章節",
+      "loading": "識別中...",
+      "chaptersRecognized": "章節已識別"
+    },
+
+    "chapters": {
+      "title": "章節列表（共 {{count}} 章）",
+      "processAll": "⚡ 全部處理",
+      "parseAll": "批量解析",
+      "generateAll": "批量生成",
+      "defaultTitle": "第 {{index}} 章",
+      "parse": "解析此章",
+      "parsing": "解析中",
+      "parseStarted": "「{{title}}」解析已開始",
+      "parseStartedDefault": "章節解析已開始",
+      "reparse": "重新解析",
+      "generate": "生成此章",
+      "generateStarted": "第 {{index}} 章生成已開始",
+      "generateAllStarted": "全書生成已開始",
+      "processAllStarted": "全部任務已觸發",
+      "parseAllStarted": "批量解析已開始",
+      "doneBadge": "已完成 {{count}} 段",
+      "segmentProgress": "{{done}}/{{total}} 段"
+    },
+
+    "segments": {
+      "errorBadge": "出錯",
+      "unknownCharacter": "?"
+    },
+
+    "sequential": {
+      "play": "順序播放（{{count}} 段）",
+      "stop": "停止",
+      "progress": "第 {{current}} / {{total}} 段",
+      "loading": "載入中..."
+    }
+  }
+}

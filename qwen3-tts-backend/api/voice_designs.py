@@ -132,7 +132,6 @@ async def prepare_and_create_voice_design(
         x_vector = tts.create_voice_clone_prompt(
             ref_audio=(ref_audio_array, ref_sr),
             ref_text=ref_text,
-            x_vector_only_mode=True
         )
 
         cache_manager = await VoiceCacheManager.get_instance()
@@ -142,7 +141,6 @@ async def prepare_and_create_voice_design(
             'duration': features['duration'],
             'sample_rate': features['sample_rate'],
             'ref_text': ref_text,
-            'x_vector_only_mode': True,
             'instruct': data.instruct
         }
         cache_id = await cache_manager.set_cache(
@@ -257,7 +255,6 @@ async def prepare_voice_clone_prompt(
         x_vector = tts.create_voice_clone_prompt(
             ref_audio=(ref_audio_array, ref_sr),
             ref_text=ref_text,
-            x_vector_only_mode=True
         )
 
         cache_manager = await VoiceCacheManager.get_instance()
@@ -268,7 +265,6 @@ async def prepare_voice_clone_prompt(
             'duration': features['duration'],
             'sample_rate': features['sample_rate'],
             'ref_text': ref_text,
-            'x_vector_only_mode': True,
             'voice_design_id': design_id,
             'instruct': design.instruct
         }

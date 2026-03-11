@@ -14,8 +14,9 @@ from core.security import (
     decode_access_token
 )
 from db.database import get_db
-from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences, can_user_use_local_model
+from db.crud import get_user_by_username, get_user_by_email, create_user, change_user_password, update_user_aliyun_key, get_user_preferences, update_user_preferences, can_user_use_local_model, update_user_llm_config
 from schemas.user import User, UserCreate, Token, PasswordChange, AliyunKeyUpdate, AliyunKeyVerifyResponse, UserPreferences, UserPreferencesResponse
+from schemas.audiobook import LLMConfigUpdate, LLMConfigResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -285,3 +286,47 @@ async def update_preferences(
         )
 
     return {"message": "Preferences updated successfully"}
+
+
+@router.put("/llm-config")
+@limiter.limit("10/minute")
+async def set_llm_config(
+    request: Request,
+    config: LLMConfigUpdate,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    from core.security import encrypt_api_key
+    encrypted_key = encrypt_api_key(config.api_key.strip())
+    update_user_llm_config(
+        db,
+        user_id=current_user.id,
+        llm_api_key=encrypted_key,
+        llm_base_url=config.base_url.strip(),
+        llm_model=config.model.strip(),
+    )
+    return {"message": "LLM config updated successfully"}
+
+
+@router.get("/llm-config", response_model=LLMConfigResponse)
+@limiter.limit("30/minute")
+async def get_llm_config(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    return LLMConfigResponse(
+        base_url=current_user.llm_base_url,
+        model=current_user.llm_model,
+        has_key=bool(current_user.llm_api_key),
+    )
+
+
+@router.delete("/llm-config")
+@limiter.limit("10/minute")
+async def delete_llm_config(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    update_user_llm_config(db, user_id=current_user.id, clear=True)
+    return {"message": "LLM config deleted"}

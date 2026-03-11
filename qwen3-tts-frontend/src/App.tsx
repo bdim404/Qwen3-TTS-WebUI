@@ -16,6 +16,7 @@ const Home = lazy(() => import('@/pages/Home'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const UserManagement = lazy(() => import('@/pages/UserManagement'))
 const VoiceManagement = lazy(() => import('@/pages/VoiceManagement'))
+const Audiobook = lazy(() => import('@/pages/Audiobook'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -106,6 +107,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <VoiceManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/audiobook"
+                  element={
+                    <ProtectedRoute>
+                      <Audiobook />
                     </ProtectedRoute>
                   }
                 />

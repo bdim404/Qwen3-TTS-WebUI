@@ -27,6 +27,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated || !user) {
       const browserLang = detectBrowserLanguage()
       loadFontsForLanguage(browserLang)
+      setPreferences(null)
       setIsLoading(false)
       return
     }

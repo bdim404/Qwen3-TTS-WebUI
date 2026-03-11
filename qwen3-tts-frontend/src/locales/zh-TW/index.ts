@@ -9,6 +9,7 @@ import user from './user.json'
 import errors from './errors.json'
 import constants from './constants.json'
 import onboarding from './onboarding.json'
+import audiobook from './audiobook.json'
 
 export default {
   common,
@@ -22,4 +23,5 @@ export default {
   errors,
   constants,
   onboarding,
+  audiobook,
 }

@@ -11,6 +11,20 @@ class JobStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+class AudiobookStatus(str, Enum):
+    PENDING = "pending"
+    ANALYZING = "analyzing"
+    READY = "ready"
+    GENERATING = "generating"
+    DONE = "done"
+    ERROR = "error"
+
+class SegmentStatus(str, Enum):
+    PENDING = "pending"
+    GENERATING = "generating"
+    DONE = "done"
+    ERROR = "error"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -21,6 +35,9 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     aliyun_api_key = Column(Text, nullable=True)
+    llm_api_key = Column(Text, nullable=True)
+    llm_base_url = Column(String(500), nullable=True)
+    llm_model = Column(String(200), nullable=True)
     can_use_local_model = Column(Boolean, default=False, nullable=False)
     user_preferences = Column(JSON, nullable=True, default=lambda: {"default_backend": "aliyun", "onboarding_completed": False})
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -29,6 +46,7 @@ class User(Base):
     jobs = relationship("Job", back_populates="user", cascade="all, delete-orphan")
     voice_caches = relationship("VoiceCache", back_populates="user", cascade="all, delete-orphan")
     voice_designs = relationship("VoiceDesign", back_populates="user", cascade="all, delete-orphan")
+    audiobook_projects = relationship("AudiobookProject", back_populates="user", cascade="all, delete-orphan")
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -103,4 +121,79 @@ class VoiceDesign(Base):
     __table_args__ = (
         Index('idx_user_backend', 'user_id', 'backend_type'),
         Index('idx_user_active', 'user_id', 'is_active'),
+    )
+
+
+class AudiobookProject(Base):
+    __tablename__ = "audiobook_projects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(500), nullable=False)
+    source_type = Column(String(10), nullable=False)
+    source_path = Column(String(500), nullable=True)
+    source_text = Column(Text, nullable=True)
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    llm_model = Column(String(200), nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="audiobook_projects")
+    characters = relationship("AudiobookCharacter", back_populates="project", cascade="all, delete-orphan")
+    chapters = relationship("AudiobookChapter", back_populates="project", cascade="all, delete-orphan", order_by="AudiobookChapter.chapter_index")
+    segments = relationship("AudiobookSegment", back_populates="project", cascade="all, delete-orphan")
+
+
+class AudiobookChapter(Base):
+    __tablename__ = "audiobook_chapters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("audiobook_projects.id"), nullable=False, index=True)
+    chapter_index = Column(Integer, nullable=False)
+    title = Column(String(500), nullable=True)
+    source_text = Column(Text, nullable=False)
+    status = Column(String(20), default="pending", nullable=False)
+    error_message = Column(Text, nullable=True)
+
+    project = relationship("AudiobookProject", back_populates="chapters")
+
+    __table_args__ = (
+        Index('idx_chapter_project_idx', 'project_id', 'chapter_index'),
+    )
+
+
+class AudiobookCharacter(Base):
+    __tablename__ = "audiobook_characters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("audiobook_projects.id"), nullable=False, index=True)
+    name = Column(String(200), nullable=False)
+    gender = Column(String(20), nullable=True)
+    description = Column(Text, nullable=True)
+    instruct = Column(Text, nullable=True)
+    voice_design_id = Column(Integer, ForeignKey("voice_designs.id"), nullable=True)
+
+    project = relationship("AudiobookProject", back_populates="characters")
+    voice_design = relationship("VoiceDesign")
+    segments = relationship("AudiobookSegment", back_populates="character")
+
+
+class AudiobookSegment(Base):
+    __tablename__ = "audiobook_segments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("audiobook_projects.id"), nullable=False, index=True)
+    chapter_index = Column(Integer, nullable=False, default=0)
+    segment_index = Column(Integer, nullable=False)
+    character_id = Column(Integer, ForeignKey("audiobook_characters.id"), nullable=False)
+    text = Column(Text, nullable=False)
+    audio_path = Column(String(500), nullable=True)
+    status = Column(String(20), default="pending", nullable=False)
+
+    project = relationship("AudiobookProject", back_populates="segments")
+    character = relationship("AudiobookCharacter", back_populates="segments")
+
+    __table_args__ = (
+        Index('idx_project_chapter', 'project_id', 'chapter_index', 'segment_index'),
     )

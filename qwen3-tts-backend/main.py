@@ -15,7 +15,7 @@ from core.config import settings
 from core.database import init_db
 from core.model_manager import ModelManager
 from core.cleanup import run_scheduled_cleanup
-from api import auth, jobs, tts, users, voice_designs
+from api import auth, jobs, tts, users, voice_designs, audiobook
 from api.auth import get_current_user
 from schemas.user import User
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -67,6 +67,23 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         logger.info("Database initialized successfully")
+
+        # Reset stale processing statuses from interrupted sessions
+        from core.database import SessionLocal
+        from db.models import AudiobookChapter, AudiobookSegment
+        startup_db = SessionLocal()
+        try:
+            stale_chapters = startup_db.query(AudiobookChapter).filter(AudiobookChapter.status == "parsing").all()
+            for ch in stale_chapters:
+                ch.status = "pending"
+            stale_segments = startup_db.query(AudiobookSegment).filter(AudiobookSegment.status == "generating").all()
+            for seg in stale_segments:
+                seg.status = "pending"
+            if stale_chapters or stale_segments:
+                startup_db.commit()
+                logger.info(f"Reset {len(stale_chapters)} stale parsing chapters, {len(stale_segments)} stale generating segments")
+        finally:
+            startup_db.close()
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise
@@ -133,6 +150,7 @@ app.include_router(jobs.router)
 app.include_router(tts.router)
 app.include_router(users.router)
 app.include_router(voice_designs.router)
+app.include_router(audiobook.router)
 
 @app.get("/health")
 async def health_check():
