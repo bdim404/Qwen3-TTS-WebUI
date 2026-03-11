@@ -661,7 +661,6 @@ async def parse_all_chapters(project_id: int, user: User, db: Session, statuses:
     semaphore = asyncio.Semaphore(max_concurrent)
     logger.info(f"parse_all_chapters: project={project_id}, {len(pending)} chapters, concurrency={max_concurrent}")
     
-    ps = ProgressStore()
     key = f"project_{project_id}"
     ps.append_line(key, f"\n[状态] 开启章节并发解析，共 {len(pending)} 章待处理，最大并发: {max_concurrent}...\n")
 
