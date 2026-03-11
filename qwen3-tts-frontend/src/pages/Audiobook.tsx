@@ -689,14 +689,19 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="space-y-2">
           {(chaptersParsing > 0 || chaptersError > 0 || chaptersParsed < chaptersTotal) && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
                 <span>📝</span>
                 <span>{t('projectCard.chaptersProgress', { parsed: chaptersParsed, total: chaptersTotal })}</span>
                 {chaptersParsing > 0 && (
                   <span className="text-primary">({t('projectCard.chaptersParsing', { count: chaptersParsing })})</span>
                 )}
                 {chaptersError > 0 && (
-                  <span className="text-destructive">({t('projectCard.chaptersError', { count: chaptersError })})</span>
+                  <>
+                    <span className="text-destructive">({t('projectCard.chaptersError', { count: chaptersError })})</span>
+                    <Button size="sm" variant="outline" className="h-5 text-[10px] px-1.5 text-destructive border-destructive/40" onClick={handleParseAll}>
+                      {t('projectCard.retryFailed')}
+                    </Button>
+                  </>
                 )}
               </div>
               <Progress value={chapterProgress} />
@@ -711,9 +716,14 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
               <Progress value={progress} />
             </div>
           )}
-          {(chaptersParsing > 0 || hasGenerating) && (
+          {chaptersParsing > 0 && (
             <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={handleCancelBatch}>
-              {t('projectCard.cancelBatch')}
+              {t('projectCard.cancelParsing')}
+            </Button>
+          )}
+          {!chaptersParsing && hasGenerating && (
+            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={handleCancelBatch}>
+              {t('projectCard.cancelGenerating')}
             </Button>
           )}
         </div>

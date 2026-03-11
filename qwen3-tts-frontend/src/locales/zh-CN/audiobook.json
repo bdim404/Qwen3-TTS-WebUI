@@ -67,7 +67,9 @@
     "chaptersProgress": "章节解析：{{parsed}} / {{total}} 章",
     "chaptersParsing": "{{count}} 解析中",
     "chaptersError": "{{count}} 出错",
-    "cancelBatch": "✖ 取消批量操作",
+    "cancelParsing": "✖ 取消解析",
+    "cancelGenerating": "✖ 取消生成",
+    "retryFailed": "重试失败",
     "cancelledToast": "已发送取消信号，当前正在运行的任务会完成后停止",
 
     "characters": {

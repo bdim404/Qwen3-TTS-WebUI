@@ -67,7 +67,9 @@
     "chaptersProgress": "章解析：{{parsed}} / {{total}} 章",
     "chaptersParsing": "{{count}} 解析中",
     "chaptersError": "{{count}} エラー",
-    "cancelBatch": "✖ バッチキャンセル",
+    "cancelParsing": "✖ 解析をキャンセル",
+    "cancelGenerating": "✖ 生成をキャンセル",
+    "retryFailed": "失敗を再試行",
     "cancelledToast": "キャンセルシグナルを送信しました。実行中のタスクは完了後停止します。",
 
     "characters": {

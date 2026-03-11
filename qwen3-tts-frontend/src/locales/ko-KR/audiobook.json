@@ -67,7 +67,9 @@
     "chaptersProgress": "챕터 파싱: {{parsed}} / {{total}} 챕터",
     "chaptersParsing": "{{count}} 파싱 중",
     "chaptersError": "{{count}} 오류",
-    "cancelBatch": "✖ 일괄 취소",
+    "cancelParsing": "✖ 파싱 취소",
+    "cancelGenerating": "✖ 생성 취소",
+    "retryFailed": "실패 재시도",
     "cancelledToast": "취소 신호가 전송되었습니다. 실행 중인 작업은 완료 후 중지됩니다.",
 
     "characters": {

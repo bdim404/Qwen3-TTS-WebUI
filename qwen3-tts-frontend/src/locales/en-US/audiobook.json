@@ -67,7 +67,9 @@
     "chaptersProgress": "Chapters parsed: {{parsed}} / {{total}}",
     "chaptersParsing": "{{count}} parsing",
     "chaptersError": "{{count}} error",
-    "cancelBatch": "✖ Cancel Batch",
+    "cancelParsing": "✖ Cancel Parsing",
+    "cancelGenerating": "✖ Cancel Generating",
+    "retryFailed": "Retry Failed",
     "cancelledToast": "Cancel signal sent. Running tasks will finish then stop.",
 
     "characters": {
