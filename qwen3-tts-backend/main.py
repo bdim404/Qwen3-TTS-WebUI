@@ -67,6 +67,23 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         logger.info("Database initialized successfully")
+
+        # Reset stale processing statuses from interrupted sessions
+        from core.database import SessionLocal
+        from db.models import AudiobookChapter, AudiobookSegment
+        startup_db = SessionLocal()
+        try:
+            stale_chapters = startup_db.query(AudiobookChapter).filter(AudiobookChapter.status == "parsing").all()
+            for ch in stale_chapters:
+                ch.status = "pending"
+            stale_segments = startup_db.query(AudiobookSegment).filter(AudiobookSegment.status == "generating").all()
+            for seg in stale_segments:
+                seg.status = "pending"
+            if stale_chapters or stale_segments:
+                startup_db.commit()
+                logger.info(f"Reset {len(stale_chapters)} stale parsing chapters, {len(stale_segments)} stale generating segments")
+        finally:
+            startup_db.close()
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise
