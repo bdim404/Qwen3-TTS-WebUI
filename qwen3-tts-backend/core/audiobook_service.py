@@ -497,10 +497,16 @@ async def _bootstrap_character_voices(segments, user, backend, backend_type: str
             logger.error(f"Failed to bootstrap voice for design_id={design.id}: {e}", exc_info=True)
 
 
-async def generate_project(project_id: int, user: User, db: Session, chapter_index: Optional[int] = None) -> None:
+async def generate_project(project_id: int, user: User, db: Session, chapter_index: Optional[int] = None, cancel_event: Optional[asyncio.Event] = None) -> None:
     project = db.query(AudiobookProject).filter(AudiobookProject.id == project_id).first()
     if not project:
         return
+
+    # Resolve cancel event: use explicit one, or fall back to global _cancel_events
+    if cancel_event is None:
+        if project_id not in _cancel_events:
+            _cancel_events[project_id] = asyncio.Event()
+        cancel_event = _cancel_events[project_id]
 
     try:
         if chapter_index is None:
@@ -535,6 +541,11 @@ async def generate_project(project_id: int, user: User, db: Session, chapter_ind
         await _bootstrap_character_voices(segments, user, backend, backend_type, db)
 
         for seg in segments:
+            # Check cancel event before each segment
+            if cancel_event and cancel_event.is_set():
+                logger.info(f"Generation cancelled for project {project_id}, stopping at segment {seg.id}")
+                break
+
             try:
                 crud.update_audiobook_segment_status(db, seg.id, "generating")
 
@@ -615,6 +626,18 @@ async def generate_project(project_id: int, user: User, db: Session, chapter_ind
                 logger.error(f"Segment {seg.id} generation failed: {e}", exc_info=True)
                 crud.update_audiobook_segment_status(db, seg.id, "error")
 
+        # Update chapter status to "done" if all its segments are complete
+        if chapter_index is not None:
+            ch_segs = crud.list_audiobook_segments(db, project_id, chapter_index=chapter_index)
+            if ch_segs and all(s.status == "done" for s in ch_segs):
+                from db.models import AudiobookChapter
+                chapter_obj = db.query(AudiobookChapter).filter(
+                    AudiobookChapter.project_id == project_id,
+                    AudiobookChapter.chapter_index == chapter_index,
+                ).first()
+                if chapter_obj:
+                    crud.update_audiobook_chapter_status(db, chapter_obj.id, "done")
+
         all_segs = crud.list_audiobook_segments(db, project_id)
         all_done = all(s.status == "done" for s in all_segs) if all_segs else False
         if all_done:
@@ -645,7 +668,7 @@ def merge_audio_files(audio_paths: list[str], output_path: str) -> None:
         combined.export(output_path, format="wav")
 
 
-async def parse_all_chapters(project_id: int, user: User, db: Session, statuses: tuple = ("pending", "error", "ready")) -> None:
+async def parse_all_chapters(project_id: int, user: User, db: Session, statuses: tuple = ("pending", "error")) -> None:
     """Concurrently parse chapters with matching statuses using asyncio.Semaphore."""
     from core.database import SessionLocal
 
@@ -719,7 +742,7 @@ async def generate_all_chapters(project_id: int, user: User, db: Session) -> Non
             task_db = SessionLocal()
             try:
                 db_user = crud.get_user_by_id(task_db, user.id)
-                await generate_project(project_id, db_user, task_db, chapter_index=chapter.chapter_index)
+                await generate_project(project_id, db_user, task_db, chapter_index=chapter.chapter_index, cancel_event=cancel_ev)
             except Exception as e:
                 logger.error(f"generate_all_chapters: chapter {chapter.chapter_index} failed: {e}", exc_info=True)
             finally:

@@ -319,7 +319,7 @@ async def parse_all_chapters_endpoint(
     project = crud.get_audiobook_project(db, project_id, current_user.id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.status not in ("ready", "done", "error"):
+    if project.status not in ("ready", "generating", "done", "error"):
         raise HTTPException(status_code=400, detail=f"Project must be in 'ready' state, current: {project.status}")
 
     if not current_user.llm_api_key or not current_user.llm_base_url or not current_user.llm_model:
@@ -328,7 +328,7 @@ async def parse_all_chapters_endpoint(
     from core.audiobook_service import parse_all_chapters
     from core.database import SessionLocal
 
-    statuses = ("error",) if only_errors else ("pending", "error", "ready")
+    statuses = ("error",) if only_errors else ("pending", "error")
 
     async def run():
         async_db = SessionLocal()
