@@ -327,6 +327,21 @@ async def process_all_endpoint(
     return {"message": "Full processing started", "project_id": project_id}
 
 
+@router.post("/projects/{project_id}/cancel-batch")
+async def cancel_batch_endpoint(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = crud.get_audiobook_project(db, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    from core.audiobook_service import cancel_batch
+    cancel_batch(project_id)
+    return {"message": "Cancellation signalled", "project_id": project_id}
+
+
 @router.put("/projects/{project_id}/characters/{char_id}", response_model=AudiobookCharacterResponse)
 async def update_character(
     project_id: int,

@@ -12,6 +12,7 @@
     "characters_ready": "キャラクター確認待ち",
     "parsing": "章を解析中",
     "ready": "生成待ち",
+    "processing": "処理中",
     "generating": "生成中",
     "done": "完了",
     "error": "エラー"
@@ -63,6 +64,11 @@
     "deleteSuccess": "プロジェクトを削除しました",
     "allDoneToast": "「{{title}}」の音声生成がすべて完了しました！",
     "segmentsProgress": "{{done}} / {{total}} セグメント完了",
+    "chaptersProgress": "章解析：{{parsed}} / {{total}} 章",
+    "chaptersParsing": "{{count}} 解析中",
+    "chaptersError": "{{count}} エラー",
+    "cancelBatch": "✖ バッチキャンセル",
+    "cancelledToast": "キャンセルシグナルを送信しました。実行中のタスクは完了後停止します。",
 
     "characters": {
       "title": "キャラクター（{{count}} 人）",

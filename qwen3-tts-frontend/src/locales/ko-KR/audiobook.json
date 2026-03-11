@@ -12,6 +12,7 @@
     "characters_ready": "캐릭터 확인 대기",
     "parsing": "챕터 파싱 중",
     "ready": "생성 대기",
+    "processing": "처리 중",
     "generating": "생성 중",
     "done": "완료",
     "error": "오류"
@@ -63,6 +64,11 @@
     "deleteSuccess": "프로젝트가 삭제되었습니다",
     "allDoneToast": "「{{title}}」 음성 생성이 모두 완료되었습니다!",
     "segmentsProgress": "{{done}} / {{total}} 세그먼트 완료",
+    "chaptersProgress": "챕터 파싱: {{parsed}} / {{total}} 챕터",
+    "chaptersParsing": "{{count}} 파싱 중",
+    "chaptersError": "{{count}} 오류",
+    "cancelBatch": "✖ 일괄 취소",
+    "cancelledToast": "취소 신호가 전송되었습니다. 실행 중인 작업은 완료 후 중지됩니다.",
 
     "characters": {
       "title": "캐릭터 목록 ({{count}}명)",

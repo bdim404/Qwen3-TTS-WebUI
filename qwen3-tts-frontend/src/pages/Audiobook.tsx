@@ -33,6 +33,7 @@ const STATUS_COLORS: Record<string, string> = {
   analyzing: 'default',
   characters_ready: 'default',
   parsing: 'default',
+  processing: 'default',
   ready: 'default',
   generating: 'default',
   done: 'outline',
@@ -554,6 +555,18 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
     }
   }
 
+  const handleCancelBatch = async () => {
+    try {
+      await audiobookApi.cancelBatch(project.id)
+      toast.success(t('projectCard.cancelledToast'))
+      setIsPolling(false)
+      setGeneratingChapterIndices(new Set())
+      setTimeout(() => { onRefresh(); fetchDetail(); fetchSegments() }, 1000)
+    } catch (e: any) {
+      toast.error(formatApiError(e))
+    }
+  }
+
   const handleDownload = async (chapterIndex?: number) => {
     setLoadingAction(true)
     try {
@@ -621,6 +634,26 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
   const totalCount = segments.length
   const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
 
+  // Chapter parsing progress
+  const chaptersParsed = detail?.chapters.filter(c => ['ready', 'done'].includes(c.status) || (segments.some(s => s.chapter_index === c.chapter_index))).length ?? 0
+  const chaptersParsing = detail?.chapters.filter(c => c.status === 'parsing').length ?? 0
+  const chaptersError = detail?.chapters.filter(c => c.status === 'error').length ?? 0
+  const chaptersTotal = detail?.chapters.length ?? 0
+  const chapterProgress = chaptersTotal > 0 ? Math.round((chaptersParsed / chaptersTotal) * 100) : 0
+  const hasGenerating = segments.some(s => s.status === 'generating')
+
+  // Frontend display status override
+  const displayStatus = (() => {
+    if (['ready', 'generating', 'done'].includes(status)) {
+      if (chaptersParsing > 0 && hasGenerating) return 'processing'
+      if (chaptersParsing > 0) return 'parsing'
+      if (hasGenerating) return 'generating'
+      if (totalCount > 0 && doneCount === totalCount && chaptersTotal > 0 && chaptersParsing === 0 && chaptersError === 0) return 'done'
+      if (status === 'done' && (chaptersError > 0 || (chaptersTotal > 0 && chaptersParsed < chaptersTotal))) return 'ready'
+    }
+    return status
+  })()
+
   return (
     <div className="border rounded-lg p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
@@ -629,8 +662,8 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
           <span className="font-medium break-words">{project.title}</span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Badge variant={(STATUS_COLORS[status] || 'secondary') as any}>
-            {t(`status.${status}`, { defaultValue: status })}
+          <Badge variant={(STATUS_COLORS[displayStatus] || 'secondary') as any}>
+            {t(`status.${displayStatus}`, { defaultValue: displayStatus })}
           </Badge>
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -652,12 +685,37 @@ function ProjectCard({ project, onRefresh }: { project: AudiobookProject; onRefr
         <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{project.error_message}</div>
       )}
 
-      {totalCount > 0 && doneCount > 0 && (
-        <div className="space-y-1">
-          <div className="text-xs text-muted-foreground">
-            {t('projectCard.segmentsProgress', { done: doneCount, total: totalCount })}
-          </div>
-          <Progress value={progress} />
+      {chaptersTotal > 0 && ['ready', 'generating', 'done'].includes(status) && (chaptersParsing > 0 || chaptersError > 0 || (totalCount > 0 && doneCount > 0)) && (
+        <div className="space-y-2">
+          {(chaptersParsing > 0 || chaptersError > 0 || chaptersParsed < chaptersTotal) && (
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <span>📝</span>
+                <span>{t('projectCard.chaptersProgress', { parsed: chaptersParsed, total: chaptersTotal })}</span>
+                {chaptersParsing > 0 && (
+                  <span className="text-primary">({t('projectCard.chaptersParsing', { count: chaptersParsing })})</span>
+                )}
+                {chaptersError > 0 && (
+                  <span className="text-destructive">({t('projectCard.chaptersError', { count: chaptersError })})</span>
+                )}
+              </div>
+              <Progress value={chapterProgress} />
+            </div>
+          )}
+          {totalCount > 0 && doneCount > 0 && (
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <span>🎵</span>
+                <span>{t('projectCard.segmentsProgress', { done: doneCount, total: totalCount })}</span>
+              </div>
+              <Progress value={progress} />
+            </div>
+          )}
+          {(chaptersParsing > 0 || hasGenerating) && (
+            <Button size="sm" variant="outline" className="h-6 text-xs px-2 text-destructive border-destructive/40" onClick={handleCancelBatch}>
+              {t('projectCard.cancelBatch')}
+            </Button>
+          )}
         </div>
       )}
 

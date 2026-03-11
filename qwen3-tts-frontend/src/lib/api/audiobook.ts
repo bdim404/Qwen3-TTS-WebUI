@@ -147,6 +147,10 @@ export const audiobookApi = {
     await apiClient.post(`/audiobook/projects/${projectId}/process-all`)
   },
 
+  cancelBatch: async (projectId: number): Promise<void> => {
+    await apiClient.post(`/audiobook/projects/${projectId}/cancel-batch`)
+  },
+
   deleteProject: async (id: number): Promise<void> => {
     await apiClient.delete(`/audiobook/projects/${id}`)
   },

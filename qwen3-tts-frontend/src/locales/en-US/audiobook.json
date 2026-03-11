@@ -12,6 +12,7 @@
     "characters_ready": "Awaiting Character Review",
     "parsing": "Parsing Chapters",
     "ready": "Ready",
+    "processing": "Processing",
     "generating": "Generating",
     "done": "Done",
     "error": "Error"
@@ -63,6 +64,11 @@
     "deleteSuccess": "Project deleted",
     "allDoneToast": "\"{{title}}\" — all audio generation complete!",
     "segmentsProgress": "{{done}} / {{total}} segments done",
+    "chaptersProgress": "Chapters parsed: {{parsed}} / {{total}}",
+    "chaptersParsing": "{{count}} parsing",
+    "chaptersError": "{{count}} error",
+    "cancelBatch": "✖ Cancel Batch",
+    "cancelledToast": "Cancel signal sent. Running tasks will finish then stop.",
 
     "characters": {
       "title": "Characters ({{count}})",

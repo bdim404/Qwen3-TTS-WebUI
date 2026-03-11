@@ -12,6 +12,7 @@
     "characters_ready": "角色待確認",
     "parsing": "解析章節",
     "ready": "待生成",
+    "processing": "處理中",
     "generating": "生成中",
     "done": "已完成",
     "error": "出錯"
@@ -63,6 +64,11 @@
     "deleteSuccess": "專案已刪除",
     "allDoneToast": "「{{title}}」音訊全部生成完成！",
     "segmentsProgress": "{{done}} / {{total}} 片段完成",
+    "chaptersProgress": "章節解析：{{parsed}} / {{total}} 章",
+    "chaptersParsing": "{{count}} 解析中",
+    "chaptersError": "{{count}} 出錯",
+    "cancelBatch": "✖ 取消批量操作",
+    "cancelledToast": "已發送取消信號，當前正在執行的任務會完成後停止",
 
     "characters": {
       "title": "角色列表（{{count}} 個）",
