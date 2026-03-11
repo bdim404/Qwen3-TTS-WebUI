@@ -1,14 +1,18 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 
 from config import settings
 
+_is_sqlite = "sqlite" in settings.DATABASE_URL
+
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    poolclass=NullPool if _is_sqlite else None,
 )
 
-if "sqlite" in settings.DATABASE_URL:
+if _is_sqlite:
     @event.listens_for(engine, "connect")
     def _set_wal(dbapi_conn, _):
         dbapi_conn.execute("PRAGMA journal_mode=WAL")
