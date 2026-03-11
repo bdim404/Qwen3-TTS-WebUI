@@ -36,6 +36,26 @@ def _get_llm_service(user: User) -> LLMService:
     return LLMService(base_url=user.llm_base_url, api_key=api_key, model=user.llm_model)
 
 
+def _get_gendered_instruct(gender: Optional[str], base_instruct: str) -> str:
+    """Ensure the instruction sent to the TTS model has explicit gender cues if known."""
+    if not gender or gender == "未知":
+        return base_instruct
+    
+    # We want to force a clear gender bias at the start of the prompt
+    prefix = ""
+    if gender == "男":
+        prefix = "男性声音，"
+    elif gender == "女":
+        prefix = "女性声音，"
+    
+    if prefix and prefix not in base_instruct:
+        # Prepend prefix, but try to be smart if the first line starts with "音色信息："
+        if base_instruct.startswith("音色信息："):
+            return base_instruct.replace("音色信息：", f"音色信息：{prefix}", 1)
+        return f"{prefix}{base_instruct}"
+    return base_instruct
+
+
 def _extract_epub_chapters(file_path: str) -> list[str]:
     try:
         import ebooklib
@@ -166,6 +186,17 @@ async def analyze_project(project_id: int, user: User, db: Session, turbo: bool 
 
         samples = _sample_full_text(text)
         n = len(samples)
+        
+        # Ensure previews directory is clean for new analysis
+        previews_dir = Path(settings.OUTPUT_DIR) / "audiobook" / str(project_id) / "previews"
+        if previews_dir.exists():
+            import shutil
+            try:
+                shutil.rmtree(previews_dir)
+            except Exception as e:
+                logger.warning(f"Failed to clear previews directory: {e}")
+        previews_dir.mkdir(parents=True, exist_ok=True)
+
         mode_label = "极速并发" if turbo else "顺序"
         ps.append_line(key, f"\n[LLM] 模型：{user.llm_model}，共 {n} 个采样段（{mode_label}模式），正在分析角色...\n")
         ps.append_line(key, "")
@@ -173,9 +204,12 @@ async def analyze_project(project_id: int, user: User, db: Session, turbo: bool 
         def on_token(token: str) -> None:
             ps.append_token(key, token)
 
+        completed_count = 0
         def on_sample(i: int, total: int) -> None:
-            if i < total - 1:
-                ps.append_line(key, f"\n[LLM] 采样段 {i + 1}/{total} 完成，继续分析...\n")
+            nonlocal completed_count
+            completed_count += 1
+            if completed_count < total:
+                ps.append_line(key, f"\n[LLM] 采样段 {completed_count}/{total} 完成，继续分析...\n")
             else:
                 ps.append_line(key, f"\n[LLM] 全部 {total} 个采样段完成，正在合并角色列表...\n")
             ps.append_line(key, "")
@@ -201,52 +235,32 @@ async def analyze_project(project_id: int, user: User, db: Session, turbo: bool 
         crud.delete_audiobook_characters(db, project_id)
 
         backend_type = user.user_preferences.get("default_backend", "aliyun") if user.user_preferences else "aliyun"
-        
-        async def _create_char_with_voice(char_data):
+
+        for char_data in characters_data:
             name = char_data.get("name", "narrator")
             instruct = char_data.get("instruct", "")
             description = char_data.get("description", "")
             gender = char_data.get("gender") or ("未知" if name == "narrator" else None)
-
-            # Requires isolated DB queries since we're in an async concurrent block
             try:
-                # We need an async wrapper or a local db session for concurrent sync DB pushes
-                # Because core crud uses synchronous SQLalchemy, executing them in threadpool via asyncio.to_thread
-                import asyncio
-                
-                def db_ops():
-                    from core.database import SessionLocal
-                    local_db = SessionLocal()
-                    try:
-                        voice_design = crud.create_voice_design(
-                            db=local_db,
-                            user_id=user.id,
-                            name=f"[有声书] {project.title} - {name}",
-                            instruct=instruct,
-                            backend_type=backend_type,
-                            preview_text=description[:100] if description else None,
-                        )
-
-                        crud.create_audiobook_character(
-                            db=local_db,
-                            project_id=project_id,
-                            name=name,
-                            gender=gender,
-                            description=description,
-                            instruct=instruct,
-                            voice_design_id=voice_design.id,
-                        )
-                    finally:
-                        local_db.close()
-                
-                await asyncio.to_thread(db_ops)
+                voice_design = crud.create_voice_design(
+                    db=db,
+                    user_id=user.id,
+                    name=f"[有声书] {project.title} - {name}",
+                    instruct=instruct,
+                    backend_type=backend_type,
+                    preview_text=description[:100] if description else None,
+                )
+                crud.create_audiobook_character(
+                    db=db,
+                    project_id=project_id,
+                    name=name,
+                    gender=gender,
+                    description=description,
+                    instruct=instruct,
+                    voice_design_id=voice_design.id,
+                )
             except Exception as e:
                 logger.error(f"Failed to create char/voice for {name}: {e}")
-
-        import asyncio
-        batch_tasks = [_create_char_with_voice(cd) for cd in characters_data]
-        if batch_tasks:
-            await asyncio.gather(*batch_tasks)
 
         crud.update_audiobook_project_status(db, project_id, "characters_ready")
         ps.mark_done(key)
@@ -259,25 +273,34 @@ async def analyze_project(project_id: int, user: User, db: Session, turbo: bool 
         user_id = user.id
 
         async def _generate_all_previews():
-            async_db = SessionLocal()
+            # Get character IDs first using a temporary session
+            temp_db = SessionLocal()
             try:
-                db_user = crud.get_user_by_id(async_db, user_id)
-                characters = crud.list_audiobook_characters(async_db, project_id)
-                
-                # Use a semaphore to limit concurrent TTS requests
-                sem = asyncio.Semaphore(3)
-                async def _gen(char_id: int):
-                    async with sem:
-                        try:
-                            await generate_character_preview(project_id, char_id, db_user, async_db)
-                        except Exception as e:
-                            logger.error(f"Background preview generation failed for char {char_id}: {e}")
-                
-                tasks = [_gen(c.id) for c in characters]
-                if tasks:
-                    await asyncio.gather(*tasks)
+                characters = crud.list_audiobook_characters(temp_db, project_id)
+                char_ids = [c.id for c in characters]
             finally:
-                async_db.close()
+                temp_db.close()
+            
+            if not char_ids:
+                return
+
+            # Use a semaphore to limit concurrent TTS requests
+            sem = asyncio.Semaphore(3)
+            
+            async def _gen(char_id: int):
+                async with sem:
+                    # Each concurrent task MUST have its own dedicated session
+                    local_db = SessionLocal()
+                    try:
+                        db_user = crud.get_user_by_id(local_db, user_id)
+                        await generate_character_preview(project_id, char_id, db_user, local_db)
+                    except Exception as e:
+                        logger.error(f"Background preview generation failed for char {char_id}: {e}")
+                    finally:
+                        local_db.close()
+            
+            tasks = [_gen(cid) for cid in char_ids]
+            await asyncio.gather(*tasks)
                 
         asyncio.create_task(_generate_all_previews())
 
@@ -538,7 +561,7 @@ async def generate_project(project_id: int, user: User, db: Session, chapter_ind
                         audio_bytes, _ = await backend.generate_voice_design({
                             "text": seg.text,
                             "language": "zh",
-                            "instruct": design.instruct,
+                            "instruct": _get_gendered_instruct(char.gender, design.instruct),
                         })
                 else:
                     if design.voice_cache_id:
@@ -563,7 +586,7 @@ async def generate_project(project_id: int, user: User, db: Session, chapter_ind
                             audio_bytes, _ = await backend.generate_voice_design({
                                 "text": seg.text,
                                 "language": "Auto",
-                                "instruct": design.instruct,
+                                "instruct": _get_gendered_instruct(char.gender, design.instruct),
                                 "max_new_tokens": 2048,
                                 "temperature": 0.3,
                                 "top_k": 10,
@@ -574,7 +597,7 @@ async def generate_project(project_id: int, user: User, db: Session, chapter_ind
                         audio_bytes, _ = await backend.generate_voice_design({
                             "text": seg.text,
                             "language": "Auto",
-                            "instruct": design.instruct,
+                            "instruct": _get_gendered_instruct(char.gender, design.instruct),
                             "max_new_tokens": 2048,
                             "temperature": 0.3,
                             "top_k": 10,
@@ -789,7 +812,7 @@ async def generate_character_preview(project_id: int, char_id: int, user: User, 
             from core.cache_manager import VoiceCacheManager
             from utils.audio import process_ref_audio
             import hashlib
-            
+
             ref_text = "你好，这是参考音频。"
             ref_audio_bytes, _ = await backend.generate_voice_design({
                 "text": ref_text,
@@ -823,6 +846,20 @@ async def generate_character_preview(project_id: int, char_id: int, user: User, 
             db.commit()
             logger.info(f"Bootstrapped local voice cache for preview: design_id={design.id}, cache_id={cache_id}")
 
+        if backend_type == "aliyun" and not design.aliyun_voice_id:
+            from core.tts_service import AliyunTTSBackend
+            if isinstance(backend, AliyunTTSBackend):
+                try:
+                    voice_id = await backend._create_voice_design(
+                        instruct=_get_gendered_instruct(char.gender, design.instruct),
+                        preview_text=preview_text,
+                    )
+                    design.aliyun_voice_id = voice_id
+                    db.commit()
+                    logger.info(f"Bootstrapped aliyun voice_id for preview: design_id={design.id}, voice_id={voice_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to bootstrap aliyun voice_id for preview, falling back to instruct: {e}")
+
         if backend_type == "aliyun":
             if design.aliyun_voice_id:
                 audio_bytes, _ = await backend.generate_voice_design(
@@ -833,7 +870,7 @@ async def generate_character_preview(project_id: int, char_id: int, user: User, 
                 audio_bytes, _ = await backend.generate_voice_design({
                     "text": preview_text,
                     "language": "zh",
-                    "instruct": design.instruct,
+                    "instruct": _get_gendered_instruct(char.gender, design.instruct),
                 })
         else:
             if design.voice_cache_id:
@@ -858,7 +895,7 @@ async def generate_character_preview(project_id: int, char_id: int, user: User, 
                     audio_bytes, _ = await backend.generate_voice_design({
                         "text": preview_text,
                         "language": "Auto",
-                        "instruct": design.instruct,
+                        "instruct": _get_gendered_instruct(char.gender, design.instruct),
                         "max_new_tokens": 512,
                         "temperature": 0.3,
                         "top_k": 10,
