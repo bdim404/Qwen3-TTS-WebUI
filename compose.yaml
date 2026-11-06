@@ -1,0 +1,19 @@
+services:
+  qwen3-tts-webui:
+    image: bdim404/qwen3-tts-webui:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      - WEBUI_PASSWORD=${WEBUI_PASSWORD:-}
+      - MODEL_SIZE=${MODEL_SIZE:-1.7B}
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://huggingface.co}
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

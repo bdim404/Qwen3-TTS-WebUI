@@ -1,0 +1,227 @@
+{
+  "modes": {
+    "custom-voice": "프리셋 음성",
+    "voice-design": "보이스 디자인",
+    "voice-clone": "보이스 클론"
+  },
+  "modeHints": {
+    "custom-voice": "내장 화자를 선택하고 필요하면 감정이나 말투를 지시하세요.",
+    "voice-design": "원하는 목소리를 자연어로 설명하면 모델이 만들어 줍니다. 마음에 드는 결과는 보이스로 저장할 수 있습니다.",
+    "voice-clone": "3~20초 길이의 참고 음성으로 목소리를 복제하거나 저장한 보이스를 사용하세요."
+  },
+  "language": "언어",
+  "speaker": "화자",
+  "instruct": "스타일 지시 (선택)",
+  "instructPlaceholder": "예: 다정하고 따뜻하게, 천천히, 부드러운 톤으로",
+  "text": "텍스트",
+  "textPlaceholder": "합성할 텍스트를 입력하세요…",
+  "generate": "생성",
+  "firstRunHint": "각 모드의 첫 생성 시 모델을 자동으로 다운로드하고 불러옵니다. 몇 분 걸릴 수 있습니다.",
+  "logout": "로그아웃",
+  "design": {
+    "instruct": "목소리 설명",
+    "placeholder": "예: 낮고 매력적인 남성 목소리, 차분하고 느긋하게"
+  },
+  "clone": {
+    "voice": "보이스",
+    "newReference": "새 참고 음성",
+    "refAudio": "참고 음성",
+    "refAudioHint": "오디오 파일을 업로드하거나 마이크로 녹음하세요. 3~20초의 깨끗한 음성이 가장 좋습니다.",
+    "upload": "업로드",
+    "record": "녹음",
+    "stop": "중지",
+    "recording": "녹음",
+    "refText": "참고 텍스트",
+    "refTextHint": "참고 음성에서 말한 내용입니다. 비워 두면 음색만 복제합니다 (유사도 낮음).",
+    "refTextPlaceholder": "받아쓴 내용을 입력하거나 아래 원고를 골라 읽으며 녹음하세요",
+    "saveAs": "보이스로 저장 (선택)",
+    "saveAsPlaceholder": "보이스 이름",
+    "deleteVoice": "보이스 삭제",
+    "confirmDeleteVoice": "보이스 \"{name}\"을(를) 삭제할까요?",
+    "noTranscript": "참고 텍스트 없음 (음색만)"
+  },
+  "busy": {
+    "downloading": "{name} 다운로드 중…",
+    "loading": "{name} 불러오는 중…",
+    "generating": "생성 중…"
+  },
+  "params": {
+    "title": "고급 매개변수",
+    "reset": "기본값으로",
+    "max_new_tokens": {
+      "label": "최대 생성 토큰",
+      "hint": "생성 음성 길이의 상한 (약 12토큰 = 1초)."
+    },
+    "temperature": {
+      "label": "온도",
+      "hint": "높을수록 다양하고, 낮을수록 안정적입니다."
+    },
+    "top_k": {
+      "label": "Top K",
+      "hint": "확률 상위 K개 후보에서만 샘플링합니다."
+    },
+    "top_p": {
+      "label": "Top P",
+      "hint": "누적 확률이 P에 도달하는 후보에서만 샘플링합니다."
+    },
+    "repetition_penalty": {
+      "label": "반복 페널티",
+      "hint": "반복을 억제합니다. 너무 크면 부자연스러울 수 있습니다."
+    }
+  },
+  "history": {
+    "title": "기록",
+    "empty": "아직 생성한 음성이 없습니다.",
+    "reuse": "다시 사용",
+    "download": "다운로드",
+    "saveVoice": "보이스로 저장",
+    "saved": "저장됨",
+    "voiceName": "보이스 이름",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "confirmDelete": "이 음성을 삭제할까요?",
+    "uploadedRef": "업로드한 참고 음성"
+  },
+  "login": {
+    "title": "비밀번호가 필요합니다",
+    "password": "비밀번호",
+    "wrong": "비밀번호가 틀렸습니다",
+    "submit": "로그인"
+  },
+  "errors": {
+    "refRequired": "저장된 보이스를 선택하거나 참고 음성을 추가하세요.",
+    "refTooLong": "참고 음성은 60초보다 짧아야 합니다.",
+    "refTooShort": "참고 음성이 너무 짧습니다.",
+    "decode": "브라우저에서 이 오디오 파일을 읽을 수 없습니다.",
+    "mic": "마이크를 사용할 수 없거나 권한이 거부되었습니다."
+  },
+  "languages": {
+    "Auto": "자동 감지",
+    "Chinese": "중국어",
+    "English": "영어",
+    "Japanese": "일본어",
+    "Korean": "한국어",
+    "German": "독일어",
+    "French": "프랑스어",
+    "Russian": "러시아어",
+    "Portuguese": "포르투갈어",
+    "Spanish": "스페인어",
+    "Italian": "이탈리아어",
+    "Cantonese": "광둥어"
+  },
+  "speakers": {
+    "Vivian": "밝은 젊은 여성 · 중국어",
+    "Serena": "따뜻하고 부드러운 젊은 여성 · 중국어",
+    "Uncle_Fu": "차분하고 낮은 중년 남성 · 중국어",
+    "Dylan": "베이징 청년 · 베이징 방언",
+    "Eric": "활기찬 청두 남성 · 쓰촨 방언",
+    "Ryan": "리듬감 있는 남성 · 영어",
+    "Aiden": "밝은 미국 남성 · 영어",
+    "Ono_Anna": "장난기 있는 여성 · 일본어",
+    "Sohee": "따뜻하고 감성적인 여성 · 한국어"
+  },
+  "presetInstructs": [
+    {
+      "label": "Happy",
+      "instruct": "very happy",
+      "text": "The weather is so nice today, let's go to the park together!"
+    },
+    {
+      "label": "Sad",
+      "instruct": "very sad, with a crying tone",
+      "text": "I'm sorry, I really tried my best, but I still let you down."
+    },
+    {
+      "label": "Angry",
+      "instruct": "very angry, with intense tone",
+      "text": "How could you do this! This is absolutely unacceptable!"
+    },
+    {
+      "label": "Gentle Care",
+      "instruct": "gentle and caring, slow pace, soft tone, full of care and comfort",
+      "text": "Don't worry, everything will be fine. I'll always be here with you."
+    },
+    {
+      "label": "Excited",
+      "instruct": "very excited, faster pace, rising tone, full of energy and enthusiasm",
+      "text": "Awesome! We finally made it! This is so exciting!"
+    },
+    {
+      "label": "Anxious",
+      "instruct": "anxious tone, slightly faster pace, unstable tone, with tension and worry",
+      "text": "What should we do? We're running out of time, we won't make it, what can we do?"
+    },
+    {
+      "label": "Professional Broadcaster",
+      "instruct": "Professional news broadcaster. Pace: standard broadcasting speed, clear articulation. Emotion: calm and professional, without personal emotion. Tone: mostly flat with slight variations, emphasis on key words. Character: rigorous, objective, authoritative.",
+      "text": "According to Reuters, our space program has achieved a major breakthrough, with the successful completion of manned space missions."
+    },
+    {
+      "label": "Warm Mentor",
+      "instruct": "Warm mentor. Pace: unhurried, speaking slowly. Tone: stable with encouraging rises. Emotion: caring, patient, encouraging. Character: understanding, guiding, full of positive energy.",
+      "text": "Everyone has their own pace, don't rush. Take your time, you will definitely find your own path."
+    },
+    {
+      "label": "Energetic Youth",
+      "instruct": "Full of energy. Pace: fast, crisp articulation. Emotion: cheerful and optimistic, energetic. Tone: strong sense of rhythm, cadence. Character: outgoing, confident, enthusiastic, full of youthful spirit.",
+      "text": "Wow, this game is so cool! Let's team up and play together, I promise I'll carry you!"
+    }
+  ],
+  "presetVoiceDesigns": [
+    {
+      "label": "Sweet Girl",
+      "instruct": "Young female, sweet and bright voice, with a touch of girlish charm. High pitch, lively and varied intonation. Moderate pace, clear articulation. Cheerful and relaxed emotion, full of youthful energy. Suitable for: customer service, voice assistant, entertainment content.",
+      "text": "Hello, I'm happy to help you! How may I assist you today?"
+    },
+    {
+      "label": "Mature Woman",
+      "instruct": "Mature and intellectual female voice, warm and full tone, with professional woman's capable temperament. Medium pitch, stable range. Moderate to fast pace, clear and organized. Calm and confident emotion, conveying professionalism and reliability.",
+      "text": "According to the latest market analysis report, this quarter's performance shows steady growth, with all indicators meeting expected targets."
+    },
+    {
+      "label": "Magnetic Male",
+      "instruct": "Mid-low male voice, deep and magnetic tone, very appealing. Slow pace, steady rhythm. Moderate volume, thick and powerful voice. Suitable for emotional content, storytelling, brand promotion.",
+      "text": "Night falls, yet the city lights remain brilliant. Under each light, there's a story about dreams."
+    },
+    {
+      "label": "Energetic Youth",
+      "instruct": "Energetic young male, bright and clear tone, with youthful vigor. Fast pace, strong sense of rhythm. Enthusiastic and positive emotion, very appealing. Suitable for sports, gaming, entertainment.",
+      "text": "Brothers, are you ready? Today we're going to challenge the new dungeon, let's go!"
+    },
+    {
+      "label": "Authority Expert",
+      "instruct": "Middle-aged male expert image, calm and authoritative tone, thick and powerful voice. Moderate pace, clear and standard articulation. Serious and professional emotion, conveying trust and expertise. Suitable for academic lectures, knowledge popularization, formal occasions.",
+      "text": "From a historical development perspective, technological innovation has always been the core driving force for social progress."
+    },
+    {
+      "label": "Gentle Mother",
+      "instruct": "Gentle and loving middle-aged female, soft and warm tone, full of maternal care. Slow pace, calm and soothing tone. Warm and caring emotion, giving a sense of security. Suitable for children's content, emotional companionship, bedtime stories.",
+      "text": "Sweetie, it's time to sleep. Mom will tell you a story. Once upon a time, there was a little rabbit who lived in the forest..."
+    },
+    {
+      "label": "Broadcasting Host",
+      "instruct": "Professional broadcasting host voice, full and round tone, standard pronunciation. Medium pitch, wide range. Standard pace, precise rhythm control. Professional and calm emotion, clear articulation. Suitable for news broadcasting, program hosting, formal reading.",
+      "text": "Hello dear listeners, welcome to today's program. Next, we bring you today's news."
+    },
+    {
+      "label": "Playful Girl",
+      "instruct": "Playful and cute girl voice, light and lively sound, with unique girlish liveliness. High and varied tone, with coquettish and cute elements. Varying pace, clear articulation with cute interjections.",
+      "text": "Oh no, I didn't mean to~ Can you forgive me this time? Please please~"
+    }
+  ],
+  "presetRefTexts": [
+    {
+      "label": "Natural Life",
+      "text": "In this fast-paced world, we're always rushing forward, forgetting to pause and listen to our inner voice. Life is not just about the busyness before us, but also the poetry in the distance and the little moments of happiness we discover. May this recording bring you a touch of gentleness and strength, like an afternoon breeze. No matter how the future changes, remember to keep your love for life and embrace every bright tomorrow."
+    },
+    {
+      "label": "Professional Formal",
+      "text": "Technological progress allows us to transcend the boundaries of time and space, continuing emotions and memories through digitalization. Voice cloning is not only precise code logic, but also a bridge connecting humanity with future intelligence. Through the continuous evolution of deep learning and neural networks, every subtle intonation can be accurately captured. Let us witness together how technology gives voice a more vital expression."
+    },
+    {
+      "label": "Literary Narrative",
+      "text": "The spring breeze brushes the willow tips, carrying the fragrance of earth and news of blooming flowers. Have you ever anticipated meeting your long-lost self at some street corner? Whether it's hearty laughter or low whispers, each voice is a unique mark of life. Let us record this moment, let memories flow in the sound, becoming an eternal melody."
+    }
+  ]
+}

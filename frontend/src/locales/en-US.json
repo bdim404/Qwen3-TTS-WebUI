@@ -1,0 +1,227 @@
+{
+  "modes": {
+    "custom-voice": "Custom Voice",
+    "voice-design": "Voice Design",
+    "voice-clone": "Voice Clone"
+  },
+  "modeHints": {
+    "custom-voice": "Pick a built-in speaker and optionally describe the emotion or speaking style.",
+    "voice-design": "Describe a voice in natural language and the model creates it. Save a result you like as a reusable voice.",
+    "voice-clone": "Clone a voice from a 3–20 second reference clip, or use a voice you saved earlier."
+  },
+  "language": "Language",
+  "speaker": "Speaker",
+  "instruct": "Style instruction (optional)",
+  "instructPlaceholder": "e.g. gentle and caring, slow pace, soft tone",
+  "text": "Text",
+  "textPlaceholder": "Enter the text to synthesize…",
+  "generate": "Generate",
+  "firstRunHint": "The first generation in each mode downloads and loads its model, which can take a few minutes.",
+  "logout": "Sign out",
+  "design": {
+    "instruct": "Voice description",
+    "placeholder": "e.g. A deep, magnetic male voice, calm and unhurried"
+  },
+  "clone": {
+    "voice": "Voice",
+    "newReference": "New reference audio",
+    "refAudio": "Reference audio",
+    "refAudioHint": "Upload any audio file or record with your microphone. 3–20 seconds of clean speech works best.",
+    "upload": "Upload",
+    "record": "Record",
+    "stop": "Stop",
+    "recording": "Recording",
+    "refText": "Reference transcript",
+    "refTextHint": "What is said in the reference audio. Leave empty to clone the timbre only (lower similarity).",
+    "refTextPlaceholder": "Type the transcript, or pick a script below and read it aloud while recording",
+    "saveAs": "Save as voice (optional)",
+    "saveAsPlaceholder": "Voice name",
+    "deleteVoice": "Delete voice",
+    "confirmDeleteVoice": "Delete the voice \"{name}\"?",
+    "noTranscript": "No transcript (timbre only)"
+  },
+  "busy": {
+    "downloading": "Downloading {name}…",
+    "loading": "Loading {name}…",
+    "generating": "Generating…"
+  },
+  "params": {
+    "title": "Advanced parameters",
+    "reset": "Reset to defaults",
+    "max_new_tokens": {
+      "label": "Max new tokens",
+      "hint": "Upper limit on generated audio length (12 tokens ≈ 1 second)."
+    },
+    "temperature": {
+      "label": "Temperature",
+      "hint": "Higher is more varied, lower is more stable."
+    },
+    "top_k": {
+      "label": "Top K",
+      "hint": "Sample only from the K most likely tokens."
+    },
+    "top_p": {
+      "label": "Top P",
+      "hint": "Sample from the smallest set of tokens whose probability adds up to P."
+    },
+    "repetition_penalty": {
+      "label": "Repetition penalty",
+      "hint": "Discourages repetition. Too high can sound unnatural."
+    }
+  },
+  "history": {
+    "title": "History",
+    "empty": "Nothing generated yet.",
+    "reuse": "Reuse",
+    "download": "Download",
+    "saveVoice": "Save as voice",
+    "saved": "Saved",
+    "voiceName": "Voice name",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Delete this audio?",
+    "uploadedRef": "Uploaded reference"
+  },
+  "login": {
+    "title": "Password required",
+    "password": "Password",
+    "wrong": "Wrong password",
+    "submit": "Sign in"
+  },
+  "errors": {
+    "refRequired": "Choose a saved voice or add a reference audio first.",
+    "refTooLong": "The reference audio must be shorter than 60 seconds.",
+    "refTooShort": "The reference audio is too short.",
+    "decode": "This audio file could not be read by the browser.",
+    "mic": "Microphone access was denied or is unavailable."
+  },
+  "languages": {
+    "Auto": "Auto detect",
+    "Chinese": "Chinese",
+    "English": "English",
+    "Japanese": "Japanese",
+    "Korean": "Korean",
+    "German": "German",
+    "French": "French",
+    "Russian": "Russian",
+    "Portuguese": "Portuguese",
+    "Spanish": "Spanish",
+    "Italian": "Italian",
+    "Cantonese": "Cantonese"
+  },
+  "speakers": {
+    "Vivian": "Bright young female · Chinese",
+    "Serena": "Warm, gentle young female · Chinese",
+    "Uncle_Fu": "Seasoned male, low and mellow · Chinese",
+    "Dylan": "Youthful Beijing male · Beijing dialect",
+    "Eric": "Lively Chengdu male · Sichuan dialect",
+    "Ryan": "Dynamic, rhythmic male · English",
+    "Aiden": "Sunny American male · English",
+    "Ono_Anna": "Playful female · Japanese",
+    "Sohee": "Warm, emotional female · Korean"
+  },
+  "presetInstructs": [
+    {
+      "label": "Happy",
+      "instruct": "very happy",
+      "text": "The weather is so nice today, let's go to the park together!"
+    },
+    {
+      "label": "Sad",
+      "instruct": "very sad, with a crying tone",
+      "text": "I'm sorry, I really tried my best, but I still let you down."
+    },
+    {
+      "label": "Angry",
+      "instruct": "very angry, with intense tone",
+      "text": "How could you do this! This is absolutely unacceptable!"
+    },
+    {
+      "label": "Gentle Care",
+      "instruct": "gentle and caring, slow pace, soft tone, full of care and comfort",
+      "text": "Don't worry, everything will be fine. I'll always be here with you."
+    },
+    {
+      "label": "Excited",
+      "instruct": "very excited, faster pace, rising tone, full of energy and enthusiasm",
+      "text": "Awesome! We finally made it! This is so exciting!"
+    },
+    {
+      "label": "Anxious",
+      "instruct": "anxious tone, slightly faster pace, unstable tone, with tension and worry",
+      "text": "What should we do? We're running out of time, we won't make it, what can we do?"
+    },
+    {
+      "label": "Professional Broadcaster",
+      "instruct": "Professional news broadcaster. Pace: standard broadcasting speed, clear articulation. Emotion: calm and professional, without personal emotion. Tone: mostly flat with slight variations, emphasis on key words. Character: rigorous, objective, authoritative.",
+      "text": "According to Reuters, our space program has achieved a major breakthrough, with the successful completion of manned space missions."
+    },
+    {
+      "label": "Warm Mentor",
+      "instruct": "Warm mentor. Pace: unhurried, speaking slowly. Tone: stable with encouraging rises. Emotion: caring, patient, encouraging. Character: understanding, guiding, full of positive energy.",
+      "text": "Everyone has their own pace, don't rush. Take your time, you will definitely find your own path."
+    },
+    {
+      "label": "Energetic Youth",
+      "instruct": "Full of energy. Pace: fast, crisp articulation. Emotion: cheerful and optimistic, energetic. Tone: strong sense of rhythm, cadence. Character: outgoing, confident, enthusiastic, full of youthful spirit.",
+      "text": "Wow, this game is so cool! Let's team up and play together, I promise I'll carry you!"
+    }
+  ],
+  "presetVoiceDesigns": [
+    {
+      "label": "Sweet Girl",
+      "instruct": "Young female, sweet and bright voice, with a touch of girlish charm. High pitch, lively and varied intonation. Moderate pace, clear articulation. Cheerful and relaxed emotion, full of youthful energy. Suitable for: customer service, voice assistant, entertainment content.",
+      "text": "Hello, I'm happy to help you! How may I assist you today?"
+    },
+    {
+      "label": "Mature Woman",
+      "instruct": "Mature and intellectual female voice, warm and full tone, with professional woman's capable temperament. Medium pitch, stable range. Moderate to fast pace, clear and organized. Calm and confident emotion, conveying professionalism and reliability.",
+      "text": "According to the latest market analysis report, this quarter's performance shows steady growth, with all indicators meeting expected targets."
+    },
+    {
+      "label": "Magnetic Male",
+      "instruct": "Mid-low male voice, deep and magnetic tone, very appealing. Slow pace, steady rhythm. Moderate volume, thick and powerful voice. Suitable for emotional content, storytelling, brand promotion.",
+      "text": "Night falls, yet the city lights remain brilliant. Under each light, there's a story about dreams."
+    },
+    {
+      "label": "Energetic Youth",
+      "instruct": "Energetic young male, bright and clear tone, with youthful vigor. Fast pace, strong sense of rhythm. Enthusiastic and positive emotion, very appealing. Suitable for sports, gaming, entertainment.",
+      "text": "Brothers, are you ready? Today we're going to challenge the new dungeon, let's go!"
+    },
+    {
+      "label": "Authority Expert",
+      "instruct": "Middle-aged male expert image, calm and authoritative tone, thick and powerful voice. Moderate pace, clear and standard articulation. Serious and professional emotion, conveying trust and expertise. Suitable for academic lectures, knowledge popularization, formal occasions.",
+      "text": "From a historical development perspective, technological innovation has always been the core driving force for social progress."
+    },
+    {
+      "label": "Gentle Mother",
+      "instruct": "Gentle and loving middle-aged female, soft and warm tone, full of maternal care. Slow pace, calm and soothing tone. Warm and caring emotion, giving a sense of security. Suitable for children's content, emotional companionship, bedtime stories.",
+      "text": "Sweetie, it's time to sleep. Mom will tell you a story. Once upon a time, there was a little rabbit who lived in the forest..."
+    },
+    {
+      "label": "Broadcasting Host",
+      "instruct": "Professional broadcasting host voice, full and round tone, standard pronunciation. Medium pitch, wide range. Standard pace, precise rhythm control. Professional and calm emotion, clear articulation. Suitable for news broadcasting, program hosting, formal reading.",
+      "text": "Hello dear listeners, welcome to today's program. Next, we bring you today's news."
+    },
+    {
+      "label": "Playful Girl",
+      "instruct": "Playful and cute girl voice, light and lively sound, with unique girlish liveliness. High and varied tone, with coquettish and cute elements. Varying pace, clear articulation with cute interjections.",
+      "text": "Oh no, I didn't mean to~ Can you forgive me this time? Please please~"
+    }
+  ],
+  "presetRefTexts": [
+    {
+      "label": "Natural Life",
+      "text": "In this fast-paced world, we're always rushing forward, forgetting to pause and listen to our inner voice. Life is not just about the busyness before us, but also the poetry in the distance and the little moments of happiness we discover. May this recording bring you a touch of gentleness and strength, like an afternoon breeze. No matter how the future changes, remember to keep your love for life and embrace every bright tomorrow."
+    },
+    {
+      "label": "Professional Formal",
+      "text": "Technological progress allows us to transcend the boundaries of time and space, continuing emotions and memories through digitalization. Voice cloning is not only precise code logic, but also a bridge connecting humanity with future intelligence. Through the continuous evolution of deep learning and neural networks, every subtle intonation can be accurately captured. Let us witness together how technology gives voice a more vital expression."
+    },
+    {
+      "label": "Literary Narrative",
+      "text": "The spring breeze brushes the willow tips, carrying the fragrance of earth and news of blooming flowers. Have you ever anticipated meeting your long-lost self at some street corner? Whether it's hearty laughter or low whispers, each voice is a unique mark of life. Let us record this moment, let memories flow in the sound, becoming an eternal melody."
+    }
+  ]
+}
