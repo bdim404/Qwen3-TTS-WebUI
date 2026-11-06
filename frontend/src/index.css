@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --primary: 209 37% 21%;
+  --primary-foreground: 38 43% 92%;
+  --accent: 38 43% 86%;
+  --border: 214 32% 90%;
+  --danger: 0 72% 51%;
+  color-scheme: light;
+}
+
+.dark {
+  --background: 0 0% 9%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 13%;
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 64%;
+  --primary: 38 43% 80%;
+  --primary-foreground: 209 37% 15%;
+  --accent: 209 30% 30%;
+  --border: 0 0% 20%;
+  --danger: 0 70% 60%;
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", "Malgun Gothic", sans-serif;
+}
+
+audio {
+  @apply h-9 w-full;
+}
+
+.input {
+  @apply w-full rounded-md border border-border bg-card px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply btn bg-primary text-primary-foreground hover:opacity-90;
+}
+
+.btn-outline {
+  @apply btn border border-border bg-card hover:bg-muted;
+}
+
+.btn-ghost {
+  @apply btn px-2 text-muted-foreground hover:bg-muted hover:text-foreground;
+}
+
+.label {
+  @apply mb-1.5 block text-sm font-medium;
+}
+
+.chip {
+  @apply rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition hover:border-primary hover:text-foreground;
+}

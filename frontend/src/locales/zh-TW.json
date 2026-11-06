@@ -1,0 +1,227 @@
+{
+  "modes": {
+    "custom-voice": "預置音色",
+    "voice-design": "音色設計",
+    "voice-clone": "音色複製"
+  },
+  "modeHints": {
+    "custom-voice": "選擇內建發音人，可選填情感或說話風格指令。",
+    "voice-design": "用自然語言描述想要的聲音，模型會據此生成。滿意的結果可以儲存為音色重複使用。",
+    "voice-clone": "用一段 3–20 秒的參考音訊複製聲音，或直接使用已儲存的音色。"
+  },
+  "language": "語言",
+  "speaker": "發音人",
+  "instruct": "風格指令（選填）",
+  "instructPlaceholder": "例如：溫柔體貼，語速平緩，音調柔和",
+  "text": "文字",
+  "textPlaceholder": "輸入要合成的文字…",
+  "generate": "生成",
+  "firstRunHint": "每種模式首次生成時會自動下載並載入對應模型，可能需要幾分鐘。",
+  "logout": "登出",
+  "design": {
+    "instruct": "音色描述",
+    "placeholder": "例如：低沉有磁性的男聲，沉穩、語速偏慢"
+  },
+  "clone": {
+    "voice": "音色",
+    "newReference": "新的參考音訊",
+    "refAudio": "參考音訊",
+    "refAudioHint": "上傳任意音訊檔或用麥克風錄製，3–20 秒清晰人聲效果最好。",
+    "upload": "上傳",
+    "record": "錄音",
+    "stop": "停止",
+    "recording": "錄音",
+    "refText": "參考文字",
+    "refTextHint": "參考音訊裡說的內容。留空則只複製音色（相似度較低）。",
+    "refTextPlaceholder": "輸入參考音訊的文字，或選擇下方朗讀稿邊讀邊錄",
+    "saveAs": "儲存為音色（選填）",
+    "saveAsPlaceholder": "音色名稱",
+    "deleteVoice": "刪除音色",
+    "confirmDeleteVoice": "確定刪除音色「{name}」嗎？",
+    "noTranscript": "無參考文字（僅音色）"
+  },
+  "busy": {
+    "downloading": "正在下載 {name}…",
+    "loading": "正在載入 {name}…",
+    "generating": "生成中…"
+  },
+  "params": {
+    "title": "進階參數",
+    "reset": "恢復預設",
+    "max_new_tokens": {
+      "label": "最大生成長度",
+      "hint": "生成音訊長度上限（約 12 個 token 為 1 秒）。"
+    },
+    "temperature": {
+      "label": "溫度",
+      "hint": "越高越多樣，越低越穩定。"
+    },
+    "top_k": {
+      "label": "Top K",
+      "hint": "只從機率最高的 K 個候選中取樣。"
+    },
+    "top_p": {
+      "label": "Top P",
+      "hint": "只從累計機率達到 P 的候選中取樣。"
+    },
+    "repetition_penalty": {
+      "label": "重複懲罰",
+      "hint": "抑制重複，過大可能不自然。"
+    }
+  },
+  "history": {
+    "title": "歷史紀錄",
+    "empty": "還沒有生成任何音訊。",
+    "reuse": "重用",
+    "download": "下載",
+    "saveVoice": "儲存為音色",
+    "saved": "已儲存",
+    "voiceName": "音色名稱",
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "confirmDelete": "確定刪除這條音訊嗎？",
+    "uploadedRef": "上傳的參考音訊"
+  },
+  "login": {
+    "title": "需要密碼",
+    "password": "密碼",
+    "wrong": "密碼錯誤",
+    "submit": "登入"
+  },
+  "errors": {
+    "refRequired": "請先選擇已儲存的音色或加入參考音訊。",
+    "refTooLong": "參考音訊需短於 60 秒。",
+    "refTooShort": "參考音訊太短。",
+    "decode": "瀏覽器無法讀取這個音訊檔。",
+    "mic": "無法使用麥克風或權限被拒絕。"
+  },
+  "languages": {
+    "Auto": "自動偵測",
+    "Chinese": "中文",
+    "English": "英語",
+    "Japanese": "日語",
+    "Korean": "韓語",
+    "German": "德語",
+    "French": "法語",
+    "Russian": "俄語",
+    "Portuguese": "葡萄牙語",
+    "Spanish": "西班牙語",
+    "Italian": "義大利語",
+    "Cantonese": "粵語"
+  },
+  "speakers": {
+    "Vivian": "明亮的年輕女聲 · 中文",
+    "Serena": "溫柔的年輕女聲 · 中文",
+    "Uncle_Fu": "沉穩醇厚的成熟男聲 · 中文",
+    "Dylan": "北京少年音 · 北京話",
+    "Eric": "活潑的成都男聲 · 四川話",
+    "Ryan": "節奏感強的男聲 · 英語",
+    "Aiden": "陽光的美式男聲 · 英語",
+    "Ono_Anna": "俏皮女聲 · 日語",
+    "Sohee": "溫暖細膩的女聲 · 韓語"
+  },
+  "presetInstructs": [
+    {
+      "label": "Happy",
+      "instruct": "very happy",
+      "text": "The weather is so nice today, let's go to the park together!"
+    },
+    {
+      "label": "Sad",
+      "instruct": "very sad, with a crying tone",
+      "text": "I'm sorry, I really tried my best, but I still let you down."
+    },
+    {
+      "label": "Angry",
+      "instruct": "very angry, with intense tone",
+      "text": "How could you do this! This is absolutely unacceptable!"
+    },
+    {
+      "label": "Gentle Care",
+      "instruct": "gentle and caring, slow pace, soft tone, full of care and comfort",
+      "text": "Don't worry, everything will be fine. I'll always be here with you."
+    },
+    {
+      "label": "Excited",
+      "instruct": "very excited, faster pace, rising tone, full of energy and enthusiasm",
+      "text": "Awesome! We finally made it! This is so exciting!"
+    },
+    {
+      "label": "Anxious",
+      "instruct": "anxious tone, slightly faster pace, unstable tone, with tension and worry",
+      "text": "What should we do? We're running out of time, we won't make it, what can we do?"
+    },
+    {
+      "label": "Professional Broadcaster",
+      "instruct": "Professional news broadcaster. Pace: standard broadcasting speed, clear articulation. Emotion: calm and professional, without personal emotion. Tone: mostly flat with slight variations, emphasis on key words. Character: rigorous, objective, authoritative.",
+      "text": "According to Reuters, our space program has achieved a major breakthrough, with the successful completion of manned space missions."
+    },
+    {
+      "label": "Warm Mentor",
+      "instruct": "Warm mentor. Pace: unhurried, speaking slowly. Tone: stable with encouraging rises. Emotion: caring, patient, encouraging. Character: understanding, guiding, full of positive energy.",
+      "text": "Everyone has their own pace, don't rush. Take your time, you will definitely find your own path."
+    },
+    {
+      "label": "Energetic Youth",
+      "instruct": "Full of energy. Pace: fast, crisp articulation. Emotion: cheerful and optimistic, energetic. Tone: strong sense of rhythm, cadence. Character: outgoing, confident, enthusiastic, full of youthful spirit.",
+      "text": "Wow, this game is so cool! Let's team up and play together, I promise I'll carry you!"
+    }
+  ],
+  "presetVoiceDesigns": [
+    {
+      "label": "Sweet Girl",
+      "instruct": "Young female, sweet and bright voice, with a touch of girlish charm. High pitch, lively and varied intonation. Moderate pace, clear articulation. Cheerful and relaxed emotion, full of youthful energy. Suitable for: customer service, voice assistant, entertainment content.",
+      "text": "Hello, I'm happy to help you! How may I assist you today?"
+    },
+    {
+      "label": "Mature Woman",
+      "instruct": "Mature and intellectual female voice, warm and full tone, with professional woman's capable temperament. Medium pitch, stable range. Moderate to fast pace, clear and organized. Calm and confident emotion, conveying professionalism and reliability.",
+      "text": "According to the latest market analysis report, this quarter's performance shows steady growth, with all indicators meeting expected targets."
+    },
+    {
+      "label": "Magnetic Male",
+      "instruct": "Mid-low male voice, deep and magnetic tone, very appealing. Slow pace, steady rhythm. Moderate volume, thick and powerful voice. Suitable for emotional content, storytelling, brand promotion.",
+      "text": "Night falls, yet the city lights remain brilliant. Under each light, there's a story about dreams."
+    },
+    {
+      "label": "Energetic Youth",
+      "instruct": "Energetic young male, bright and clear tone, with youthful vigor. Fast pace, strong sense of rhythm. Enthusiastic and positive emotion, very appealing. Suitable for sports, gaming, entertainment.",
+      "text": "Brothers, are you ready? Today we're going to challenge the new dungeon, let's go!"
+    },
+    {
+      "label": "Authority Expert",
+      "instruct": "Middle-aged male expert image, calm and authoritative tone, thick and powerful voice. Moderate pace, clear and standard articulation. Serious and professional emotion, conveying trust and expertise. Suitable for academic lectures, knowledge popularization, formal occasions.",
+      "text": "From a historical development perspective, technological innovation has always been the core driving force for social progress."
+    },
+    {
+      "label": "Gentle Mother",
+      "instruct": "Gentle and loving middle-aged female, soft and warm tone, full of maternal care. Slow pace, calm and soothing tone. Warm and caring emotion, giving a sense of security. Suitable for children's content, emotional companionship, bedtime stories.",
+      "text": "Sweetie, it's time to sleep. Mom will tell you a story. Once upon a time, there was a little rabbit who lived in the forest..."
+    },
+    {
+      "label": "Broadcasting Host",
+      "instruct": "Professional broadcasting host voice, full and round tone, standard pronunciation. Medium pitch, wide range. Standard pace, precise rhythm control. Professional and calm emotion, clear articulation. Suitable for news broadcasting, program hosting, formal reading.",
+      "text": "Hello dear listeners, welcome to today's program. Next, we bring you today's news."
+    },
+    {
+      "label": "Playful Girl",
+      "instruct": "Playful and cute girl voice, light and lively sound, with unique girlish liveliness. High and varied tone, with coquettish and cute elements. Varying pace, clear articulation with cute interjections.",
+      "text": "Oh no, I didn't mean to~ Can you forgive me this time? Please please~"
+    }
+  ],
+  "presetRefTexts": [
+    {
+      "label": "Natural Life",
+      "text": "In this fast-paced world, we're always rushing forward, forgetting to pause and listen to our inner voice. Life is not just about the busyness before us, but also the poetry in the distance and the little moments of happiness we discover. May this recording bring you a touch of gentleness and strength, like an afternoon breeze. No matter how the future changes, remember to keep your love for life and embrace every bright tomorrow."
+    },
+    {
+      "label": "Professional Formal",
+      "text": "Technological progress allows us to transcend the boundaries of time and space, continuing emotions and memories through digitalization. Voice cloning is not only precise code logic, but also a bridge connecting humanity with future intelligence. Through the continuous evolution of deep learning and neural networks, every subtle intonation can be accurately captured. Let us witness together how technology gives voice a more vital expression."
+    },
+    {
+      "label": "Literary Narrative",
+      "text": "The spring breeze brushes the willow tips, carrying the fragrance of earth and news of blooming flowers. Have you ever anticipated meeting your long-lost self at some street corner? Whether it's hearty laughter or low whispers, each voice is a unique mark of life. Let us record this moment, let memories flow in the sound, becoming an eternal melody."
+    }
+  ]
+}

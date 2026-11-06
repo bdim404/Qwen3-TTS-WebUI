@@ -1,322 +1,101 @@
 # Qwen3-TTS WebUI
 
-> **⚠️ 注意：** 本项目由大量 AI 生成，目前处于不稳定状态。稳定版将在 [Releases](../../releases) 中发布。
+一个轻量的 [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) 自托管网页界面。一个进程、一个端口、不需要数据库：启动后打开浏览器，输入文字即可。
 
-> **🚫 开源版本停止更新：** 本项目开源版本已停止更新，后续将进行闭源开发。目前闭源版本已经可以做到针对台词的情绪控制，并且新增了 NSFW 功能。对有声书感兴趣的欢迎私信联系我合作。
+[English](./README.md)
 
-**非官方** 基于 Qwen3-TTS 的文本转语音 Web 应用，支持自定义语音、语音设计和语音克隆，提供直观的 Web 界面。
+> 想做有声书？多角色有声书生成已经独立为 **[Canto](https://github.com/bdim404/Canto)** 项目。本仓库只保留核心 TTS 功能。
 
-> 这是一个非官方项目。如需查看官方 Qwen3-TTS 仓库，请访问 [QwenLM/Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)。
+## 功能
 
-[English Documentation](./README.md)
+- **预置音色**：9 个内置发音人，可用自然语言指定情感和风格（"非常开心"、"温柔、语速平缓"……）
+- **音色设计**：用文字描述想要的声音，模型据此生成
+- **音色克隆**：上传音频或用麦克风录音克隆声音，参考文本可填可不填
+- **保存音色**：任何生成结果或参考音频都能保存为音色，克隆时直接复用
+- **历史记录**：所有结果保存在磁盘上，可播放、下载、复用参数或删除
+- 模型首次使用时自动下载；自动识别 CUDA、Apple Silicon（MPS）和 CPU
+- 可选访问密码，深色/浅色主题，English / 简体中文 / 繁體中文 / 日本語 / 한국어
 
-## 功能特性
+## 快速开始
 
-- 自定义语音：预定义说话人语音
-- 语音设计：自然语言描述创建语音
-- 语音克隆：上传音频克隆语音
-- 有声书生成：上传 EPUB 文件，通过 LLM 自动提取角色并分配语音，生成多角色有声书
-- 双后端支持：支持本地模型和阿里云 TTS API 切换
-- 多语言支持：English、简体中文、繁體中文、日本語、한국어
-- JWT 认证、异步任务、语音缓存、暗黑模式
+### Docker（NVIDIA GPU）
 
-## 界面预览
-
-### 桌面端 - 亮色模式
-![亮色模式](./images/lightmode-english.png)
-
-### 桌面端 - 暗黑模式
-![暗黑模式](./images/darkmode-chinese.png)
-
-### 移动端
-<table>
-  <tr>
-    <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="移动端亮色模式" /></td>
-    <td width="50%"><img src="./images/mobile-settings.png" alt="移动端设置" /></td>
-  </tr>
-</table>
-
-### 有声书生成
-![有声书概览](./images/audiobook-overview.png)
-
-<table>
-  <tr>
-    <td width="50%"><img src="./images/audiobook-characters.png" alt="有声书角色列表" /></td>
-    <td width="50%"><img src="./images/audiobook-chapters.png" alt="有声书章节列表" /></td>
-  </tr>
-</table>
-
-## 技术栈
-
-**后端**: FastAPI + SQLAlchemy + PyTorch + JWT
-- 使用 PyTorch 直接推理 Qwen3-TTS 模型
-- 异步任务处理与批量优化
-- 支持本地模型 + 阿里云 API 双后端
-
-**前端**: React 19 + TypeScript + Vite + Tailwind + Shadcn/ui
-
-## Docker 部署
-
-预构建镜像已发布至 Docker Hub：[bdim404/qwen3-tts-backend](https://hub.docker.com/r/bdim404/qwen3-tts-backend)、[bdim404/qwen3-tts-frontend](https://hub.docker.com/r/bdim404/qwen3-tts-frontend)
-
-**前置要求**：Docker、Docker Compose、NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+需要 Docker 和 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)。
 
 ```bash
-git clone https://github.com/bdim404/Qwen3-TTS-WebUI.git
-cd Qwen3-TTS-webUI
+docker run -d --gpus all -p 8000:8000 -v ./data:/data -e HF_ENDPOINT=https://hf-mirror.com --name qwen3-tts-webui bdim404/qwen3-tts-webui
+```
 
-# 下载模型到 docker/models/（参见下方"安装部署 > 下载模型"）
-mkdir -p docker/models docker/data
+或使用仓库里的 [compose.yaml](./compose.yaml)：
 
-# 配置
-cp docker/.env.example docker/.env
-# 编辑 docker/.env，设置 SECRET_KEY
-
-cd docker
-
-# 拉取预构建镜像
-docker compose pull
-
-# 启动（仅 CPU）
+```bash
 docker compose up -d
-
-# 启动（GPU 加速）
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 ```
 
-访问 `http://localhost`，默认账号：`admin` / `admin123456`
+打开 http://localhost:8000 。模型、历史记录和保存的音色都在 `./data` 目录中。
 
-## 安装部署
+### 本地安装
 
-### 环境要求
-
-- Python 3.9+ 并支持 CUDA（用于本地模型推理）
-- Node.js 18+（用于前端）
-- Git
-
-### 1. 克隆仓库
+需要 Python 3.10+（推荐 3.12）、Node.js 20+；GPU 推理需要 NVIDIA 驱动或 Apple Silicon Mac。
 
 ```bash
 git clone https://github.com/bdim404/Qwen3-TTS-WebUI.git
-cd Qwen3-TTS-webUI
+cd Qwen3-TTS-WebUI
+
+cd frontend && npm ci && npm run build && cd ..
+
+cd backend
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+HF_ENDPOINT=https://hf-mirror.com .venv/bin/python app.py
 ```
 
-### 2. 下载模型
+打开 http://localhost:8000 。
 
-**重要**: 模型**不会**自动下载，需要手动下载。
-
-详细信息请访问官方仓库：[Qwen3-TTS 模型](https://github.com/QwenLM/Qwen3-TTS)
-
-进入模型目录：
-```bash
-# Docker 部署
-mkdir -p docker/models && cd docker/models
-
-# 本地部署
-cd qwen3-tts-backend && mkdir -p Qwen && cd Qwen
-```
-
-**方式一：通过 ModelScope 下载（推荐中国大陆用户）**
-
-```bash
-pip install -U modelscope
-
-modelscope download --model Qwen/Qwen3-TTS-Tokenizer-12Hz --local_dir ./Qwen3-TTS-Tokenizer-12Hz
-modelscope download --model Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice --local_dir ./Qwen3-TTS-12Hz-1.7B-CustomVoice
-modelscope download --model Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign --local_dir ./Qwen3-TTS-12Hz-1.7B-VoiceDesign
-modelscope download --model Qwen/Qwen3-TTS-12Hz-1.7B-Base --local_dir ./Qwen3-TTS-12Hz-1.7B-Base
-```
-
-可选的 0.6B 模型（更小、更快）：
-```bash
-modelscope download --model Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice --local_dir ./Qwen3-TTS-12Hz-0.6B-CustomVoice
-modelscope download --model Qwen/Qwen3-TTS-12Hz-0.6B-Base --local_dir ./Qwen3-TTS-12Hz-0.6B-Base
-```
-
-**方式二：通过 Hugging Face 下载**
-
-```bash
-pip install -U "huggingface_hub[cli]"
-
-hf download Qwen/Qwen3-TTS-Tokenizer-12Hz --local-dir ./Qwen3-TTS-Tokenizer-12Hz
-hf download Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice --local-dir ./Qwen3-TTS-12Hz-1.7B-CustomVoice
-hf download Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign --local-dir ./Qwen3-TTS-12Hz-1.7B-VoiceDesign
-hf download Qwen/Qwen3-TTS-12Hz-1.7B-Base --local-dir ./Qwen3-TTS-12Hz-1.7B-Base
-```
-
-可选的 0.6B 模型（更小、更快）：
-```bash
-hf download Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice --local-dir ./Qwen3-TTS-12Hz-0.6B-CustomVoice
-hf download Qwen/Qwen3-TTS-12Hz-0.6B-Base --local-dir ./Qwen3-TTS-12Hz-0.6B-Base
-```
-
-**最终目录结构：**
-
-Docker 部署（`docker/models/`）：
-```
-Qwen3-TTS-webUI/
-└── docker/
-    └── models/
-        ├── Qwen3-TTS-Tokenizer-12Hz/
-        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
-        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
-        └── Qwen3-TTS-12Hz-1.7B-Base/
-```
-
-本地部署（`qwen3-tts-backend/Qwen/`）：
-```
-Qwen3-TTS-webUI/
-└── qwen3-tts-backend/
-    └── Qwen/
-        ├── Qwen3-TTS-Tokenizer-12Hz/
-        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
-        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
-        └── Qwen3-TTS-12Hz-1.7B-Base/
-```
-
-### 3. 后端配置
-
-```bash
-cd qwen3-tts-backend
-
-# 创建虚拟环境
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 安装 Qwen3-TTS
-pip install qwen-tts
-
-# 创建配置文件
-cp .env.example .env
-
-# 编辑配置文件
-# 本地模型：设置 MODEL_BASE_PATH=./Qwen
-# 仅阿里云 API：设置 DEFAULT_BACKEND=aliyun
-nano .env  # 或使用其他编辑器
-```
-
-**重要的后端配置** (`.env` 文件)：
-```env
-MODEL_DEVICE=cuda:0              # 使用 GPU（或 cpu 使用 CPU）
-MODEL_BASE_PATH=./Qwen           # 已下载模型的路径
-DEFAULT_BACKEND=local            # 使用本地模型用 'local'，API 用 'aliyun'
-DATABASE_URL=sqlite:///./qwen_tts.db
-SECRET_KEY=your-secret-key-here  # 请修改此项！
-```
-
-启动后端服务：
-```bash
-# 使用 uvicorn 直接启动
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# 或使用 conda（如果你喜欢）
-conda run -n qwen3-tts uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-验证后端是否运行：
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-### 4. 前端配置
-
-```bash
-cd qwen3-tts-frontend
-
-# 安装依赖
-npm install
-
-# 创建配置文件
-cp .env.example .env
-
-# 启动开发服务器
-npm run dev
-```
-
-### 5. 访问应用
-
-在浏览器中打开：`http://localhost:5173`
-
-**默认账号**：
-- 用户名：`admin`
-- 密码：`admin123456`
-- **重要**: 登录后请立即修改密码！
-
-### 生产环境部署
-
-用于生产环境：
-
-```bash
-# 后端：使用 gunicorn 或类似的 WSGI 服务器
-cd qwen3-tts-backend
-gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
-
-# 前端：构建静态文件
-cd qwen3-tts-frontend
-npm run build
-# 使用 nginx 或其他 Web 服务器提供 'dist' 文件夹
-```
+每种模式第一次生成时会从 Hugging Face 下载对应模型（1.7B 约 4.5 GB，0.6B 约 2.5 GB），需要几分钟，按钮上会显示下载和加载进度。中国大陆用户建议设置 `HF_ENDPOINT=https://hf-mirror.com`。
 
 ## 配置
 
-### 后端配置
+通过环境变量配置，或把 `backend/.env.example` 复制为 `backend/.env`。
 
-后端 `.env` 关键配置：
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `HOST` | `127.0.0.1`（Docker 中为 `0.0.0.0`） | 监听地址 |
+| `PORT` | `8000` | 监听端口 |
+| `WEBUI_PASSWORD` | 空 | 设置后需要输入密码才能使用。只要界面能被其他机器访问就应该设置 |
+| `DATA_DIR` | `backend/data`（Docker 中为 `/data`） | 历史记录、音色、模型和会话密钥 |
+| `MODEL_DIR` | `$DATA_DIR/models` | 模型下载目录 |
+| `DEVICE` | `auto` | `auto`、`cuda:0`、`mps` 或 `cpu` |
+| `MODEL_SIZE` | `1.7B` | 预置音色和音色克隆使用的模型：`1.7B` 或 `0.6B`。音色设计只有 1.7B |
+| `MAX_LOADED_MODELS` | `1` | 同时驻留内存的模型数。显存充足（约 16 GB）时设为 `3`，切换模式无需重新加载 |
+| `MAX_TEXT_LENGTH` | `2000` | 单次请求的最大字符数 |
+| `HF_ENDPOINT` | Hugging Face | Hugging Face 镜像地址 |
 
-```env
-SECRET_KEY=your-secret-key
-MODEL_DEVICE=cuda:0
-MODEL_BASE_PATH=../Qwen
-DATABASE_URL=sqlite:///./qwen_tts.db
+如果已经下载过模型，按原名放进 `MODEL_DIR`，并在每个模型目录里创建一个空的 `.complete` 文件：
 
-DEFAULT_BACKEND=local
-
-ALIYUN_REGION=beijing
-ALIYUN_MODEL_FLASH=qwen3-tts-flash-realtime
-ALIYUN_MODEL_VC=qwen3-tts-vc-realtime-2026-01-15
-ALIYUN_MODEL_VD=qwen3-tts-vd-realtime-2026-01-15
+```
+data/models/
+├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
+├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
+└── Qwen3-TTS-12Hz-1.7B-Base/
 ```
 
-**后端选项：**
+## API
 
-- `DEFAULT_BACKEND`: 默认 TTS 后端，可选值：`local` 或 `aliyun`
-- **本地模式**: 使用本地 Qwen3-TTS 模型（需要配置 `MODEL_BASE_PATH`）
-- **阿里云模式**: 使用阿里云 TTS API（需要用户在设置页面配置 API 密钥）
+网页只是 JSON API 的一层薄客户端，接口文档见 http://localhost:8000/api/docs 。例如：
 
-**阿里云配置：**
+```bash
+curl -X POST http://localhost:8000/api/tts/custom-voice \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "你好，世界", "language": "Chinese", "speaker": "Vivian"}'
+```
 
-- 用户需要在 Web 界面的设置页面添加阿里云 API 密钥
-- API 密钥经过加密后安全存储在数据库中
-- 超级管理员可以控制是否为所有用户启用本地模型
-- 获取阿里云 API 密钥，请访问 [阿里云控制台](https://dashscope.console.aliyun.com/)
+返回新的历史记录条目，音频通过 `/api/history/<id>/audio` 获取。
 
-## 使用说明
+## 致谢
 
-### 切换后端
-
-1. 登录 Web 界面
-2. 进入设置页面
-3. 配置您偏好的后端：
-   - **本地模型**：选择"本地模型"（需要超级管理员启用本地模型）
-   - **阿里云 API**：选择"阿里云"并添加您的 API 密钥
-4. 选择的后端将默认用于所有 TTS 操作
-5. 也可以通过 API 的 `backend` 参数为单次请求指定不同的后端
-
-### 管理阿里云 API 密钥
-
-1. 在设置页面找到"阿里云 API 密钥"部分
-2. 输入您的阿里云 API 密钥
-3. 点击"更新密钥"保存并验证
-4. 系统会在保存前验证密钥的有效性
-5. 可随时使用删除按钮删除密钥
-
-## 特别鸣谢
-
-本项目基于阿里云 Qwen 团队开源的 [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) 官方仓库构建。特别感谢 Qwen 团队开源如此强大的文本转语音模型。
+基于阿里云通义千问团队的 [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)。本项目为非官方项目。
 
 ## 许可证
 
-Apache-2.0 license 
+Apache-2.0

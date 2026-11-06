@@ -1,322 +1,101 @@
 # Qwen3-TTS WebUI
 
-> **⚠️ Notice:** This project is largely AI-generated and is currently in an unstable state. Stable releases will be published in the [Releases](../../releases) section.
-
-> **🚫 End of Open Source Updates:** The open-source version of this project is no longer maintained. Future development will continue as a closed-source project. The closed-source version already supports emotion control for dialogue lines and includes new NSFW features. If you are interested in audiobook-related collaboration, feel free to contact me privately.
-
-**Unofficial** text-to-speech web application based on Qwen3-TTS, supporting custom voice, voice design, and voice cloning with an intuitive interface.
-
-> This is an unofficial project. For the official Qwen3-TTS repository, please visit [QwenLM/Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS).
+A small, self-hosted web interface for [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS). One process, one port, no database: start it, open the browser, type some text.
 
 [中文文档](./README.zh.md)
 
+> Looking for audiobooks? Multi-character audiobook generation has moved to its own project, **[Canto](https://github.com/bdim404/Canto)**. This repository only keeps the core TTS features.
+
 ## Features
 
-- Custom Voice: Predefined speaker voices
-- Voice Design: Create voices from natural language descriptions
-- Voice Cloning: Clone voices from uploaded audio
-- Audiobook Generation: Upload EPUB files and generate multi-character audiobooks with LLM-powered character extraction and voice assignment
-- Dual Backend Support: Switch between local model and Aliyun TTS API
-- Multi-language Support: English, 简体中文, 繁體中文, 日本語, 한국어
-- JWT auth, async tasks, voice cache, dark mode
+- **Custom Voice**: 9 built-in speakers, with optional natural-language style instructions ("very happy", "slow and gentle", …)
+- **Voice Design**: describe a voice in plain words and the model creates it
+- **Voice Clone**: clone from an uploaded file or a microphone recording, with or without a transcript
+- **Saved voices**: save any generated result or reference clip as a voice and reuse it for cloning
+- **History**: every result is kept on disk; play, download, reuse its settings or delete it
+- Models download automatically on first use; CUDA, Apple Silicon (MPS) and CPU are detected automatically
+- Optional password, light and dark themes, English / 简体中文 / 繁體中文 / 日本語 / 한국어
 
-## Interface Preview
+## Quick start
 
-### Desktop - Light Mode
-![Light Mode](./images/lightmode-english.png)
+### Docker (NVIDIA GPU)
 
-### Desktop - Dark Mode
-![Dark Mode](./images/darkmode-chinese.png)
-
-### Mobile
-<table>
-  <tr>
-    <td width="50%"><img src="./images/mobile-lightmode-custom.png" alt="Mobile Light Mode" /></td>
-    <td width="50%"><img src="./images/mobile-settings.png" alt="Mobile Settings" /></td>
-  </tr>
-</table>
-
-### Audiobook Generation
-![Audiobook Overview](./images/audiobook-overview.png)
-
-<table>
-  <tr>
-    <td width="50%"><img src="./images/audiobook-characters.png" alt="Audiobook Characters" /></td>
-    <td width="50%"><img src="./images/audiobook-chapters.png" alt="Audiobook Chapters" /></td>
-  </tr>
-</table>
-
-## Tech Stack
-
-**Backend**: FastAPI + SQLAlchemy + PyTorch + JWT
-- Direct PyTorch inference with Qwen3-TTS models
-- Async task processing with batch optimization
-- Local model support + Aliyun API integration
-
-**Frontend**: React 19 + TypeScript + Vite + Tailwind + Shadcn/ui
-
-## Docker Deployment
-
-Pre-built images are available on Docker Hub: [bdim404/qwen3-tts-backend](https://hub.docker.com/r/bdim404/qwen3-tts-backend), [bdim404/qwen3-tts-frontend](https://hub.docker.com/r/bdim404/qwen3-tts-frontend)
-
-**Prerequisites**: Docker, Docker Compose, NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+Requires Docker and the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 
 ```bash
-git clone https://github.com/bdim404/Qwen3-TTS-WebUI.git
-cd Qwen3-TTS-webUI
+docker run -d --gpus all -p 8000:8000 -v ./data:/data --name qwen3-tts-webui bdim404/qwen3-tts-webui
+```
 
-# Download models to docker/models/ (see Installation > Download Models below)
-mkdir -p docker/models docker/data
+Or with the bundled [compose.yaml](./compose.yaml):
 
-# Configure
-cp docker/.env.example docker/.env
-# Edit docker/.env and set SECRET_KEY
-
-cd docker
-
-# Pull pre-built images
-docker compose pull
-
-# Start (CPU only)
+```bash
 docker compose up -d
-
-# Start (with GPU)
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 ```
 
-Access the application at `http://localhost`. Default credentials: `admin` / `admin123456`
+Open http://localhost:8000. Models, history and saved voices all live in `./data`.
 
-## Installation
+### Native
 
-### Prerequisites
-
-- Python 3.9+ with CUDA support (for local model inference)
-- Node.js 18+ (for frontend)
-- Git
-
-### 1. Clone Repository
+Requires Python 3.10+ (3.12 recommended), Node.js 20+ and, for GPU inference, an NVIDIA driver or an Apple Silicon Mac.
 
 ```bash
 git clone https://github.com/bdim404/Qwen3-TTS-WebUI.git
-cd Qwen3-TTS-webUI
+cd Qwen3-TTS-WebUI
+
+cd frontend && npm ci && npm run build && cd ..
+
+cd backend
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python app.py
 ```
 
-### 2. Download Models
+Open http://localhost:8000.
 
-**Important**: Models are **NOT** automatically downloaded. You need to manually download them first.
-
-For more details, visit the official repository: [Qwen3-TTS Models](https://github.com/QwenLM/Qwen3-TTS)
-
-Navigate to the models directory:
-```bash
-# Docker deployment
-mkdir -p docker/models && cd docker/models
-
-# Local deployment
-cd qwen3-tts-backend && mkdir -p Qwen && cd Qwen
-```
-
-**Option 1: Download through ModelScope (Recommended for users in Mainland China)**
-
-```bash
-pip install -U modelscope
-
-modelscope download --model Qwen/Qwen3-TTS-Tokenizer-12Hz --local_dir ./Qwen3-TTS-Tokenizer-12Hz
-modelscope download --model Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice --local_dir ./Qwen3-TTS-12Hz-1.7B-CustomVoice
-modelscope download --model Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign --local_dir ./Qwen3-TTS-12Hz-1.7B-VoiceDesign
-modelscope download --model Qwen/Qwen3-TTS-12Hz-1.7B-Base --local_dir ./Qwen3-TTS-12Hz-1.7B-Base
-```
-
-Optional 0.6B models (smaller, faster):
-```bash
-modelscope download --model Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice --local_dir ./Qwen3-TTS-12Hz-0.6B-CustomVoice
-modelscope download --model Qwen/Qwen3-TTS-12Hz-0.6B-Base --local_dir ./Qwen3-TTS-12Hz-0.6B-Base
-```
-
-**Option 2: Download through Hugging Face**
-
-```bash
-pip install -U "huggingface_hub[cli]"
-
-hf download Qwen/Qwen3-TTS-Tokenizer-12Hz --local-dir ./Qwen3-TTS-Tokenizer-12Hz
-hf download Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice --local-dir ./Qwen3-TTS-12Hz-1.7B-CustomVoice
-hf download Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign --local-dir ./Qwen3-TTS-12Hz-1.7B-VoiceDesign
-hf download Qwen/Qwen3-TTS-12Hz-1.7B-Base --local-dir ./Qwen3-TTS-12Hz-1.7B-Base
-```
-
-Optional 0.6B models (smaller, faster):
-```bash
-hf download Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice --local-dir ./Qwen3-TTS-12Hz-0.6B-CustomVoice
-hf download Qwen/Qwen3-TTS-12Hz-0.6B-Base --local-dir ./Qwen3-TTS-12Hz-0.6B-Base
-```
-
-**Final directory structure:**
-
-Docker deployment (`docker/models/`):
-```
-Qwen3-TTS-webUI/
-└── docker/
-    └── models/
-        ├── Qwen3-TTS-Tokenizer-12Hz/
-        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
-        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
-        └── Qwen3-TTS-12Hz-1.7B-Base/
-```
-
-Local deployment (`qwen3-tts-backend/Qwen/`):
-```
-Qwen3-TTS-webUI/
-└── qwen3-tts-backend/
-    └── Qwen/
-        ├── Qwen3-TTS-Tokenizer-12Hz/
-        ├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
-        ├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
-        └── Qwen3-TTS-12Hz-1.7B-Base/
-```
-
-### 3. Backend Setup
-
-```bash
-cd qwen3-tts-backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install Qwen3-TTS
-pip install qwen-tts
-
-# Create configuration file
-cp .env.example .env
-
-# Edit .env file
-# For local model: Set MODEL_BASE_PATH=./Qwen
-# For Aliyun API only: Set DEFAULT_BACKEND=aliyun
-nano .env  # or use your preferred editor
-```
-
-**Important Backend Configuration** (`.env`):
-```env
-MODEL_DEVICE=cuda:0              # Use GPU (or cpu for CPU-only)
-MODEL_BASE_PATH=./Qwen           # Path to your downloaded models
-DEFAULT_BACKEND=local            # Use 'local' for local models, 'aliyun' for API
-DATABASE_URL=sqlite:///./qwen_tts.db
-SECRET_KEY=your-secret-key-here  # Change this!
-```
-
-Start the backend server:
-```bash
-# Using uvicorn directly
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# Or using conda (if you prefer)
-conda run -n qwen3-tts uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Verify backend is running:
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-### 4. Frontend Setup
-
-```bash
-cd qwen3-tts-frontend
-
-# Install dependencies
-npm install
-
-# Create configuration file
-cp .env.example .env
-
-# Start development server
-npm run dev
-```
-
-### 5. Access the Application
-
-Open your browser and visit: `http://localhost:5173`
-
-**Default Credentials**:
-- Username: `admin`
-- Password: `admin123456`
-- **IMPORTANT**: Change the password immediately after first login!
-
-### Production Build
-
-For production deployment:
-
-```bash
-# Backend: Use gunicorn or similar WSGI server
-cd qwen3-tts-backend
-gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
-
-# Frontend: Build static files
-cd qwen3-tts-frontend
-npm run build
-# Serve the 'dist' folder with nginx or another web server
-```
+The first generation in each mode downloads its model from Hugging Face (about 4.5 GB for 1.7B, 2.5 GB for 0.6B) and can take a few minutes. The button shows download and loading progress. In mainland China, set `HF_ENDPOINT=https://hf-mirror.com`.
 
 ## Configuration
 
-### Backend Configuration
+Set environment variables, or copy `backend/.env.example` to `backend/.env`.
 
-Backend `.env` key settings:
+| Variable | Default | Description |
+| --- | --- | --- |
+| `HOST` | `127.0.0.1` (`0.0.0.0` in Docker) | Listen address |
+| `PORT` | `8000` | Listen port |
+| `WEBUI_PASSWORD` | empty | Require this password to use the UI. Set it whenever the UI is reachable from other machines |
+| `DATA_DIR` | `backend/data` (`/data` in Docker) | History, saved voices, models and the session key |
+| `MODEL_DIR` | `$DATA_DIR/models` | Where models are downloaded |
+| `DEVICE` | `auto` | `auto`, `cuda:0`, `mps` or `cpu` |
+| `MODEL_SIZE` | `1.7B` | `1.7B` or `0.6B` for Custom Voice and Voice Clone. Voice Design is only available as 1.7B |
+| `MAX_LOADED_MODELS` | `1` | How many models stay in memory. Raise to `3` with enough VRAM (~16 GB) to switch modes instantly |
+| `MAX_TEXT_LENGTH` | `2000` | Maximum characters per request |
+| `HF_ENDPOINT` | Hugging Face | Hugging Face mirror |
 
-```env
-SECRET_KEY=your-secret-key
-MODEL_DEVICE=cuda:0
-MODEL_BASE_PATH=../Qwen
-DATABASE_URL=sqlite:///./qwen_tts.db
+To use models you already downloaded, put them in `MODEL_DIR` under their original names and create an empty `.complete` file in each folder:
 
-DEFAULT_BACKEND=local
-
-ALIYUN_REGION=beijing
-ALIYUN_MODEL_FLASH=qwen3-tts-flash-realtime
-ALIYUN_MODEL_VC=qwen3-tts-vc-realtime-2026-01-15
-ALIYUN_MODEL_VD=qwen3-tts-vd-realtime-2026-01-15
+```
+data/models/
+├── Qwen3-TTS-12Hz-1.7B-CustomVoice/
+├── Qwen3-TTS-12Hz-1.7B-VoiceDesign/
+└── Qwen3-TTS-12Hz-1.7B-Base/
 ```
 
-**Backend Options:**
+## API
 
-- `DEFAULT_BACKEND`: Default TTS backend, options: `local` or `aliyun`
-- **Local Mode**: Uses local Qwen3-TTS model (requires `MODEL_BASE_PATH` configuration)
-- **Aliyun Mode**: Uses Aliyun TTS API (requires users to configure their API keys in settings)
+The UI is a thin client over a JSON API, documented at http://localhost:8000/api/docs. For example:
 
-**Aliyun Configuration:**
+```bash
+curl -X POST http://localhost:8000/api/tts/custom-voice \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "Hello world", "language": "English", "speaker": "Ryan"}'
+```
 
-- Users need to add their Aliyun API keys in the web interface settings page
-- API keys are encrypted and stored securely in the database
-- Superuser can enable/disable local model access for all users
-- To obtain an Aliyun API key, visit the [Aliyun Console](https://dashscope.console.aliyun.com/)
-
-## Usage
-
-### Switching Between Backends
-
-1. Log in to the web interface
-2. Navigate to Settings page
-3. Configure your preferred backend:
-   - **Local Model**: Select "本地模型" (requires local model to be enabled by superuser)
-   - **Aliyun API**: Select "阿里云" and add your API key
-4. The selected backend will be used for all TTS operations by default
-5. You can also specify a different backend per request using the `backend` parameter in the API
-
-### Managing Aliyun API Key
-
-1. In Settings page, find the "阿里云 API 密钥" section
-2. Enter your Aliyun API key
-3. Click "更新密钥" to save and validate
-4. The system will verify the key before saving
-5. You can delete the key anytime using the delete button
+The response describes the new history item; fetch the audio from `/api/history/<id>/audio`.
 
 ## Acknowledgments
 
-This project is built upon the excellent work of the official [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) repository by the Qwen Team at Alibaba Cloud. Special thanks to the Qwen Team for open-sourcing such a powerful text-to-speech model.
+Built on [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by the Qwen team at Alibaba Cloud. This is an unofficial project.
 
 ## License
 
-Apache-2.0 license 
+Apache-2.0
